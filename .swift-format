@@ -1,0 +1,33 @@
+{
+    "indentation" : {
+        "spaces" : 4
+    },
+    "indentConditionalCompilationBlocks" : true,
+    "lineBreakAroundMultilineExpressionChainComponents": false,
+    "lineBreakBeforeControlFlowKeywords" : false,
+    "lineBreakBeforeEachArgument" : true,
+    "lineBreakBeforeEachGenericRequirement": true,
+    "lineLength" : 80,
+    "maximumBlankLines" : 1,
+    "prioritizeKeepingFunctionOutputTogether": false,
+    "respectsExistingLineBreaks" : true,
+    "blankLineBetweenMembers": {
+        "ignoreSingleLineProperties": true
+    },
+    "rules" : {
+        "AllPublicDeclarationsHaveDocumentation" : false,
+        "AlwaysUseLowerCamelCase": true,
+        "BeginDocumentationCommentWithOneLineSummary" : false,
+        "BlankLineBetweenMembers" : true,
+        "CaseIndentLevelEqualsSwitch" : true,
+        "DoNotUseSemicolons" : true,
+        "DontRepeatTypeInStaticProperties" : true,
+        "MultiLineTrailingCommas" : true,
+        "OneVariableDeclarationPerLine": true,
+        "TypeNamesShouldBeCapitalized": true,
+        "UseEnumForNamespacing" : true,
+        "ValidateDocumentationComments" : false
+    },
+    "tabWidth" : 8,
+    "version" : 1
+}
