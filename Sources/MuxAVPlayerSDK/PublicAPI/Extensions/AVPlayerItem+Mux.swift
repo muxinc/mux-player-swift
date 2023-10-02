@@ -5,7 +5,67 @@
 import AVFoundation
 import Foundation
 
-extension AVPlayerItem {
+fileprivate func makePlaybackURL(
+    playbackID: String,
+    playbackOptions: PlaybackOptions
+) -> URL {
+
+    var components = URLComponents()
+    components.scheme = "https"
+
+    if let customDomain = playbackOptions.customDomain {
+        components.host = "stream.\(customDomain)"
+    } else {
+        components.host = "stream.mux.com"
+    }
+
+    components.path = "/\(playbackID).m3u8"
+
+    if case PlaybackOptions.PlaybackPolicy.public(let publicPlaybackOptions) = playbackOptions.playbackPolicy {
+        var queryItems: [URLQueryItem] = []
+
+        if publicPlaybackOptions.useRedundantStreams {
+            queryItems.append(
+                URLQueryItem(
+                    name: "redundant_streams",
+                    value: "true"
+                )
+            )
+        }
+
+        if publicPlaybackOptions.maximumResolutionTier != .default {
+            queryItems.append(
+                URLQueryItem(
+                    name: "max_resolution",
+                    value: publicPlaybackOptions.maximumResolutionTier.queryValue
+                )
+            )
+        }
+
+        components.queryItems = queryItems
+    } else if case PlaybackOptions.PlaybackPolicy.signed(let signedPlaybackOptions) = playbackOptions.playbackPolicy {
+
+        var queryItems: [URLQueryItem] = []
+
+        queryItems.append(
+            URLQueryItem(
+                name: "token",
+                value: signedPlaybackOptions.playbackToken
+            )
+        )
+
+        components.queryItems = queryItems
+
+    }
+
+    guard let playbackURL = components.url else {
+        preconditionFailure("Invalid playback URL components")
+    }
+
+    return playbackURL
+}
+
+internal extension AVPlayerItem {
 
     /// Initializes a player item with a playback URL that
     /// references your Mux Video at the supplied playback ID.
@@ -17,20 +77,11 @@ extension AVPlayerItem {
     ///
     /// - Parameter playbackID: playback ID of the Mux Asset
     /// you'd like to play
-    convenience init(publicPlaybackID: String) {
-        guard let baseURL = URL(string: "https://stream.mux.com") else {
-            preconditionFailure("Invalid base URL string")
-        }
-
-        var components = URLComponents(
-            url: baseURL,
-            resolvingAgainstBaseURL: false
+    convenience init(playbackID: String) {
+        let playbackURL = makePlaybackURL(
+            playbackID: playbackID,
+            playbackOptions: PlaybackOptions()
         )
-        components?.path = "/\(publicPlaybackID).m3u8"
-
-        guard let playbackURL = components?.url else {
-            preconditionFailure("Invalid playback URL components")
-        }
 
         self.init(url: playbackURL)
     }
@@ -40,20 +91,16 @@ extension AVPlayerItem {
     /// The playback ID must be public.
     ///
     /// - Parameters:
-    ///   - publicPlaybackID: playback ID of the Mux Asset
+    ///   - playbackID: playback ID of the Mux Asset
     ///   you'd like to play
-    ///   - customDomain: custom playback domain, custom domains
-    ///   need to be configured as described [here](https://docs.mux.com/guides/video/use-a-custom-domain-for-streaming#use-your-own-domain-for-delivering-videos-and-images) first
-    convenience init(publicPlaybackID: String, customDomain: URL) {
-        var components = URLComponents(
-            url: customDomain,
-            resolvingAgainstBaseURL: false
+    convenience init(
+        playbackID: String,
+        playbackOptions: PlaybackOptions
+    ) {
+        let playbackURL = makePlaybackURL(
+            playbackID: playbackID,
+            playbackOptions: playbackOptions
         )
-        components?.path = "/\(publicPlaybackID).m3u8"
-
-        guard let playbackURL = components?.url else {
-            preconditionFailure("Invalid playback URL components")
-        }
 
         self.init(url: playbackURL)
     }
