@@ -37,7 +37,7 @@ final class PlaybackURLTests: XCTestCase {
     func testCustomDomainPlaybackURL() throws {
 
         let playbackOptions = PlaybackOptions(
-            customDomain: URL(string: "https://play.example.com")!
+            customDomain: "play.example.com"
         )
 
         let playerItem = AVPlayerItem(
@@ -71,7 +71,7 @@ final class PlaybackURLTests: XCTestCase {
     func testCustomDomainSignedPlaybackURL() throws {
 
         let playbackOptions = PlaybackOptions(
-            customDomain: URL(string: "https://play.example.com")!,
+            customDomain: "play.example.com",
             playbackToken: "WhoooopsNotAnActualToken"
         )
 

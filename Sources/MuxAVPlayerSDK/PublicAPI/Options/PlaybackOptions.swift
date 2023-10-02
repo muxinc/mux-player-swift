@@ -48,7 +48,7 @@ public struct PlaybackOptions {
 
     var playbackPolicy: PlaybackPolicy
 
-    var customDomain: URL?
+    var customDomain: String?
 }
 
 extension PlaybackOptions {
@@ -73,12 +73,18 @@ extension PlaybackOptions {
     /// Initializes playback options for a public
     /// playback ID
     /// - Parameters:
-    ///   - customDomain: custom playback domain, custom domains
-    ///   need to be configured as described [here](https://docs.mux.com/guides/video/use-a-custom-domain-for-streaming#use-your-own-domain-for-delivering-videos-and-images) first
+    ///   ///   - customDomain: custom playback domain, custom domains
+    ///   need to be configured as described [here](https://docs.mux.com/guides/video/use-a-custom-domain-for-streaming#use-your-own-domain-for-delivering-videos-and-images) first.
+    ///   The custom domain argument must have the format:
+    ///   media.example.com.
+    ///
+    ///   Based on the above example, constructed playback
+    ///   URLs will use https://stream.media.example.com/ as
+    ///   their base URL.
     ///   - maximumResolutionTier: maximum resolution of the
     ///   video the player will download
     public init(
-        customDomain: URL,
+        customDomain: String,
         maximumResolutionTier: ResolutionTier = .default
     ) {
         self.customDomain = customDomain
@@ -109,11 +115,17 @@ extension PlaybackOptions {
     /// signed playback token
     /// - Parameters:
     ///   - customDomain: custom playback domain, custom domains
-    ///   need to be configured as described [here](https://docs.mux.com/guides/video/use-a-custom-domain-for-streaming#use-your-own-domain-for-delivering-videos-and-images) first
+    ///   need to be configured as described [here](https://docs.mux.com/guides/video/use-a-custom-domain-for-streaming#use-your-own-domain-for-delivering-videos-and-images) first.
+    ///   The custom domain argument must have the format:
+    ///   media.example.com.
+    ///
+    ///   Based on the above example, constructed playback
+    ///   URLs will use https://stream.media.example.com/ as
+    ///   their base URL.
     ///   - playbackToken: JSON web token signed
     /// with a signing key
     public init(
-        customDomain: URL,
+        customDomain: String,
         playbackToken: String
     ) {
         self.customDomain = customDomain

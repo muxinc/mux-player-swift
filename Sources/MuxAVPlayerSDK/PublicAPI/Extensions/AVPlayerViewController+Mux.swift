@@ -63,19 +63,16 @@ extension AVPlayerViewController {
     /// - Parameters:
     ///   - playbackID: playback ID of the Mux Asset
     ///   you'd like to play
-    ///   - customDomain: custom playback domain, custom domains
-    ///   need to be configured as described [here](https://docs.mux.com/guides/video/use-a-custom-domain-for-streaming#use-your-own-domain-for-delivering-videos-and-images) first
+    ///   - play
     convenience init(
         playbackID: String,
-        customDomain: URL
+        playbackOptions: PlaybackOptions
     ) {
         self.init()
 
         let playerItem = AVPlayerItem(
             playbackID: playbackID,
-            playbackOptions: PlaybackOptions(
-                customDomain: customDomain
-            )
+            playbackOptions: playbackOptions
         )
 
         let player = AVPlayer(playerItem: playerItem)
@@ -104,16 +101,14 @@ extension AVPlayerViewController {
     ///   data reported by Mux
     convenience init(
         playbackID: String,
-        customDomain: URL,
+        playbackOptions: PlaybackOptions,
         monitoringOptions: MonitoringOptions
     ) {
         self.init()
 
         let playerItem = AVPlayerItem(
             playbackID: playbackID,
-            playbackOptions: PlaybackOptions(
-                customDomain: customDomain
-            )
+            playbackOptions: playbackOptions
         )
 
         let player = AVPlayer(playerItem: playerItem)

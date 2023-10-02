@@ -9,17 +9,14 @@ fileprivate func makePlaybackURL(
     playbackID: String,
     playbackOptions: PlaybackOptions
 ) -> URL {
-    guard let baseURL = playbackOptions.customDomain ?? URL(
-        string: "https://stream.mux.com"
-    ) else {
-        preconditionFailure("Invalid base URL string")
-    }
+    
+    var components = URLComponents()
+    components.scheme = "https"
 
-    guard var components = URLComponents(
-        url: baseURL,
-        resolvingAgainstBaseURL: false
-    ) else {
-        preconditionFailure("Invalid playback URL components")
+    if let customDomain = playbackOptions.customDomain {
+        components.host = customDomain
+    } else {
+        components.host = "stream.mux.com"
     }
 
     components.path = "/\(playbackID).m3u8"
