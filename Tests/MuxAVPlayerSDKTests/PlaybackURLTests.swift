@@ -47,7 +47,7 @@ final class PlaybackURLTests: XCTestCase {
 
         XCTAssertEqual(
             (playerItem.asset as! AVURLAsset).url.absoluteString,
-            "https://play.example.com/abc.m3u8?redundant_streams=true"
+            "https://stream.play.example.com/abc.m3u8?redundant_streams=true"
         )
     }
 
@@ -82,7 +82,7 @@ final class PlaybackURLTests: XCTestCase {
 
         XCTAssertEqual(
             (playerItem.asset as! AVURLAsset).url.absoluteString,
-            "https://play.example.com/abc.m3u8?token=WhoooopsNotAnActualToken"
+            "https://stream.play.example.com/abc.m3u8?token=WhoooopsNotAnActualToken"
         )
     }
 }
