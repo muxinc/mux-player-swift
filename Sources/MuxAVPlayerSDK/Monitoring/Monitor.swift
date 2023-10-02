@@ -23,21 +23,39 @@ class Monitor {
         playerViewController: AVPlayerViewController,
         options: MonitoringOptions
     ) {
-        let customerPlayerData = MUXSDKCustomerPlayerData()
 
-        let customerData = MUXSDKCustomerData()
-        customerData.customerPlayerData = customerPlayerData
+        let monitoredPlayer: MonitoredPlayer
 
-        let binding = MUXSDKStats.monitorAVPlayerViewController(
-            playerViewController,
-            withPlayerName: options.playerName,
-            customerData: customerData
-        )
+        if let customerData = options.customerData {
 
-        let monitoredPlayer = MonitoredPlayer(
-            name: options.playerName,
-            binding: binding!
-        )
+            let binding = MUXSDKStats.monitorAVPlayerViewController(
+                playerViewController,
+                withPlayerName: options.playerName,
+                customerData: customerData
+            )
+
+            monitoredPlayer = MonitoredPlayer(
+                name: options.playerName,
+                binding: binding!
+            )
+
+        } else {
+            let customerPlayerData = MUXSDKCustomerPlayerData()
+
+            let customerData = MUXSDKCustomerData()
+            customerData.customerPlayerData = customerPlayerData
+
+            let binding = MUXSDKStats.monitorAVPlayerViewController(
+                playerViewController,
+                withPlayerName: options.playerName,
+                customerData: customerData
+            )
+
+            monitoredPlayer = MonitoredPlayer(
+                name: options.playerName,
+                binding: binding!
+            )
+        }
 
         let objectIdentifier = ObjectIdentifier(playerViewController)
 
