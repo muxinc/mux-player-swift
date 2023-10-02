@@ -68,7 +68,7 @@ fileprivate func makePlaybackURL(
     return playbackURL
 }
 
-extension AVPlayerItem {
+internal extension AVPlayerItem {
 
     /// Initializes a player item with a playback URL that
     /// references your Mux Video at the supplied playback ID.
