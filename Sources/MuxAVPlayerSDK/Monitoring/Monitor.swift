@@ -6,6 +6,7 @@ import AVFoundation
 import AVKit
 import Foundation
 
+import MuxCore
 import MUXSDKStats
 
 class Monitor {
@@ -40,6 +41,9 @@ class Monitor {
             )
 
         } else {
+
+            /// TODO: Check for custom env key
+
             let customerPlayerData = MUXSDKCustomerPlayerData()
 
             let customerData = MUXSDKCustomerData()
@@ -56,6 +60,18 @@ class Monitor {
                 binding: binding!
             )
         }
+
+        let playerData = MUXSDKPlayerData()
+        playerData.playerSoftwareVersion = SemanticVersion.versionString
+        playerData.playerSoftwareName = "MuxAVPlayerViewController"
+
+        let playbackEvent = MUXSDKPlaybackEvent()
+        playbackEvent.playerData = playerData
+
+        MUXSDKCore.dispatchEvent(
+            playbackEvent,
+            forPlayer: options.playerName
+        )
 
         let objectIdentifier = ObjectIdentifier(playerViewController)
 
