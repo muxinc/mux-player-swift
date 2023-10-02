@@ -10,18 +10,20 @@ extension AVPlayerViewController {
     /// Initializes an AVPlayerViewController that's configured
     /// to play your Mux Asset as well as monitor and report
     /// back it's playback performance.
-    /// - Parameter publicPlaybackID: playback ID of the Mux
+    /// - Parameter playbackID: playback ID of the Mux
     /// Asset you'd like to play
-    public convenience init(publicPlaybackID: String) {
+    public convenience init(playbackID: String) {
         self.init()
 
-        let playerItem = AVPlayerItem(publicPlaybackID: publicPlaybackID)
+        let playerItem = AVPlayerItem(playbackID: playbackID)
 
         let player = AVPlayer(playerItem: playerItem)
 
         self.player = player
 
-        let monitoringOptions = MonitoringOptions(playbackID: publicPlaybackID)
+        let monitoringOptions = MonitoringOptions(
+            playbackID: playbackID
+        )
 
         Monitor.shared.setupMonitoring(
             playerViewController: self,
@@ -33,7 +35,7 @@ extension AVPlayerViewController {
     /// to play your Mux Asset as well as monitor and report
     /// back it's playback performance.
     /// - Parameters:
-    ///   - publicPlaybackID: playback ID of the Mux Asset
+    ///   - playbackID: playback ID of the Mux Asset
     ///   you'd like to play
     ///   - monitoringOptions: Options to customize monitoring
     ///   data reported by Mux
@@ -43,7 +45,7 @@ extension AVPlayerViewController {
     ) {
         self.init()
 
-        let playerItem = AVPlayerItem(publicPlaybackID: publicPlaybackID)
+        let playerItem = AVPlayerItem(playbackID: publicPlaybackID)
 
         let player = AVPlayer(playerItem: playerItem)
 
@@ -59,23 +61,30 @@ extension AVPlayerViewController {
     /// to play your Mux Asset as well as monitor and report
     /// back it's playback performance.
     /// - Parameters:
-    ///   - publicPlaybackID: playback ID of the Mux Asset
+    ///   - playbackID: playback ID of the Mux Asset
     ///   you'd like to play
     ///   - customDomain: custom playback domain, custom domains
     ///   need to be configured as described [here](https://docs.mux.com/guides/video/use-a-custom-domain-for-streaming#use-your-own-domain-for-delivering-videos-and-images) first
-    convenience init(publicPlaybackID: String, customDomain: URL) {
+    convenience init(
+        playbackID: String,
+        customDomain: URL
+    ) {
         self.init()
 
         let playerItem = AVPlayerItem(
-            publicPlaybackID: publicPlaybackID,
-            customDomain: customDomain
+            playbackID: playbackID,
+            playbackOptions: PlaybackOptions(
+                customDomain: customDomain
+            )
         )
 
         let player = AVPlayer(playerItem: playerItem)
 
         self.player = player
 
-        let monitoringOptions = MonitoringOptions(playbackID: publicPlaybackID)
+        let monitoringOptions = MonitoringOptions(
+            playbackID: playbackID
+        )
 
         Monitor.shared.setupMonitoring(
             playerViewController: self,
@@ -87,22 +96,24 @@ extension AVPlayerViewController {
     /// to play your Mux Asset as well as monitor and report
     /// back it's playback performance.
     /// - Parameters:
-    ///   - publicPlaybackID: playback ID of the Mux Asset
+    ///   - playbackID: playback ID of the Mux Asset
     ///   you'd like to play
     ///   - customDomain: custom playback domain, custom
     ///   domains need to be configured as described [here](https://docs.mux.com/guides/video/use-a-custom-domain-for-streaming#use-your-own-domain-for-delivering-videos-and-images) first
     ///   - monitoringOptions: Options to customize monitoring
     ///   data reported by Mux
     convenience init(
-        publicPlaybackID: String,
+        playbackID: String,
         customDomain: URL,
         monitoringOptions: MonitoringOptions
     ) {
         self.init()
 
         let playerItem = AVPlayerItem(
-            publicPlaybackID: publicPlaybackID,
-            customDomain: customDomain
+            playbackID: playbackID,
+            playbackOptions: PlaybackOptions(
+                customDomain: customDomain
+            )
         )
 
         let player = AVPlayer(playerItem: playerItem)

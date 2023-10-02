@@ -27,7 +27,7 @@ struct MainView: UIViewControllerRepresentable {
 class MainViewController: UIViewController {
 
     lazy var playerViewController = AVPlayerViewController(
-        publicPlaybackID: playbackID
+        playbackID: playbackID
     )
 
     var playbackID: String = "qxb01i6T202018GFS02vp9RIe01icTcDCjVzQpmaB00CUisJ4"
@@ -75,9 +75,10 @@ class MainViewController: UIViewController {
         playerViewController.player?.play()
     }
 
-    override func viewDidDisappear(_ animated: Bool) {
+    override func viewWillDisappear(_ animated: Bool) {
+        playerViewController.player?.pause()
         playerViewController.stopMonitoring()
-        super.viewDidDisappear(animated)
+        super.viewWillDisappear(animated)
     }
 
 }
