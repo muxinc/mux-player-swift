@@ -44,10 +44,9 @@ class Monitor {
 
             let customerData = MUXSDKCustomerData()
 
-            if !options.environmentKey.isEmpty {
+            if let environmentKey = options.environmentKey {
                 let customerPlayerData = MUXSDKCustomerPlayerData()
-                customerPlayerData.environmentKey = options.environmentKey
-
+                customerPlayerData.environmentKey = environmentKey
                 customerData.customerPlayerData = customerPlayerData
             }
 

@@ -10,7 +10,7 @@ import MuxCore
 public struct MonitoringOptions {
 
     /// Environment key associated with the monitoring data
-    var environmentKey: String
+    var environmentKey: String?
 
     /// Identifies the player name
     public var playerName: String
@@ -20,9 +20,7 @@ public struct MonitoringOptions {
     /// Initializes options to customize monitoring by Mux
     /// - Parameter playbackID: helps identify your Data environment,
     public init(playbackID: String) {
-        /// Mux will use the same environment as the one used
-        /// associated with the playback ID
-        self.environmentKey = playbackID
+        self.environmentKey = nil
         let uniquePlayerName = "\(playbackID)-\(UUID().uuidString)"
         self.playerName = uniquePlayerName
     }
@@ -47,7 +45,7 @@ public struct MonitoringOptions {
         playerName: String
     ) {
         self.customerData = customerData
-        self.environmentKey = ""
+        self.environmentKey = nil
         self.playerName = playerName
     }
 }
