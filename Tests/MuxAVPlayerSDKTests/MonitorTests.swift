@@ -10,7 +10,7 @@ import XCTest
 
 class MonitorTests: XCTestCase {
 
-    func testMonitoringLifecycle() throws {
+    func testPlayerViewControllerMonitoringLifecycle() throws {
 
         let playerViewController = AVPlayerViewController(
             playbackID: "abc"
@@ -24,6 +24,27 @@ class MonitorTests: XCTestCase {
         )
 
         playerViewController.stopMonitoring()
+
+        XCTAssertTrue(
+            monitor.bindings.isEmpty
+        )
+
+    }
+
+    func testPlayerLayerMonitoringLifecycle() throws {
+
+        let playerLayer = AVPlayerLayer(
+            playbackID: "abc"
+        )
+
+        let monitor = Monitor.shared
+
+        XCTAssertEqual(
+            monitor.bindings.count,
+            1
+        )
+
+        playerLayer.stopMonitoring()
 
         XCTAssertTrue(
             monitor.bindings.isEmpty
