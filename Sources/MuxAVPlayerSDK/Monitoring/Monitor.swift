@@ -6,6 +6,7 @@ import AVFoundation
 import AVKit
 import Foundation
 
+import MuxCore
 import MUXSDKStats
 
 class Monitor {
@@ -23,20 +24,54 @@ class Monitor {
         playerViewController: AVPlayerViewController,
         options: MonitoringOptions
     ) {
-        let customerPlayerData = MUXSDKCustomerPlayerData()
 
-        let customerData = MUXSDKCustomerData()
-        customerData.customerPlayerData = customerPlayerData
+        let monitoredPlayer: MonitoredPlayer
 
-        let binding = MUXSDKStats.monitorAVPlayerViewController(
-            playerViewController,
-            withPlayerName: options.playerName,
-            customerData: customerData
-        )
+        if let customerData = options.customerData {
 
-        let monitoredPlayer = MonitoredPlayer(
-            name: options.playerName,
-            binding: binding!
+            let binding = MUXSDKStats.monitorAVPlayerViewController(
+                playerViewController,
+                withPlayerName: options.playerName,
+                customerData: customerData
+            )
+
+            monitoredPlayer = MonitoredPlayer(
+                name: options.playerName,
+                binding: binding!
+            )
+
+        } else {
+
+            let customerData = MUXSDKCustomerData()
+
+            if let environmentKey = options.environmentKey {
+                let customerPlayerData = MUXSDKCustomerPlayerData()
+                customerPlayerData.environmentKey = environmentKey
+                customerData.customerPlayerData = customerPlayerData
+            }
+
+            let binding = MUXSDKStats.monitorAVPlayerViewController(
+                playerViewController,
+                withPlayerName: options.playerName,
+                customerData: customerData
+            )
+
+            monitoredPlayer = MonitoredPlayer(
+                name: options.playerName,
+                binding: binding!
+            )
+        }
+
+        let playerData = MUXSDKPlayerData()
+        playerData.playerSoftwareVersion = SemanticVersion.versionString
+        playerData.playerSoftwareName = "MuxAVPlayerViewController"
+
+        let playbackEvent = MUXSDKPlaybackEvent()
+        playbackEvent.playerData = playerData
+
+        MUXSDKCore.dispatchEvent(
+            playbackEvent,
+            forPlayer: options.playerName
         )
 
         let objectIdentifier = ObjectIdentifier(playerViewController)
@@ -51,5 +86,7 @@ class Monitor {
         guard let playerName = bindings[objectIdentifier]?.name else { return }
 
         MUXSDKStats.destroyPlayer(playerName)
+
+        bindings.removeValue(forKey: objectIdentifier)
     }
 }
