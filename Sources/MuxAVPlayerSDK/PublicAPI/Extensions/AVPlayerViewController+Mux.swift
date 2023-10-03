@@ -63,7 +63,8 @@ extension AVPlayerViewController {
     /// - Parameters:
     ///   - playbackID: playback ID of the Mux Asset
     ///   you'd like to play
-    ///   - play
+    ///   - playbackOptions: playback-related options such
+    ///   as custom domain and maximum resolution
     convenience init(
         playbackID: String,
         playbackOptions: PlaybackOptions
@@ -95,8 +96,8 @@ extension AVPlayerViewController {
     /// - Parameters:
     ///   - playbackID: playback ID of the Mux Asset
     ///   you'd like to play
-    ///   - customDomain: custom playback domain, custom
-    ///   domains need to be configured as described [here](https://docs.mux.com/guides/video/use-a-custom-domain-for-streaming#use-your-own-domain-for-delivering-videos-and-images) first
+    ///   - playbackOptions: playback-related options such
+    ///   as custom domain and maximum resolution
     ///   - monitoringOptions: Options to customize monitoring
     ///   data reported by Mux
     convenience init(
