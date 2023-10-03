@@ -40,12 +40,12 @@ extension AVPlayerViewController {
     ///   - monitoringOptions: Options to customize monitoring
     ///   data reported by Mux
     public convenience init(
-        publicPlaybackID: String,
+        playbackID: String,
         monitoringOptions: MonitoringOptions
     ) {
         self.init()
 
-        let playerItem = AVPlayerItem(playbackID: publicPlaybackID)
+        let playerItem = AVPlayerItem(playbackID: playbackID)
 
         let player = AVPlayer(playerItem: playerItem)
 
