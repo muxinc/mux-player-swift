@@ -87,5 +87,7 @@ class Monitor {
         guard let playerName = bindings[objectIdentifier]?.name else { return }
 
         MUXSDKStats.destroyPlayer(playerName)
+
+        bindings.removeValue(forKey: objectIdentifier)
     }
 }
