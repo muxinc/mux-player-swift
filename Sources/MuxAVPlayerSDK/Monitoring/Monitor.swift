@@ -42,12 +42,14 @@ class Monitor {
 
         } else {
 
-            /// TODO: Check for custom env key
-
-            let customerPlayerData = MUXSDKCustomerPlayerData()
-
             let customerData = MUXSDKCustomerData()
-            customerData.customerPlayerData = customerPlayerData
+
+            if !options.environmentKey.isEmpty {
+                let customerPlayerData = MUXSDKCustomerPlayerData()
+                customerPlayerData.environmentKey = options.environmentKey
+
+                customerData.customerPlayerData = customerPlayerData
+            }
 
             let binding = MUXSDKStats.monitorAVPlayerViewController(
                 playerViewController,
