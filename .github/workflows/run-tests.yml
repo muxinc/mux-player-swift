@@ -1,0 +1,17 @@
+name: Run Tests
+
+on:
+  push:
+
+
+jobs:
+  tests:
+    name: Run Unit Tests
+    runs-on: macos-13
+    steps:
+      - name: Install xcbeautify
+        run: brew install xcbeautify
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Run Tests
+        run: "scripts/run-unit-tests.sh"
