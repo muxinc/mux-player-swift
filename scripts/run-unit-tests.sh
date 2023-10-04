@@ -2,8 +2,6 @@
 
 readonly XCODE=$(xcodebuild -version | grep Xcode | cut -d " " -f2)
 
-readonly TOP_DIR=`pwd`
-
 set -euo pipefail
 
 if [ $# -ne 1 ]; then
