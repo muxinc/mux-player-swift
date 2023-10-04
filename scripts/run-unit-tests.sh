@@ -3,9 +3,15 @@
 readonly XCODE=$(xcodebuild -version | grep Xcode | cut -d " " -f2)
 
 readonly TOP_DIR=`pwd`
-readonly SCHEME="MuxAVPlayerSDK"
 
 set -euo pipefail
+
+if [ $# -ne 1 ]; then
+    echo "▸ Usage: $0 SCHEME"
+    exit 1
+fi
+
+readonly SCHEME="$1"
 
 if ! command -v xcbeautify &> /dev/null
 then

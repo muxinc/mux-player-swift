@@ -3,7 +3,6 @@ name: Run Tests
 on:
   push:
 
-
 jobs:
   tests:
     name: Run Unit Tests
@@ -14,4 +13,4 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Run Tests
-        run: "scripts/run-unit-tests.sh"
+        run: "scripts/run-unit-tests.sh MuxAVPlayerSDK"
