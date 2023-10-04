@@ -13,7 +13,17 @@ then
     exit 1
 fi
 
+echo "▸ Selecting Xcode 15"
+
+sudo xcode-select -s /Applications/Xcode_15.0.app/Contents/Developer
+
 echo "▸ Using Xcode Version: ${XCODE}"
+
+echo "▸ Available Xcode SDKs"
+
+xcodebuild -showsdks
+
+echo "▸ Test ${SCHEME}"
 
 xcodebuild clean test \
 	-scheme $SCHEME \
