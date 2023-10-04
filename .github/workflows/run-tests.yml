@@ -14,17 +14,3 @@ jobs:
         uses: actions/checkout@v3
       - name: Run Tests
         run: "scripts/run-unit-tests.sh MuxAVPlayerSDK"
-  unit-tests-apple-silicon:
-    name: Run Unit Tests on Apple Silicon
-    runs-on: macos-13-arm64
-    timeout-minutes: 3
-    steps:
-      - name: Install xcbeautify
-        run: brew install xcbeautify
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Run Tests
-        run: "scripts/run-unit-tests.sh MuxAVPlayerSDK"
-      - name: Handle Timeout
-        run: echo "The job completed successfully."  # Add your own logic here
-        if: ${{ always() }}
