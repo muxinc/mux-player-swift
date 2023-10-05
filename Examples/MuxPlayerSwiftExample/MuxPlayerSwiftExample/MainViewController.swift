@@ -34,7 +34,7 @@ class MainViewController: UIViewController {
 
         playerViewController
             .view
-            .translatesAutoresizingMaskIntoConstraints = true
+            .translatesAutoresizingMaskIntoConstraints = false
         view.addConstraints([
             playerViewController.view.centerXAnchor.constraint(
                 equalTo: view.centerXAnchor
