@@ -46,7 +46,6 @@
 		198F42F42A980E9E007148F0 /* MuxAVPlayerSDKExampleUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MuxAVPlayerSDKExampleUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		198F42F82A980E9E007148F0 /* MuxAVPlayerSDKExampleUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MuxAVPlayerSDKExampleUITests.swift; sourceTree = "<group>"; };
 		198F42FA2A980E9E007148F0 /* MuxAVPlayerSDKExampleUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MuxAVPlayerSDKExampleUITestsLaunchTests.swift; sourceTree = "<group>"; };
-		198F43072A980EBC007148F0 /* mux-avplayer-sdk */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = "mux-avplayer-sdk"; path = ../..; sourceTree = "<group>"; };
 		198F430A2A98210F007148F0 /* MainViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainViewController.swift; sourceTree = "<group>"; };
 		198F430F2A9960A0007148F0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -80,7 +79,6 @@
 		198F42D12A980E9D007148F0 = {
 			isa = PBXGroup;
 			children = (
-				198F43072A980EBC007148F0 /* mux-avplayer-sdk */,
 				198F42DC2A980E9D007148F0 /* MuxAVPlayerSDKExample */,
 				198F42ED2A980E9E007148F0 /* MuxAVPlayerSDKExampleTests */,
 				198F42F72A980E9E007148F0 /* MuxAVPlayerSDKExampleUITests */,
