@@ -27,6 +27,14 @@ echo "▸ Available Xcode SDKs"
 
 xcodebuild -showsdks
 
+echo "▸ Resolve Package Dependencies"
+
+xcodebuild -resolvePackageDependencies
+
+echo "▸ Available Schemes"
+
+xcodebuild -list -json
+
 echo "▸ Test ${SCHEME}"
 
 xcodebuild clean test \
