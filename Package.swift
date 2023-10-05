@@ -3,7 +3,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "mux-player-swift",
+    name: "MuxPlayerSwift",
     platforms: [
         .iOS(.v15)
     ],
