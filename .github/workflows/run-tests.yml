@@ -13,4 +13,4 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Run Tests
-        run: "scripts/run-unit-tests.sh SwiftPlayerSDK"
+        run: "scripts/run-unit-tests.sh MuxPlayerSwift"
