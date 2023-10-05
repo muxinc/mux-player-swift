@@ -4,7 +4,7 @@
 
 import AVFoundation
 import XCTest
-@testable import MuxAVPlayerSDK
+@testable import MuxPlayerSwift
 
 final class PlaybackURLTests: XCTestCase {
     func testPlaybackURL() throws {
