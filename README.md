@@ -14,7 +14,7 @@ We'd love to hear your feedback, shoot us a note at avplayer@mux.com with any fe
 2. In the top-right corner of the modal window paste in the SDK repository URL:
 
 ```
-https://github.com/muxinc/mux-avplayer-sdk.
+https://github.com/muxinc/mux-player-swift
 ```
 3. Click `Next`
 4. Select package version. We recommend setting the "Rules" to install the latest version and choosing the option "Up to Next Major". [Here's an overview of the different SPM Dependency Rules and their semantics](https://developer.apple.com/documentation/xcode/adding-package-dependencies-to-your-app#Decide-on-package-requirements).
