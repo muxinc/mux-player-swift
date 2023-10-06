@@ -1,6 +1,6 @@
 //
 //  MainViewController.swift
-//  MuxAVPlayerSDKExample
+//  MuxPlayerSwiftExample
 //
 
 import AVFoundation
@@ -8,21 +8,7 @@ import AVKit
 import SwiftUI
 import UIKit
 
-import MuxAVPlayerSDK
-
-struct MainView: UIViewControllerRepresentable {
-    func makeUIViewController(context: Context) -> some UIViewController {
-        let mainViewController = MainViewController()
-        return mainViewController
-    }
-
-    func updateUIViewController(
-        _ uiViewController: UIViewControllerType,
-        context: Context
-    ) {
-
-    }
-}
+import MuxPlayerSwift
 
 class MainViewController: UIViewController {
 
@@ -48,7 +34,7 @@ class MainViewController: UIViewController {
 
         playerViewController
             .view
-            .translatesAutoresizingMaskIntoConstraints = true
+            .translatesAutoresizingMaskIntoConstraints = false
         view.addConstraints([
             playerViewController.view.centerXAnchor.constraint(
                 equalTo: view.centerXAnchor

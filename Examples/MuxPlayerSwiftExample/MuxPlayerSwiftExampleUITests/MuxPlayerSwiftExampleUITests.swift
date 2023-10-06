@@ -1,11 +1,11 @@
 //
-//  MuxAVPlayerSDKExampleUITests.swift
-//  MuxAVPlayerSDKExampleUITests
+//  MuxPlayerSwiftExampleUITests.swift
+//  MuxPlayerSwiftExampleUITests
 //
 
 import XCTest
 
-final class MuxAVPlayerSDKExampleUITests: XCTestCase {
+final class MuxPlayerSwiftExampleUITests: XCTestCase {
 
     override func setUpWithError() throws {
         // Put setup code here. This method is called before the invocation of each test method in the class.

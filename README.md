@@ -1,4 +1,4 @@
-## Mux AVPlayer SDK
+## Mux Player Swift
 
 A collection of helpful utilities for using AVKit with Mux.
 

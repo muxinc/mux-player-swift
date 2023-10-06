@@ -3,14 +3,14 @@
 import PackageDescription
 
 let package = Package(
-    name: "MuxAVPlayerSDK",
+    name: "MuxPlayerSwift",
     platforms: [
         .iOS(.v15)
     ],
     products: [
         .library(
-            name: "MuxAVPlayerSDK",
-            targets: ["MuxAVPlayerSDK"]
+            name: "MuxPlayerSwift",
+            targets: ["MuxPlayerSwift"]
         ),
     ],
     dependencies: [
@@ -25,7 +25,7 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "MuxAVPlayerSDK",
+            name: "MuxPlayerSwift",
             dependencies: [
                 .product(
                     name: "MUXSDKStats",
@@ -34,9 +34,9 @@ let package = Package(
             ]
         ),
         .testTarget(
-            name: "MuxAVPlayerSDKTests",
+            name: "MuxPlayerSwiftTests",
             dependencies: [
-                "MuxAVPlayerSDK"
+                "MuxPlayerSwift"
             ]
         ),
     ]

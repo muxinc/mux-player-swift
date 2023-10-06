@@ -6,7 +6,7 @@ import AVKit
 import Foundation
 import XCTest
 
-@testable import MuxAVPlayerSDK
+@testable import MuxPlayerSwift
 
 class PlayerLayerBackedView: UIView {
     override class var layerClass: AnyClass {

@@ -1,11 +1,11 @@
 //
-//  MuxAVPlayerSDKExampleUITestsLaunchTests.swift
-//  MuxAVPlayerSDKExampleUITests
+//  MuxPlayerSwiftExampleUITestsLaunchTests.swift
+//  MuxPlayerSwiftExampleUITests
 //
 
 import XCTest
 
-final class MuxAVPlayerSDKExampleUITestsLaunchTests: XCTestCase {
+final class MuxPlayerSwiftExampleUITestsLaunchTests: XCTestCase {
 
     override class var runsForEachTargetApplicationUIConfiguration: Bool {
         true

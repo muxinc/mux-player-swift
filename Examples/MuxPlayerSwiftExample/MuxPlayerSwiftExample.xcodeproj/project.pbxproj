@@ -1,0 +1,636 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 60;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		193228BB2ACF6AC700966FE1 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 193228BA2ACF6AC700966FE1 /* AppDelegate.swift */; };
+		193228BD2ACF6AC700966FE1 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 193228BC2ACF6AC700966FE1 /* SceneDelegate.swift */; };
+		193228BF2ACF6AC700966FE1 /* MainViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 193228BE2ACF6AC700966FE1 /* MainViewController.swift */; };
+		193228C22ACF6AC700966FE1 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 193228C02ACF6AC700966FE1 /* Main.storyboard */; };
+		193228C42ACF6AC800966FE1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 193228C32ACF6AC800966FE1 /* Assets.xcassets */; };
+		193228C72ACF6AC800966FE1 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 193228C52ACF6AC800966FE1 /* LaunchScreen.storyboard */; };
+		193228D22ACF6AC900966FE1 /* MuxPlayerSwiftExampleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 193228D12ACF6AC900966FE1 /* MuxPlayerSwiftExampleTests.swift */; };
+		193228DC2ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 193228DB2ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITests.swift */; };
+		193228DE2ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 193228DD2ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITestsLaunchTests.swift */; };
+		193228EC2ACF6B3400966FE1 /* MuxPlayerSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 193228EB2ACF6B3400966FE1 /* MuxPlayerSwift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		193228CE2ACF6AC900966FE1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 193228AF2ACF6AC700966FE1 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 193228B62ACF6AC700966FE1;
+			remoteInfo = MuxPlayerSwiftExample;
+		};
+		193228D82ACF6AC900966FE1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 193228AF2ACF6AC700966FE1 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 193228B62ACF6AC700966FE1;
+			remoteInfo = MuxPlayerSwiftExample;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		193228B72ACF6AC700966FE1 /* MuxPlayerSwiftExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MuxPlayerSwiftExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		193228BA2ACF6AC700966FE1 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		193228BC2ACF6AC700966FE1 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
+		193228BE2ACF6AC700966FE1 /* MainViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainViewController.swift; sourceTree = "<group>"; };
+		193228C12ACF6AC700966FE1 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		193228C32ACF6AC800966FE1 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		193228C62ACF6AC800966FE1 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		193228C82ACF6AC800966FE1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		193228CD2ACF6AC900966FE1 /* MuxPlayerSwiftExampleTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MuxPlayerSwiftExampleTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		193228D12ACF6AC900966FE1 /* MuxPlayerSwiftExampleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MuxPlayerSwiftExampleTests.swift; sourceTree = "<group>"; };
+		193228D72ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MuxPlayerSwiftExampleUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		193228DB2ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MuxPlayerSwiftExampleUITests.swift; sourceTree = "<group>"; };
+		193228DD2ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MuxPlayerSwiftExampleUITestsLaunchTests.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		193228B42ACF6AC700966FE1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				193228EC2ACF6B3400966FE1 /* MuxPlayerSwift in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		193228CA2ACF6AC900966FE1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		193228D42ACF6AC900966FE1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		193228AE2ACF6AC700966FE1 = {
+			isa = PBXGroup;
+			children = (
+				193228B92ACF6AC700966FE1 /* MuxPlayerSwiftExample */,
+				193228D02ACF6AC900966FE1 /* MuxPlayerSwiftExampleTests */,
+				193228DA2ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITests */,
+				193228B82ACF6AC700966FE1 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		193228B82ACF6AC700966FE1 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				193228B72ACF6AC700966FE1 /* MuxPlayerSwiftExample.app */,
+				193228CD2ACF6AC900966FE1 /* MuxPlayerSwiftExampleTests.xctest */,
+				193228D72ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		193228B92ACF6AC700966FE1 /* MuxPlayerSwiftExample */ = {
+			isa = PBXGroup;
+			children = (
+				193228BA2ACF6AC700966FE1 /* AppDelegate.swift */,
+				193228BC2ACF6AC700966FE1 /* SceneDelegate.swift */,
+				193228BE2ACF6AC700966FE1 /* MainViewController.swift */,
+				193228C02ACF6AC700966FE1 /* Main.storyboard */,
+				193228C32ACF6AC800966FE1 /* Assets.xcassets */,
+				193228C52ACF6AC800966FE1 /* LaunchScreen.storyboard */,
+				193228C82ACF6AC800966FE1 /* Info.plist */,
+			);
+			path = MuxPlayerSwiftExample;
+			sourceTree = "<group>";
+		};
+		193228D02ACF6AC900966FE1 /* MuxPlayerSwiftExampleTests */ = {
+			isa = PBXGroup;
+			children = (
+				193228D12ACF6AC900966FE1 /* MuxPlayerSwiftExampleTests.swift */,
+			);
+			path = MuxPlayerSwiftExampleTests;
+			sourceTree = "<group>";
+		};
+		193228DA2ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITests */ = {
+			isa = PBXGroup;
+			children = (
+				193228DB2ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITests.swift */,
+				193228DD2ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITestsLaunchTests.swift */,
+			);
+			path = MuxPlayerSwiftExampleUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		193228B62ACF6AC700966FE1 /* MuxPlayerSwiftExample */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 193228E12ACF6AC900966FE1 /* Build configuration list for PBXNativeTarget "MuxPlayerSwiftExample" */;
+			buildPhases = (
+				193228B32ACF6AC700966FE1 /* Sources */,
+				193228B42ACF6AC700966FE1 /* Frameworks */,
+				193228B52ACF6AC700966FE1 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MuxPlayerSwiftExample;
+			packageProductDependencies = (
+				193228EB2ACF6B3400966FE1 /* MuxPlayerSwift */,
+			);
+			productName = MuxPlayerSwiftExample;
+			productReference = 193228B72ACF6AC700966FE1 /* MuxPlayerSwiftExample.app */;
+			productType = "com.apple.product-type.application";
+		};
+		193228CC2ACF6AC900966FE1 /* MuxPlayerSwiftExampleTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 193228E42ACF6AC900966FE1 /* Build configuration list for PBXNativeTarget "MuxPlayerSwiftExampleTests" */;
+			buildPhases = (
+				193228C92ACF6AC900966FE1 /* Sources */,
+				193228CA2ACF6AC900966FE1 /* Frameworks */,
+				193228CB2ACF6AC900966FE1 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				193228CF2ACF6AC900966FE1 /* PBXTargetDependency */,
+			);
+			name = MuxPlayerSwiftExampleTests;
+			productName = MuxPlayerSwiftExampleTests;
+			productReference = 193228CD2ACF6AC900966FE1 /* MuxPlayerSwiftExampleTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		193228D62ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 193228E72ACF6AC900966FE1 /* Build configuration list for PBXNativeTarget "MuxPlayerSwiftExampleUITests" */;
+			buildPhases = (
+				193228D32ACF6AC900966FE1 /* Sources */,
+				193228D42ACF6AC900966FE1 /* Frameworks */,
+				193228D52ACF6AC900966FE1 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				193228D92ACF6AC900966FE1 /* PBXTargetDependency */,
+			);
+			name = MuxPlayerSwiftExampleUITests;
+			productName = MuxPlayerSwiftExampleUITests;
+			productReference = 193228D72ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		193228AF2ACF6AC700966FE1 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					193228B62ACF6AC700966FE1 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+					193228CC2ACF6AC900966FE1 = {
+						CreatedOnToolsVersion = 15.0;
+						TestTargetID = 193228B62ACF6AC700966FE1;
+					};
+					193228D62ACF6AC900966FE1 = {
+						CreatedOnToolsVersion = 15.0;
+						TestTargetID = 193228B62ACF6AC700966FE1;
+					};
+				};
+			};
+			buildConfigurationList = 193228B22ACF6AC700966FE1 /* Build configuration list for PBXProject "MuxPlayerSwiftExample" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 193228AE2ACF6AC700966FE1;
+			packageReferences = (
+				193228EA2ACF6B3400966FE1 /* XCLocalSwiftPackageReference "../.." */,
+			);
+			productRefGroup = 193228B82ACF6AC700966FE1 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				193228B62ACF6AC700966FE1 /* MuxPlayerSwiftExample */,
+				193228CC2ACF6AC900966FE1 /* MuxPlayerSwiftExampleTests */,
+				193228D62ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		193228B52ACF6AC700966FE1 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				193228C72ACF6AC800966FE1 /* LaunchScreen.storyboard in Resources */,
+				193228C42ACF6AC800966FE1 /* Assets.xcassets in Resources */,
+				193228C22ACF6AC700966FE1 /* Main.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		193228CB2ACF6AC900966FE1 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		193228D52ACF6AC900966FE1 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		193228B32ACF6AC700966FE1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				193228BF2ACF6AC700966FE1 /* MainViewController.swift in Sources */,
+				193228BB2ACF6AC700966FE1 /* AppDelegate.swift in Sources */,
+				193228BD2ACF6AC700966FE1 /* SceneDelegate.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		193228C92ACF6AC900966FE1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				193228D22ACF6AC900966FE1 /* MuxPlayerSwiftExampleTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		193228D32ACF6AC900966FE1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				193228DC2ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITests.swift in Sources */,
+				193228DE2ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITestsLaunchTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		193228CF2ACF6AC900966FE1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 193228B62ACF6AC700966FE1 /* MuxPlayerSwiftExample */;
+			targetProxy = 193228CE2ACF6AC900966FE1 /* PBXContainerItemProxy */;
+		};
+		193228D92ACF6AC900966FE1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 193228B62ACF6AC700966FE1 /* MuxPlayerSwiftExample */;
+			targetProxy = 193228D82ACF6AC900966FE1 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		193228C02ACF6AC700966FE1 /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				193228C12ACF6AC700966FE1 /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		193228C52ACF6AC800966FE1 /* LaunchScreen.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				193228C62ACF6AC800966FE1 /* Base */,
+			);
+			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		193228DF2ACF6AC900966FE1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		193228E02ACF6AC900966FE1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		193228E22ACF6AC900966FE1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = XX95P4Y787;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MuxPlayerSwiftExample/Info.plist;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UIMainStoryboardFile = Main;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.mux.player.example.MuxPlayerSwiftExample.MuxPlayerSwiftExample;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		193228E32ACF6AC900966FE1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = XX95P4Y787;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MuxPlayerSwiftExample/Info.plist;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UIMainStoryboardFile = Main;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.mux.player.example.MuxPlayerSwiftExample.MuxPlayerSwiftExample;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		193228E52ACF6AC900966FE1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = XX95P4Y787;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.mux.player.example.MuxPlayerSwiftExample.MuxPlayerSwiftExampleTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MuxPlayerSwiftExample.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/MuxPlayerSwiftExample";
+			};
+			name = Debug;
+		};
+		193228E62ACF6AC900966FE1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = XX95P4Y787;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.mux.player.example.MuxPlayerSwiftExample.MuxPlayerSwiftExampleTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MuxPlayerSwiftExample.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/MuxPlayerSwiftExample";
+			};
+			name = Release;
+		};
+		193228E82ACF6AC900966FE1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = XX95P4Y787;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.mux.player.example.MuxPlayerSwiftExample.MuxPlayerSwiftExampleUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = MuxPlayerSwiftExample;
+			};
+			name = Debug;
+		};
+		193228E92ACF6AC900966FE1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = XX95P4Y787;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.mux.player.example.MuxPlayerSwiftExample.MuxPlayerSwiftExampleUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = MuxPlayerSwiftExample;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		193228B22ACF6AC700966FE1 /* Build configuration list for PBXProject "MuxPlayerSwiftExample" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				193228DF2ACF6AC900966FE1 /* Debug */,
+				193228E02ACF6AC900966FE1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		193228E12ACF6AC900966FE1 /* Build configuration list for PBXNativeTarget "MuxPlayerSwiftExample" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				193228E22ACF6AC900966FE1 /* Debug */,
+				193228E32ACF6AC900966FE1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		193228E42ACF6AC900966FE1 /* Build configuration list for PBXNativeTarget "MuxPlayerSwiftExampleTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				193228E52ACF6AC900966FE1 /* Debug */,
+				193228E62ACF6AC900966FE1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		193228E72ACF6AC900966FE1 /* Build configuration list for PBXNativeTarget "MuxPlayerSwiftExampleUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				193228E82ACF6AC900966FE1 /* Debug */,
+				193228E92ACF6AC900966FE1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		193228EA2ACF6B3400966FE1 /* XCLocalSwiftPackageReference "../.." */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../..;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		193228EB2ACF6B3400966FE1 /* MuxPlayerSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = MuxPlayerSwift;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 193228AF2ACF6AC700966FE1 /* Project object */;
+}
