@@ -26,7 +26,7 @@ In your `Package.swift` file, add the following to as an item to the `dependenci
 
 ```
 .package(
-      url: "https://github.com/muxinc/mux-avplayer-sdk,
+      url: "https://github.com/muxinc/mux-player-swift,
       .upToNextMajor(from: "0.2.0")
     ),
 ```
@@ -37,7 +37,7 @@ Use the Mux AVPlayer SDK to setup to download and play HLS with a playback ID. T
 
 ```swift
 import AVFoundation
-import MuxAVPlayerSDK
+import MuxPlayerSwift
 
 /// After you're done testing, you can check out this video out to learn more about video and players (as well as some philosophy)
 let playbackID = "qxb01i6T202018GFS02vp9RIe01icTcDCjVzQpmaB00CUisJ4"
@@ -60,7 +60,7 @@ Your application can customize how Mux Video delivers video to the player using 
 
 ```swift
 import AVFoundation
-import MuxAVPlayerSDK
+import MuxPlayerSwift
 
 /// After you're done testing, you can check out this video out to learn more about video and players (as well as some philosophy)
 let playbackID = "qxb01i6T202018GFS02vp9RIe01icTcDCjVzQpmaB00CUisJ4"
@@ -85,7 +85,7 @@ func preparePlayerViewController(
 let examplePlayerViewController = preparePlayerViewController(playbackID: playbackID)
 ```
 
-When using the AVPlayerViewController convenience initializers provided the `MuxAVPlayerSDK` there are no required steps to enable Mux Data monitoring for video streamed from a Mux playback URL. Metrics and monitoring data will be routed to the same environment as the asset being played
+When using the AVPlayerViewController convenience initializers provided the `MuxPlayerSwift` there are no required steps to enable Mux Data monitoring for video streamed from a Mux playback URL. Metrics and monitoring data will be routed to the same environment as the asset being played
 
 See the below section for how to route monitoring data to a specific environment key and how to change or customize metadata provided to tMux Data.
 
@@ -100,7 +100,7 @@ Set custom metadata using MonitoringOptions.
 ```swift
 
 import AVKit
-import MuxAVPlayerSDK
+import MuxPlayerSwift
 
 // A separate import is needed
 // to use MUXSDKCustomerData
@@ -149,7 +149,7 @@ Once your application receives the JWT, use it to initialize `PlaybackOptions`. 
 ```swift
 
 import AVKit
-import MuxAVPlayerSDK
+import MuxPlayerSwift
 
 func preparePlayerViewController(
   playbackID: String,
