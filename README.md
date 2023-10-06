@@ -33,7 +33,7 @@ In your `Package.swift` file, add the following to as an item to the `dependenci
 
 ## Usage
 
-Use the Mux AVPlayer SDK to setup to download and play HLS with a playback ID. The SDK will also enable Mux Data monitoring to help you measure the performance and quality of your application's video experiences.
+Use the Mux Player Swift SDK to setup to download and play HLS with a playback ID. The SDK will also enable Mux Data monitoring to help you measure the performance and quality of your application's video experiences.x
 
 ```swift
 import AVFoundation
@@ -87,7 +87,7 @@ let examplePlayerViewController = preparePlayerViewController(playbackID: playba
 
 When using the AVPlayerViewController convenience initializers provided the `MuxPlayerSwift` there are no required steps to enable Mux Data monitoring for video streamed from a Mux playback URL. Metrics and monitoring data will be routed to the same environment as the asset being played
 
-See the below section for how to route monitoring data to a specific environment key and how to change or customize metadata provided to tMux Data.
+See the below section for how to route monitoring data to a specific environment key and how to change or customize metadata provided to Mux Data.
 
 ## Use AVPlayer and AVKit with Mux Data
 
@@ -140,7 +140,7 @@ func preparePlayerViewController(
 
 ## Stream Mux assets with a signed playback policy
 
-Mux Video supports playback access control. [See here for more](https://docs.mux.com/guides/video/secure-video-playback). The Mux AVPlayer SDK supports signed playback URLs.
+Mux Video supports playback access control. [See here for more](https://docs.mux.com/guides/video/secure-video-playback). `MuxPlayerSwift` supports signed playback URLs.
 
 Generate a JSON Web Token (JWT) and sign it in a trusted environment. Any playback modifiers must be passed through as part of the JWT, they must be included among the JWT claims.
 
