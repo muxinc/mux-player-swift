@@ -20,6 +20,12 @@ class Monitor {
 
     var bindings: [ObjectIdentifier: MonitoredPlayer] = [:]
 
+    let playerViewControllerSoftwareName = "MuxPlayerSwift-AVPlayerViewController"
+    let playerViewControllerSoftwareVersion = SemanticVersion.versionString
+
+    let playerLayerSoftwareName = "MuxPlayerSwift-AVPlayerLayer"
+    let playerLayerSoftwareVersion = SemanticVersion.versionString
+
     func setupMonitoring(
         playerViewController: AVPlayerViewController,
         options: MonitoringOptions
@@ -62,19 +68,10 @@ class Monitor {
             )
         }
 
-        let playerData = MUXSDKPlayerData()
-        playerData.playerSoftwareVersion = SemanticVersion.versionString
-        playerData.playerSoftwareName = "MuxAVPlayerViewController"
-
-        let playbackEvent = MUXSDKPlaybackEvent()
-        playbackEvent.playerData = playerData
-
-        MUXSDKCore.dispatchEvent(
-            playbackEvent,
-            forPlayer: options.playerName
-        )
-
         let objectIdentifier = ObjectIdentifier(playerViewController)
+
+        monitoredPlayer.binding.softwareName = playerViewControllerSoftwareName
+        monitoredPlayer.binding.softwareVersion = playerViewControllerSoftwareVersion
 
         bindings[objectIdentifier] = monitoredPlayer
     }
@@ -120,19 +117,10 @@ class Monitor {
             )
         }
 
-        let playerData = MUXSDKPlayerData()
-        playerData.playerSoftwareVersion = SemanticVersion.versionString
-        playerData.playerSoftwareName = "MuxAVPlayerLayer"
-
-        let playbackEvent = MUXSDKPlaybackEvent()
-        playbackEvent.playerData = playerData
-
-        MUXSDKCore.dispatchEvent(
-            playbackEvent,
-            forPlayer: options.playerName
-        )
-
         let objectIdentifier = ObjectIdentifier(playerLayer)
+
+        monitoredPlayer.binding.softwareName = playerLayerSoftwareName
+        monitoredPlayer.binding.softwareVersion = playerLayerSoftwareVersion
 
         bindings[objectIdentifier] = monitoredPlayer
     }
