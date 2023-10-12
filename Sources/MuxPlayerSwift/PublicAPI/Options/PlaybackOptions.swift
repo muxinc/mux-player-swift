@@ -17,6 +17,9 @@ public enum ResolutionTier {
     /// not exceed 1080p (1080 x 1920)
     case upTo1080p
     /// The asset will stream with a resolution that does
+    /// not exceed 1440p (1440 x 2560)
+    case upTo1440p
+    /// The asset will stream with a resolution that does
     /// not exceed 2160 (2160 x 4096)
     case upTo2160p
 }
@@ -30,6 +33,8 @@ extension ResolutionTier {
                 return "720p"
             case .upTo1080p:
                 return "1080p"
+            case .upTo1440p:
+                return "1440p"
             case .upTo2160p:
                 return "2160p"
         }
