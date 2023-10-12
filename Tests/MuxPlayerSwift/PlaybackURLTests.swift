@@ -23,11 +23,18 @@ final class PlaybackURLTests: XCTestCase {
         let expectedURLs: [String: String] = [
             ResolutionTier.upTo720p.queryValue: "https://stream.mux.com/abc.m3u8?redundant_streams=true&max_resolution=720p",
             ResolutionTier.upTo1080p.queryValue: "https://stream.mux.com/abc.m3u8?redundant_streams=true&max_resolution=1080p",
+            ResolutionTier.upTo1440p.queryValue: "https://stream.mux.com/abc.m3u8?redundant_streams=true&max_resolution=1440p",
             ResolutionTier.upTo2160p.queryValue: "https://stream.mux.com/abc.m3u8?redundant_streams=true&max_resolution=2160p",
             ResolutionTier.default.queryValue: "https://stream.mux.com/abc.m3u8?redundant_streams=true",
         ]
 
-        let tiers: [ResolutionTier] = [.upTo720p, .upTo1080p, .upTo2160p, .default]
+        let tiers: [ResolutionTier] = [
+            .upTo720p,
+            .upTo1080p,
+            .upTo1440p,
+            .upTo2160p,
+            .default
+        ]
 
         for tier in tiers {
             let playbackOptions = PlaybackOptions(
