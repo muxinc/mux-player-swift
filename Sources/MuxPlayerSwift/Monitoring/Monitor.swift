@@ -43,12 +43,14 @@ class Monitor {
         } else {
 
             let customerData = MUXSDKCustomerData()
+            let customerPlayerData = MUXSDKCustomerPlayerData()
+            customerPlayerData.playerSoftwareVersion = SemanticVersion.versionString
+            customerPlayerData.playerSoftwareName = "MuxPlayerSwiftAVPlayerViewController"
 
             if let environmentKey = options.environmentKey {
-                let customerPlayerData = MUXSDKCustomerPlayerData()
                 customerPlayerData.environmentKey = environmentKey
-                customerData.customerPlayerData = customerPlayerData
             }
+            customerData.customerPlayerData = customerPlayerData
 
             let binding = MUXSDKStats.monitorAVPlayerViewController(
                 playerViewController,
@@ -61,18 +63,6 @@ class Monitor {
                 binding: binding!
             )
         }
-
-        let playerData = MUXSDKPlayerData()
-        playerData.playerSoftwareVersion = SemanticVersion.versionString
-        playerData.playerSoftwareName = "MuxAVPlayerViewController"
-
-        let playbackEvent = MUXSDKPlaybackEvent()
-        playbackEvent.playerData = playerData
-
-        MUXSDKCore.dispatchEvent(
-            playbackEvent,
-            forPlayer: options.playerName
-        )
 
         let objectIdentifier = ObjectIdentifier(playerViewController)
 
@@ -101,12 +91,14 @@ class Monitor {
         } else {
 
             let customerData = MUXSDKCustomerData()
+            let customerPlayerData = MUXSDKCustomerPlayerData()
+            customerPlayerData.playerSoftwareVersion = SemanticVersion.versionString
+            customerPlayerData.playerSoftwareName = "MuxPlayerSwiftAVPlayerLayer"
 
             if let environmentKey = options.environmentKey {
-                let customerPlayerData = MUXSDKCustomerPlayerData()
                 customerPlayerData.environmentKey = environmentKey
-                customerData.customerPlayerData = customerPlayerData
             }
+            customerData.customerPlayerData = customerPlayerData
 
             let binding = MUXSDKStats.monitorAVPlayerLayer(
                 playerLayer,
@@ -119,18 +111,6 @@ class Monitor {
                 binding: binding!
             )
         }
-
-        let playerData = MUXSDKPlayerData()
-        playerData.playerSoftwareVersion = SemanticVersion.versionString
-        playerData.playerSoftwareName = "MuxAVPlayerLayer"
-
-        let playbackEvent = MUXSDKPlaybackEvent()
-        playbackEvent.playerData = playerData
-
-        MUXSDKCore.dispatchEvent(
-            playbackEvent,
-            forPlayer: options.playerName
-        )
 
         let objectIdentifier = ObjectIdentifier(playerLayer)
 

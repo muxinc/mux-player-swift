@@ -16,7 +16,7 @@ let package = Package(
     dependencies: [
         .package(
             url: "https://github.com/muxinc/mux-stats-sdk-avplayer",
-            exact: "3.3.2"
+            exact: "3.4.1"
         ),
         .package(
             url: "https://github.com/apple/swift-docc-plugin",
