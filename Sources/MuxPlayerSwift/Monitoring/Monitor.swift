@@ -44,8 +44,8 @@ class Monitor {
 
             let customerData = MUXSDKCustomerData()
             let customerPlayerData = MUXSDKCustomerPlayerData()
-            customerPlayerData.playerSoftwareVersion = SemanticVersion.versionString
-            customerPlayerData.playerSoftwareName = "MuxPlayerSwiftAVPlayerViewController"
+//            customerPlayerData.playerSoftwareVersion = SemanticVersion.versionString
+//            customerPlayerData.playerSoftwareName = "MuxPlayerSwiftAVPlayerViewController"
 
             if let environmentKey = options.environmentKey {
                 customerPlayerData.environmentKey = environmentKey
@@ -92,8 +92,8 @@ class Monitor {
 
             let customerData = MUXSDKCustomerData()
             let customerPlayerData = MUXSDKCustomerPlayerData()
-            customerPlayerData.playerSoftwareVersion = SemanticVersion.versionString
-            customerPlayerData.playerSoftwareName = "MuxPlayerSwiftAVPlayerLayer"
+//            customerPlayerData.playerSoftwareVersion = SemanticVersion.versionString
+//            customerPlayerData.playerSoftwareName = "MuxPlayerSwiftAVPlayerLayer"
 
             if let environmentKey = options.environmentKey {
                 customerPlayerData.environmentKey = environmentKey
