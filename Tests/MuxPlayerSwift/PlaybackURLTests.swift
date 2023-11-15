@@ -53,6 +53,52 @@ final class PlaybackURLTests: XCTestCase {
         }
     }
 
+    func testMinimumResolution() throws {
+
+        let expectedURLs: [String: String] = [
+            MinResolutionTier.upTo480p.queryValue:
+                "https://stream.mux.com/abc.m3u8?redundant_streams=true&min_resolution=480p",
+            MinResolutionTier.upTo540p.queryValue:
+                "https://stream.mux.com/abc.m3u8?redundant_streams=true&min_resolution=540p",
+            MinResolutionTier.upTo720p.queryValue:
+                "https://stream.mux.com/abc.m3u8?redundant_streams=true&min_resolution=720p",
+            MinResolutionTier.upTo1080p.queryValue:
+                "https://stream.mux.com/abc.m3u8?redundant_streams=true&min_resolution=1080p",
+            MinResolutionTier.upTo1440p.queryValue:
+                "https://stream.mux.com/abc.m3u8?redundant_streams=true&min_resolution=1440p",
+            MinResolutionTier.upTo2160p.queryValue:
+                "https://stream.mux.com/abc.m3u8?redundant_streams=true&min_resolution=2160p",
+            MinResolutionTier.default.queryValue:
+                "https://stream.mux.com/abc.m3u8?redundant_streams=true"
+        ]
+
+        let tiers: [MinResolutionTier] = [
+            .upTo480p,
+            .upTo540p,
+            .upTo720p,
+            .upTo1080p,
+            .upTo1440p,
+            .upTo2160p,
+            .default
+        ]
+
+        for tier in tiers {
+            let playbackOptions = PlaybackOptions(
+                minimumResolutionTier: tier
+            )
+
+            let playerItem = AVPlayerItem(
+                playbackID: "abc",
+                playbackOptions: playbackOptions
+            )
+
+            XCTAssertEqual(
+                (playerItem.asset as! AVURLAsset).url.absoluteString,
+                expectedURLs[tier.queryValue]
+            )
+        }
+    }
+    
     func testCustomDomainPlaybackURL() throws {
 
         let playbackOptions = PlaybackOptions(
