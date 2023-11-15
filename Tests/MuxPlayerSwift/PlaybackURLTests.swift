@@ -99,6 +99,58 @@ final class PlaybackURLTests: XCTestCase {
         }
     }
     
+    func testRenditionOrder() throws {
+
+        let expectedURLs: [String: String] = [
+            RenditionOrder.desc.queryValue:
+                "https://stream.mux.com/abc.m3u8?redundant_streams=true&rendition_order=desc",
+            RenditionOrder.asc.queryValue:
+                "https://stream.mux.com/abc.m3u8?redundant_streams=true&rendition_order=asc",
+            RenditionOrder.default.queryValue:
+                "https://stream.mux.com/abc.m3u8?redundant_streams=true"
+        ]
+
+        let tiers: [RenditionOrder] = [
+            .asc,
+            .desc,
+            .default
+        ]
+
+        for tier in tiers {
+            let playbackOptions = PlaybackOptions(
+                renditionOrder: tier
+            )
+
+            let playerItem = AVPlayerItem(
+                playbackID: "abc",
+                playbackOptions: playbackOptions
+            )
+
+            XCTAssertEqual(
+                (playerItem.asset as! AVURLAsset).url.absoluteString,
+                expectedURLs[tier.queryValue]
+            )
+        }
+    }
+    
+    func testMultiplePlaybackOptionParams() throws {
+        let playbackOptions = PlaybackOptions(
+            maximumResolutionTier: MaxResolutionTier.upTo2160p,
+            minimumResolutionTier: MinResolutionTier.upTo1440p,
+            renditionOrder: RenditionOrder.asc
+        )
+        
+        let playerItem = AVPlayerItem(
+            playbackID: "abc",
+            playbackOptions: playbackOptions
+        )
+        
+        XCTAssertEqual(
+            (playerItem.asset as! AVURLAsset).url.absoluteString,
+            "https://stream.mux.com/abc.m3u8?redundant_streams=true&max_resolution=2160p&min_resolution=1440p&rendition_order=asc"
+        )
+    }
+    
     func testCustomDomainPlaybackURL() throws {
 
         let playbackOptions = PlaybackOptions(

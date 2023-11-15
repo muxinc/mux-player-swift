@@ -51,6 +51,15 @@ fileprivate func makePlaybackURL(
             )
         }
 
+        if publicPlaybackOptions.renditionOrder != .default {
+            queryItems.append(
+                URLQueryItem(
+                    name: "rendition_order",
+                    value: publicPlaybackOptions.renditionOrder.queryValue
+                )
+            )
+        }
+        
         components.queryItems = queryItems
     } else if case PlaybackOptions.PlaybackPolicy.signed(let signedPlaybackOptions) = playbackOptions.playbackPolicy {
 

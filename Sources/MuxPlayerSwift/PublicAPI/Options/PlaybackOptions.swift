@@ -50,6 +50,15 @@ public enum MinResolutionTier {
     case upTo2160p
 }
 
+public enum RenditionOrder {
+    /// By default no rendition order is specified
+    case `default`
+    /// The asset will choose renditions in ascending order
+    case asc
+    /// The asset will choose renditions in descending order
+    case desc
+}
+
 extension MaxResolutionTier {
     var queryValue: String {
         switch self {
@@ -88,6 +97,19 @@ extension MinResolutionTier {
     }
 }
 
+extension RenditionOrder {
+    var queryValue: String {
+        switch self {
+        case .default:
+            return ""
+        case .asc:
+            return "asc"
+        case .desc:
+            return "desc"
+        }
+    }
+}
+
 /// Options for playback
 public struct PlaybackOptions {
 
@@ -95,6 +117,7 @@ public struct PlaybackOptions {
 
         var maximumResolutionTier: MaxResolutionTier
         var minimumResolutionTier: MinResolutionTier
+        var renditionOrder: RenditionOrder
 
         var useRedundantStreams: Bool
     }
@@ -122,12 +145,14 @@ extension PlaybackOptions {
     ///   video the player will download
     public init(
         maximumResolutionTier: MaxResolutionTier = .default,
-        minimumResolutionTier: MinResolutionTier = .default
+        minimumResolutionTier: MinResolutionTier = .default,
+        renditionOrder:RenditionOrder = .default
     ) {
         self.playbackPolicy = .public(
             PublicPlaybackOptions(
                 maximumResolutionTier: maximumResolutionTier,
                 minimumResolutionTier: minimumResolutionTier,
+                renditionOrder: renditionOrder,
                 useRedundantStreams: true
             )
         )
@@ -150,13 +175,15 @@ extension PlaybackOptions {
     public init(
         customDomain: String,
         maximumResolutionTier: MaxResolutionTier = .default,
-        minimumResolutionTier: MinResolutionTier = .default
+        minimumResolutionTier: MinResolutionTier = .default,
+        renditionOrder: RenditionOrder = .default
     ) {
         self.customDomain = customDomain
         self.playbackPolicy = .public(
             PublicPlaybackOptions(
                 maximumResolutionTier: maximumResolutionTier,
                 minimumResolutionTier: minimumResolutionTier,
+                renditionOrder: renditionOrder,
                 useRedundantStreams: true
             )
         )
