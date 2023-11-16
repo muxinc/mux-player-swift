@@ -56,29 +56,29 @@ final class PlaybackURLTests: XCTestCase {
     func testMinimumResolution() throws {
 
         let expectedURLs: [String: String] = [
-            MinResolutionTier.upTo480p.queryValue:
+            MinResolutionTier.atLeast480p.queryValue:
                 "https://stream.mux.com/abc.m3u8?redundant_streams=true&min_resolution=480p",
-            MinResolutionTier.upTo540p.queryValue:
+            MinResolutionTier.atLeast540p.queryValue:
                 "https://stream.mux.com/abc.m3u8?redundant_streams=true&min_resolution=540p",
-            MinResolutionTier.upTo720p.queryValue:
+            MinResolutionTier.atLeast720p.queryValue:
                 "https://stream.mux.com/abc.m3u8?redundant_streams=true&min_resolution=720p",
-            MinResolutionTier.upTo1080p.queryValue:
+            MinResolutionTier.atLeast1080p.queryValue:
                 "https://stream.mux.com/abc.m3u8?redundant_streams=true&min_resolution=1080p",
-            MinResolutionTier.upTo1440p.queryValue:
+            MinResolutionTier.atLeast1440p.queryValue:
                 "https://stream.mux.com/abc.m3u8?redundant_streams=true&min_resolution=1440p",
-            MinResolutionTier.upTo2160p.queryValue:
+            MinResolutionTier.atLeast2160p.queryValue:
                 "https://stream.mux.com/abc.m3u8?redundant_streams=true&min_resolution=2160p",
             MinResolutionTier.default.queryValue:
                 "https://stream.mux.com/abc.m3u8?redundant_streams=true"
         ]
 
         let tiers: [MinResolutionTier] = [
-            .upTo480p,
-            .upTo540p,
-            .upTo720p,
-            .upTo1080p,
-            .upTo1440p,
-            .upTo2160p,
+            .atLeast480p,
+            .atLeast540p,
+            .atLeast720p,
+            .atLeast1080p,
+            .atLeast1440p,
+            .atLeast2160p,
             .default
         ]
 
@@ -136,7 +136,7 @@ final class PlaybackURLTests: XCTestCase {
     func testMultiplePlaybackOptionParams() throws {
         let playbackOptions = PlaybackOptions(
             maximumResolutionTier: MaxResolutionTier.upTo2160p,
-            minimumResolutionTier: MinResolutionTier.upTo1440p,
+            minimumResolutionTier: MinResolutionTier.atLeast1440p,
             renditionOrder: RenditionOrder.asc
         )
         

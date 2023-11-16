@@ -32,22 +32,22 @@ public enum MinResolutionTier {
     case `default`
     /// The asset will stream with a resolution that does
     /// not exceed 480p (640 x 480)
-    case upTo480p
+    case atLeast480p
     /// The asset will stream with a resolution that does
     /// not exceed 540p (960 x 540)
-    case upTo540p
+    case atLeast540p
     /// The asset will stream with a resolution that does
     /// not exceed 7200p (1080 x 720)
-    case upTo720p
+    case atLeast720p
     /// The asset will stream with a resolution that does
     /// not exceed 1080p (1920 x 1080)
-    case upTo1080p
+    case atLeast1080p
     /// The asset will stream with a resolution that does
     /// not exceed 2440p (2160 x 4096)
-    case upTo1440p
+    case atLeast1440p
     /// The asset will stream with a resolution that does
     /// not exceed 2160 p(2560 x 1440)
-    case upTo2160p
+    case atLeast2160p
 }
 
 public enum RenditionOrder {
@@ -81,17 +81,17 @@ extension MinResolutionTier {
         switch self {
         case .default:
             return ""
-        case .upTo480p:
+        case .atLeast480p:
             return "480p"
-        case .upTo540p:
+        case .atLeast540p:
             return "540p"
-        case .upTo720p:
+        case .atLeast720p:
             return "720p"
-        case .upTo1080p:
+        case .atLeast1080p:
             return "1080p"
-        case .upTo1440p:
+        case .atLeast1440p:
             return "1440p"
-        case .upTo2160p:
+        case .atLeast2160p:
             return "2160p"
         }
     }
