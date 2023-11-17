@@ -102,17 +102,17 @@ final class PlaybackURLTests: XCTestCase {
     func testRenditionOrder() throws {
 
         let expectedURLs: [String: String] = [
-            RenditionOrder.desc.queryValue:
+            RenditionOrder.descending.queryValue:
                 "https://stream.mux.com/abc.m3u8?redundant_streams=true&rendition_order=desc",
-            RenditionOrder.asc.queryValue:
+            RenditionOrder.ascending.queryValue:
                 "https://stream.mux.com/abc.m3u8?redundant_streams=true&rendition_order=asc",
             RenditionOrder.default.queryValue:
                 "https://stream.mux.com/abc.m3u8?redundant_streams=true"
         ]
 
         let tiers: [RenditionOrder] = [
-            .asc,
-            .desc,
+            .ascending,
+            .descending,
             .default
         ]
 
@@ -137,7 +137,7 @@ final class PlaybackURLTests: XCTestCase {
         let playbackOptions = PlaybackOptions(
             maximumResolutionTier: MaxResolutionTier.upTo2160p,
             minimumResolutionTier: MinResolutionTier.atLeast1440p,
-            renditionOrder: RenditionOrder.asc
+            renditionOrder: RenditionOrder.ascending
         )
         
         let playerItem = AVPlayerItem(

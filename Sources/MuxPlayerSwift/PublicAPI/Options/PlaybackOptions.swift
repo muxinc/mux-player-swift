@@ -54,9 +54,9 @@ public enum RenditionOrder {
     /// By default no rendition order is specified
     case `default`
     /// The asset will choose renditions in ascending order
-    case asc
+    case ascending
     /// The asset will choose renditions in descending order
-    case desc
+    case descending
 }
 
 extension MaxResolutionTier {
@@ -102,9 +102,9 @@ extension RenditionOrder {
         switch self {
         case .default:
             return ""
-        case .asc:
+        case .ascending:
             return "asc"
-        case .desc:
+        case .descending:
             return "desc"
         }
     }
