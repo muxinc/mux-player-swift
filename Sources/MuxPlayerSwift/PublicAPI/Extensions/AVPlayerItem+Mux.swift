@@ -41,7 +41,25 @@ fileprivate func makePlaybackURL(
                 )
             )
         }
+        
+        if publicPlaybackOptions.minimumResolutionTier != .default {
+            queryItems.append(
+                URLQueryItem(
+                    name: "min_resolution",
+                    value: publicPlaybackOptions.minimumResolutionTier.queryValue
+                )
+            )
+        }
 
+        if publicPlaybackOptions.renditionOrder != .default {
+            queryItems.append(
+                URLQueryItem(
+                    name: "rendition_order",
+                    value: publicPlaybackOptions.renditionOrder.queryValue
+                )
+            )
+        }
+        
         components.queryItems = queryItems
     } else if case PlaybackOptions.PlaybackPolicy.signed(let signedPlaybackOptions) = playbackOptions.playbackPolicy {
 
