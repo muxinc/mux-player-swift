@@ -143,10 +143,14 @@ extension PlaybackOptions {
     /// - Parameters:
     ///   - maximumResolutionTier: maximum resolution of the
     ///   video the player will download
+    ///   - minimumResolutionTier: maximum resolution of the
+    ///   video the player will download
+    ///   - renditionOrder: ordering of available renditions
+    ///   in the manifest
     public init(
         maximumResolutionTier: MaxResolutionTier = .default,
         minimumResolutionTier: MinResolutionTier = .default,
-        renditionOrder:RenditionOrder = .default
+        renditionOrder: RenditionOrder = .default
     ) {
         self.playbackPolicy = .public(
             PublicPlaybackOptions(
@@ -172,6 +176,10 @@ extension PlaybackOptions {
     ///   their base URL.
     ///   - maximumResolutionTier: maximum resolution of the
     ///   video the player will download
+    ///   - minimumResolutionTier: maximum resolution of the
+    ///   video the player will download
+    ///   - renditionOrder: ordering of available renditions
+    ///   in the manifest
     public init(
         customDomain: String,
         maximumResolutionTier: MaxResolutionTier = .default,
