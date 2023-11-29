@@ -40,6 +40,7 @@ public struct MonitoringOptions {
     /// - Parameters:
     ///   - customerData: passed through as-is when initializing
     ///   Mux Data monitoring
+    ///   - playerName: identifier of the player
     public init(
         customerData: MUXSDKCustomerData,
         playerName: String
