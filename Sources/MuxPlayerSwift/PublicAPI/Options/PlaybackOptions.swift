@@ -37,7 +37,7 @@ public enum MinResolutionTier {
     /// not exceed 540p (960 x 540)
     case atLeast540p
     /// The asset will stream with a resolution that does
-    /// not exceed 7200p (1080 x 720)
+    /// not exceed 720p (1080 x 720)
     case atLeast720p
     /// The asset will stream with a resolution that does
     /// not exceed 1080p (1920 x 1080)
