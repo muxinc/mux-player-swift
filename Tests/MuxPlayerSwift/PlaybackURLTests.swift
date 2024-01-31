@@ -214,4 +214,20 @@ final class PlaybackURLTests: XCTestCase {
             "https://stream.play.example.com/abc.m3u8?token=WhoooopsNotAnActualToken"
         )
     }
+
+    func testReverseProxyTargetingURL() throws {
+        let playbackOptions = PlaybackOptions(
+            customDomain: "play.example.com"
+        )
+
+        let playerItem = AVPlayerItem(
+            playbackID: "abc",
+            playbackOptions: playbackOptions
+        )
+
+        XCTAssertEqual(
+            (playerItem.asset as! AVURLAsset).url.absoluteString,
+            "http://127.0.0.1:1234/abc.m3u8?redundant_streams=true&__hls_origin_url=https://stream.play.example.com/abc.m3u8?redundant_streams%3Dtrue"
+        )
+    }
 }

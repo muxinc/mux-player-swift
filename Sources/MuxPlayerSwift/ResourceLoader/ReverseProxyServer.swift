@@ -18,7 +18,7 @@ class ReverseProxyServer {
         self.webServer = GCDWebServer()
     }
 
-    private func start() {
+    func start() {
         guard !webServer.isRunning else {
             return
         }
@@ -29,7 +29,7 @@ class ReverseProxyServer {
         )
     }
 
-    private func stop() {
+    func stop() {
         guard webServer.isRunning else {
             return
         }
