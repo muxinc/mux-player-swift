@@ -23,6 +23,9 @@ class ReverseProxyServer {
             return
         }
 
+        self.setupManifestRequestHandler()
+        self.setupSegmentHandler()
+
         webServer.start(
             withPort: port,
             bonjourName: nil
@@ -87,8 +90,22 @@ class ReverseProxyServer {
                         .map { line in self.processPlaylistLine(line, forOriginURL: originURL) }
                         .joined(separator: "\n")
 
+                    let contentType = response.mimeType ?? "application/x-mpegurl"
 
-                    return completion(GCDWebServerErrorResponse(statusCode: 500))
+                    guard let serializedParsedManifest = parsedManifest?.data(using: .utf8) else {
+                        return completion(
+                            GCDWebServerErrorResponse(
+                                statusCode: 500
+                            )
+                        )
+                    }
+
+                    return completion(
+                        GCDWebServerDataResponse(
+                            data: serializedParsedManifest,
+                            contentType: contentType
+                        )
+                    )
                 }
 
                 task.resume()
@@ -97,6 +114,37 @@ class ReverseProxyServer {
 
         }
 
+    }
+
+    private func setupSegmentHandler() {
+        self.webServer.addHandler(
+            forMethod: "GET",
+            pathRegex: "^/.*\\.ts$",
+            request: GCDWebServerRequest.self
+        ) { [weak self] request, completion in
+
+            guard let self = self else {
+                return completion(GCDWebServerDataResponse(statusCode: 500))
+            }
+
+            guard let originURL = self.originURL(from: request) else {
+                return completion(GCDWebServerErrorResponse(statusCode: 400))
+            }
+
+            let task = self.session.dataTask(with: originURL) { data, response, error in
+              guard let data = data, let response = response else {
+                return completion(GCDWebServerErrorResponse(statusCode: 500))
+              }
+
+              let contentType = response.mimeType ?? "video/mp2t"
+              completion(GCDWebServerDataResponse(data: data, contentType: contentType))
+
+              
+            }
+
+            task.resume()
+
+        }
     }
 
     private func processPlaylistLine(
