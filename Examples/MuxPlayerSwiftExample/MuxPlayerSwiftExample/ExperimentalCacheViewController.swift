@@ -77,6 +77,8 @@ class ExperimentalCacheViewController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
 
+        startObservingPlayerAccessLog()
+
         self.topPlayerViewController.player?.play()
 
         DispatchQueue.main.asyncAfter(
@@ -99,4 +101,54 @@ class ExperimentalCacheViewController: UIViewController {
         super.viewWillDisappear(animated)
     }
 
+
+    //MARK: Player ABR Observation
+
+    func startObservingPlayerAccessLog() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(ExperimentalCacheViewController.handlePlayerAccessLogEntryUpdate),
+            name: AVPlayerItem.newAccessLogEntryNotification,
+            object: nil
+        )
+    }
+
+    @objc func handlePlayerAccessLogEntryUpdate(
+        _ notification: Notification
+    ) {
+        guard let playerItem = (notification.object as? AVPlayerItem) else {
+            print("\(#function) No player item enclosed with notification")
+            return
+        }
+
+        print("\(#function) Preferred peak bitrate \(playerItem.preferredPeakBitRate)")
+
+        print("\(#function) Preferred maximum resolution \(playerItem.preferredMaximumResolution)")
+
+        if #available(iOS 15.0, *) {
+            print("\(#function) Preferred peak bitrate \(playerItem.preferredPeakBitRateForExpensiveNetworks)")
+
+            print("\(#function) Preferred maximum resolution \(playerItem.preferredMaximumResolutionForExpensiveNetworks)")
+        }
+
+        guard let accessLog = playerItem.accessLog() else {
+            print("\(#function) No access log enclosed with notification")
+            return
+        }
+
+        guard let lastEvent = accessLog.events.last else {
+            print("\(#function) Access log empty after an update")
+            return
+        }
+
+        print("\(#function) Current Indicated Bitrate: \(lastEvent.indicatedBitrate)")
+
+        print("\(#function) Current Observed Bitrate: \(lastEvent.observedBitrate)")
+
+        print("\(#function) Current Switch Bitrate: \(lastEvent.switchBitrate)")
+
+        print("\(#function) Observed Bitrate Standard Deviation: \(lastEvent.observedBitrateStandardDeviation)")
+
+        print("\(#function) URI: \(String(describing: lastEvent.uri))")
+    }
 }
