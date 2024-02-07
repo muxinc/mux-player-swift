@@ -11,11 +11,18 @@ class ReverseProxyServer {
     var session: URLSession = .shared
     var webServer: GCDWebServer
 
+    var segmentCache: URLCache
+
     private let port: UInt = 1234
     let originURLKey: String = "__hls_origin_url"
 
     init() {
         self.webServer = GCDWebServer()
+
+        self.segmentCache = URLCache(
+            memoryCapacity: 0,
+            diskCapacity: 10_000_000
+        )
     }
 
     func start() {
@@ -66,6 +73,8 @@ class ReverseProxyServer {
                 )
                 return
             }
+
+            print("AJLB Manifest Request: \(request.url.absoluteString)")
 
             if originURL.pathExtension == "m3u8" {
                 let task = session.dataTask(
@@ -131,19 +140,58 @@ class ReverseProxyServer {
                 return completion(GCDWebServerErrorResponse(statusCode: 400))
             }
 
-            let task = self.session.dataTask(with: originURL) { data, response, error in
-              guard let data = data, let response = response else {
-                return completion(GCDWebServerErrorResponse(statusCode: 500))
-              }
+            print("AJLB Segment Request: \(request.url.absoluteString)")
 
-              let contentType = response.mimeType ?? "video/mp2t"
-              completion(GCDWebServerDataResponse(data: data, contentType: contentType))
+            var reverseProxyRequest = URLRequest(url: originURL)
+            reverseProxyRequest.httpMethod = "GET"
 
-              
+            if let cachedResponse = self.segmentCache.cachedResponse(
+                for: reverseProxyRequest
+            ) {
+                
+                print("AJLB Cached Response: \(request.url.absoluteString)")
+
+                let contentType = cachedResponse.response.mimeType ?? "video/mp2t"
+
+                completion(
+                    GCDWebServerDataResponse(
+                        data: cachedResponse.data,
+                        contentType: contentType
+                    )
+                )
+
+
+            } else {
+                let task = self.session.dataTask(
+                    with: reverseProxyRequest
+                ) { data, response, error in
+                    guard let data = data, let response = response else {
+                        return completion(GCDWebServerErrorResponse(statusCode: 500))
+                    }
+
+                    let contentType = response.mimeType ?? "video/mp2t"
+                    completion(
+                        GCDWebServerDataResponse(
+                            data: data,
+                            contentType: contentType
+                        )
+                    )
+
+                    print("AJLB Server Response: \(request.url.absoluteString)")
+
+                    let cachedURLResponse = CachedURLResponse(
+                        response: response,
+                        data: data
+                    )
+
+                    self.segmentCache.storeCachedResponse(
+                        cachedURLResponse,
+                        for: reverseProxyRequest
+                    )
+                }
+
+                task.resume()
             }
-
-            task.resume()
-
         }
     }
 

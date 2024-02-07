@@ -58,7 +58,15 @@ class MainViewController: UIViewController {
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        playerViewController.player?.play()
+
+        DispatchQueue.main.asyncAfter(
+            deadline: .now() + 5,
+            execute: DispatchWorkItem(
+                block: {
+                    self.playerViewController.player?.play()
+                }
+            )
+        )
     }
 
     override func viewWillDisappear(_ animated: Bool) {
