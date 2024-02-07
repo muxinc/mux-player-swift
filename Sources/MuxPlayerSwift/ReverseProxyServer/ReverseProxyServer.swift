@@ -6,12 +6,52 @@ import Foundation
 
 import GCDWebServer
 
+
 class ReverseProxyServer {
+
+    struct Event {
+
+        enum Kind {
+            case manifestRequestReceived
+            case segmentRequestReceived
+            case segmentCacheMiss(key: URLRequest)
+            case segmentCacheHit(key: URLRequest)
+            case segmentCacheStored(key: URLRequest)
+        }
+
+        let originURL: URL
+
+        let kind: Kind
+
+    }
+
+    class EventRecorder {
+
+        func didRecord(event: Event) {
+
+            switch event.kind {
+            case .manifestRequestReceived:
+                print("RPS Manifest Request: \(event.originURL.absoluteString)")
+            case .segmentRequestReceived:
+                print("RPS Segment Request: \(event.originURL.absoluteString)")
+            case .segmentCacheMiss(key: let key):
+                print("RPS Cache Miss Key: \(key) Origin: \(event.originURL.absoluteString)")
+            case .segmentCacheHit(key: let key):
+                print("RPS  Cache Hit Key: \(key) Origin: \(event.originURL.absoluteString)")
+            case .segmentCacheStored(key: let key):
+                print("RPS Cache Stored Key: \(key) Origin: \(event.originURL.absoluteString)")
+            }
+
+        }
+
+    }
 
     var session: URLSession = .shared
     var webServer: GCDWebServer
 
     var segmentCache: URLCache
+
+    var eventRecorder: EventRecorder = EventRecorder()
 
     private let port: UInt = 1234
     let originURLKey: String = "__hls_origin_url"
@@ -74,7 +114,12 @@ class ReverseProxyServer {
                 return
             }
 
-            print("AJLB Manifest Request: \(request.url.absoluteString)")
+            eventRecorder.didRecord(
+                event: Event(
+                    originURL: originURL,
+                    kind: .manifestRequestReceived
+                )
+            )
 
             if originURL.pathExtension == "m3u8" {
                 let task = session.dataTask(
@@ -109,6 +154,8 @@ class ReverseProxyServer {
                         )
                     }
 
+                    print("AJLB Manifest Response: \(originURL.absoluteString)")
+
                     return completion(
                         GCDWebServerDataResponse(
                             data: serializedParsedManifest,
@@ -140,16 +187,38 @@ class ReverseProxyServer {
                 return completion(GCDWebServerErrorResponse(statusCode: 400))
             }
 
-            print("AJLB Segment Request: \(request.url.absoluteString)")
+            eventRecorder.didRecord(
+                event: Event(
+                    originURL: originURL,
+                    kind: .segmentRequestReceived
+                )
+            )
 
             var reverseProxyRequest = URLRequest(url: originURL)
             reverseProxyRequest.httpMethod = "GET"
 
+            // Construct a modified request that will be the
+            // same across segment requests
+            // - Remove query parameters
+            // - Replace cdn-specific hosts with generic
+            //
+            // This request only used as a cache key
+            var components = URLComponents(url: originURL, resolvingAgainstBaseURL: false)
+            components?.queryItems = nil
+            components?.host = "stream.mux.com"
+
+            var strippedRequest = URLRequest(url: components!.url!)
+
             if let cachedResponse = self.segmentCache.cachedResponse(
-                for: reverseProxyRequest
+                for: strippedRequest
             ) {
-                
-                print("AJLB Cached Response: \(request.url.absoluteString)")
+
+                eventRecorder.didRecord(
+                    event: Event(
+                        originURL: originURL,
+                        kind: .segmentCacheHit(key: strippedRequest)
+                    )
+                )
 
                 let contentType = cachedResponse.response.mimeType ?? "video/mp2t"
 
@@ -159,9 +228,15 @@ class ReverseProxyServer {
                         contentType: contentType
                     )
                 )
-
-
             } else {
+
+                eventRecorder.didRecord(
+                    event: Event(
+                        originURL: originURL,
+                        kind: .segmentCacheMiss(key: strippedRequest)
+                    )
+                )
+
                 let task = self.session.dataTask(
                     with: reverseProxyRequest
                 ) { data, response, error in
@@ -177,8 +252,6 @@ class ReverseProxyServer {
                         )
                     )
 
-                    print("AJLB Server Response: \(request.url.absoluteString)")
-
                     let cachedURLResponse = CachedURLResponse(
                         response: response,
                         data: data
@@ -186,7 +259,16 @@ class ReverseProxyServer {
 
                     self.segmentCache.storeCachedResponse(
                         cachedURLResponse,
-                        for: reverseProxyRequest
+                        for: strippedRequest
+                    )
+
+                    self.eventRecorder.didRecord(
+                        event: Event(
+                            originURL: originURL,
+                            kind: .segmentCacheStored(
+                                key: strippedRequest
+                            )
+                        )
                     )
                 }
 
