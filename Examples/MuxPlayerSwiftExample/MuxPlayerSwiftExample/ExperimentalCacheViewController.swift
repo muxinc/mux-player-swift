@@ -10,14 +10,22 @@ import MuxPlayerSwift
 
 class ExperimentalCacheViewController: UIViewController {
 
-    var playbackID: String = "qxb01i6T202018GFS02vp9RIe01icTcDCjVzQpmaB00CUisJ4"
+    var playbackID: String = "a4nOgmxGWg6gULfcBbAa00gXyfcwPnAFldF8RdsNyk8M"
 
     lazy var topPlayerViewController = AVPlayerViewController(
-        playbackID: playbackID
+        playbackID: playbackID,
+        playbackOptions: PlaybackOptions.init(
+            maximumResolutionTier: .upTo720p,
+            minimumResolutionTier: .atLeast720p
+        )
     )
 
     lazy var bottomPlayerViewController = AVPlayerViewController(
-        playbackID: playbackID
+        playbackID: playbackID,
+        playbackOptions: PlaybackOptions.init(
+            maximumResolutionTier: .upTo720p,
+            minimumResolutionTier: .atLeast720p
+        )
     )
 
     override func viewDidLoad() {
@@ -72,6 +80,30 @@ class ExperimentalCacheViewController: UIViewController {
                 multiplier: 0.5
             ),
         ])
+
+        let recreatePlayersNavigationBarButtonItem = UIBarButtonItem(
+            title: "Recreate Players",
+            image: nil,
+            primaryAction: UIAction(
+                handler: { _ in
+                    self.recreatePlayerInstances()
+                }
+            )
+        )
+
+        let configureAlternativePlaybackIDNavigationBarButtonItem = UIBarButtonItem(
+            title: "Configure Alternative Playback ID",
+            image: nil,
+            primaryAction: UIAction(
+                handler: { _ in
+                    self.configureAlternativePlaybackID()
+                }
+            )
+        )
+        navigationController?.navigationItem.rightBarButtonItems = [
+            recreatePlayersNavigationBarButtonItem,
+            configureAlternativePlaybackIDNavigationBarButtonItem
+        ]
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -79,13 +111,16 @@ class ExperimentalCacheViewController: UIViewController {
 
         startObservingPlayerAccessLog()
 
-        self.topPlayerViewController.player?.play()
+//        self.topPlayerViewController.player?.play()
+
+        self.topPlayerViewController.player?.isMuted = true
+        self.bottomPlayerViewController.player?.isMuted = true
 
         DispatchQueue.main.asyncAfter(
             deadline: .now() + 20,
             execute: DispatchWorkItem(
                 block: {
-                    self.bottomPlayerViewController.player?.play()
+//                    self.bottomPlayerViewController.player?.play()
                 }
             )
         )
@@ -101,6 +136,27 @@ class ExperimentalCacheViewController: UIViewController {
         super.viewWillDisappear(animated)
     }
 
+    func recreatePlayerInstances() {
+        self.topPlayerViewController = AVPlayerViewController(
+            playbackID: playbackID,
+            playbackOptions: PlaybackOptions.init(
+                maximumResolutionTier: .upTo720p,
+                minimumResolutionTier: .atLeast720p
+            )
+        )
+
+        self.bottomPlayerViewController = AVPlayerViewController(
+            playbackID: playbackID,
+            playbackOptions: PlaybackOptions.init(
+                maximumResolutionTier: .upTo720p,
+                minimumResolutionTier: .atLeast720p
+            )
+        )
+    }
+
+    func configureAlternativePlaybackID() {
+
+    }
 
     //MARK: Player ABR Observation
 
@@ -149,6 +205,6 @@ class ExperimentalCacheViewController: UIViewController {
 
         print("\(#function) Observed Bitrate Standard Deviation: \(lastEvent.observedBitrateStandardDeviation)")
 
-        print("\(#function) URI: \(String(describing: lastEvent.uri))")
+        print("ABR \(#function) URI: \(String(describing: lastEvent.uri))")
     }
 }

@@ -9,41 +9,137 @@ import GCDWebServer
 
 class ReverseProxyServer {
 
-    struct Event {
+    struct Event: CustomStringConvertible {
 
         enum Kind {
             case manifestRequestReceived
             case segmentRequestReceived
-            case segmentCacheMiss(key: URLRequest)
-            case segmentCacheHit(key: URLRequest)
-            case segmentCacheStored(key: URLRequest)
+            case segmentCacheMiss(
+                key: URLRequest
+            )
+            case segmentCacheHit(
+                key: URLRequest
+            )
+            case segmentCacheStored(
+                key: URLRequest,
+                cacheDiskUsageInBytes: Int,
+                segmentSizeInBytes: Int
+            )
         }
 
         let originURL: URL
 
         let kind: Kind
 
+        var description: String {
+            switch kind {
+            case .manifestRequestReceived:
+                return "Manifest Request - Origin URL: \(originURL.absoluteString)"
+            case .segmentRequestReceived:
+                return "Segment Request Received - Origin URL: \(originURL.absoluteString)"
+            case .segmentCacheMiss(key: let key):
+                return "Segment Cache Miss - Key: \(key) Origin URL: \(originURL.absoluteString)"
+            case .segmentCacheHit(key: let key):
+                return "Segment Cache Hit - Key: \(key) Origin URL: \(originURL.absoluteString)"
+            case .segmentCacheStored(key: let key, cacheDiskUsageInBytes: let cacheDiskUsageInBytes, segmentSizeInBytes: let segmentSizeInBytes):
+                return "Segment Cache Stored - Key: \(key) CacheDiskUsageInBytes: \(cacheDiskUsageInBytes) SegmentSizeInBytes: \(segmentSizeInBytes) Origin URL: \(originURL.absoluteString)"
+            }
+        }
+
     }
 
     class EventRecorder {
 
         func didRecord(event: Event) {
-
-            switch event.kind {
-            case .manifestRequestReceived:
-                print("RPS Manifest Request: \(event.originURL.absoluteString)")
-            case .segmentRequestReceived:
-                print("RPS Segment Request: \(event.originURL.absoluteString)")
-            case .segmentCacheMiss(key: let key):
-                print("RPS Cache Miss Key: \(key) Origin: \(event.originURL.absoluteString)")
-            case .segmentCacheHit(key: let key):
-                print("RPS  Cache Hit Key: \(key) Origin: \(event.originURL.absoluteString)")
-            case .segmentCacheStored(key: let key):
-                print("RPS Cache Stored Key: \(key) Origin: \(event.originURL.absoluteString)")
-            }
-
+            print("RPS - \(Date()) - \(event.description)")
         }
 
+    }
+
+    class ManifestReversifier {
+        let port: UInt = 1234
+        let originURLKey: String = "__hls_origin_url"
+
+        func reversifyManifest(
+            encodedManifest: Data,
+            manifestOriginURL: URL
+        ) {
+            let originalManifest = String(
+                data: encodedManifest,
+                encoding: .utf8
+            )
+
+            let parsedManifest = originalManifest?
+                .components(separatedBy: .newlines)
+                .map { line in self.processPlaylistLine(line, forOriginURL: manifestOriginURL) }
+                .joined(separator: "\n")
+        }
+
+        func processPlaylistLine(
+            _ line: String,
+            forOriginURL originURL: URL
+        ) -> String {
+            guard !line.isEmpty else { return line }
+
+            if line.hasPrefix("#") {
+                return lineByReplacingURI(line: line, forOriginURL: originURL)
+            }
+
+            if let originalSegmentURL = absoluteURL(from: line, forOriginURL: originURL),
+               let reverseProxyURL = reverseProxyURL(from: originalSegmentURL) {
+                return reverseProxyURL.absoluteString
+            }
+            return line
+        }
+
+        func lineByReplacingURI(
+            line: String,
+            forOriginURL originURL: URL
+        ) -> String {
+            let uriPattern = try! NSRegularExpression(pattern: "URI=\"([^\"]*)\"")
+            let lineRange = NSRange(location: 0, length: line.count)
+            guard let result = uriPattern.firstMatch(in: line, options: [], range: lineRange) else { return line }
+
+            let uri = (line as NSString).substring(with: result.range(at: 1))
+            guard let absoluteURL = absoluteURL(from: uri, forOriginURL: originURL) else { return line }
+            guard let reverseProxyURL = reverseProxyURL(from: absoluteURL) else { return line }
+
+            return uriPattern.stringByReplacingMatches(in: line, options: [], range: lineRange, withTemplate: "URI=\"\(reverseProxyURL.absoluteString)\"")
+        }
+
+        func absoluteURL(from line: String, forOriginURL originURL: URL) -> URL? {
+            if line.hasPrefix("http://") || line.hasPrefix("https://") {
+                return URL(string: line)
+            }
+
+            guard let scheme = originURL.scheme,
+                  let host = originURL.host
+            else {
+                print("Error: bad url")
+                return nil
+            }
+
+            let path: String
+            if line.hasPrefix("/") {
+                path = line
+            } else {
+                path = originURL.deletingLastPathComponent().appendingPathComponent(line).path
+            }
+
+            return URL(string: scheme + "://" + host + path)?.standardized
+        }
+
+        func reverseProxyURL(from originURL: URL) -> URL? {
+            guard var components = URLComponents(url: originURL, resolvingAgainstBaseURL: false) else { return nil }
+            components.scheme = "http"
+            components.host = "127.0.0.1"
+            components.port = Int(port)
+
+            let originURLQueryItem = URLQueryItem(name: originURLKey, value: originURL.absoluteString)
+            components.queryItems = (components.queryItems ?? []) + [originURLQueryItem]
+
+            return components.url
+        }
     }
 
     var session: URLSession = .shared
@@ -52,16 +148,19 @@ class ReverseProxyServer {
     var segmentCache: URLCache
 
     var eventRecorder: EventRecorder = EventRecorder()
+    var manifestReversifier: ManifestReversifier = ManifestReversifier()
 
-    private let port: UInt = 1234
+    let port: UInt = 1234
     let originURLKey: String = "__hls_origin_url"
+
+    let defaultDiskCapacity = 256_000_000
 
     init() {
         self.webServer = GCDWebServer()
 
         self.segmentCache = URLCache(
             memoryCapacity: 0,
-            diskCapacity: 10_000_000
+            diskCapacity: defaultDiskCapacity
         )
     }
 
@@ -240,6 +339,7 @@ class ReverseProxyServer {
                 let task = self.session.dataTask(
                     with: reverseProxyRequest
                 ) { data, response, error in
+
                     guard let data = data, let response = response else {
                         return completion(GCDWebServerErrorResponse(statusCode: 500))
                     }
@@ -262,11 +362,17 @@ class ReverseProxyServer {
                         for: strippedRequest
                     )
 
+                    let segmentSizeInBytes = data.count
+
+                    let cacheDiskUsageInBytes = self.segmentCache.currentDiskUsage
+
                     self.eventRecorder.didRecord(
                         event: Event(
                             originURL: originURL,
                             kind: .segmentCacheStored(
-                                key: strippedRequest
+                                key: strippedRequest,
+                                cacheDiskUsageInBytes: cacheDiskUsageInBytes,
+                                segmentSizeInBytes: segmentSizeInBytes
                             )
                         )
                     )
