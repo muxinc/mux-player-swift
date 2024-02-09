@@ -39,7 +39,7 @@ extension AVPlayerLayer {
     ///   you'd like to play
     ///   - playbackOptions: playback-related options such
     ///   as custom domain and maximum resolution
-    convenience init(
+    public convenience init(
         playbackID: String,
         playbackOptions: PlaybackOptions
     ) {
@@ -74,7 +74,7 @@ extension AVPlayerLayer {
     ///   as custom domain and maximum resolution
     ///   - monitoringOptions: Options to customize monitoring
     ///   data reported by Mux
-    convenience init(
+    public convenience init(
         playbackID: String,
         playbackOptions: PlaybackOptions,
         monitoringOptions: MonitoringOptions
