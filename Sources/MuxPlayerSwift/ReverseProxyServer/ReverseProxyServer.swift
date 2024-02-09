@@ -63,7 +63,7 @@ class ReverseProxyServer {
         func reversifyManifest(
             encodedManifest: Data,
             manifestOriginURL: URL
-        ) {
+        ) -> Data? {
             let originalManifest = String(
                 data: encodedManifest,
                 encoding: .utf8
@@ -73,6 +73,8 @@ class ReverseProxyServer {
                 .components(separatedBy: .newlines)
                 .map { line in self.processPlaylistLine(line, forOriginURL: manifestOriginURL) }
                 .joined(separator: "\n")
+
+            return parsedManifest?.data(using: .utf8)
         }
 
         func processPlaylistLine(
@@ -242,6 +244,10 @@ class ReverseProxyServer {
                         .components(separatedBy: .newlines)
                         .map { line in self.processPlaylistLine(line, forOriginURL: originURL) }
                         .joined(separator: "\n")
+
+                    print("AJLB Original Manifest: \n\(originalManifest!)")
+
+                    print("AJLB Parsed Manifest: \n\(parsedManifest!)")
 
                     let contentType = response.mimeType ?? "application/x-mpegurl"
 
