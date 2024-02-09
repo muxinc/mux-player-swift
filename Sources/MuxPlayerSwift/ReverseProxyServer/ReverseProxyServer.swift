@@ -16,7 +16,7 @@ class ReverseProxyServer {
 
     }
 
-    class ManifestReversifier {
+    class PlaylistLocalURLMapper {
         let port: UInt = 1234
         let originURLKey: String = "__hls_origin_url"
 
@@ -41,10 +41,14 @@ class ReverseProxyServer {
             _ line: String,
             forOriginURL originURL: URL
         ) -> String {
-            guard !line.isEmpty else { return line }
+            guard !line.trimmingCharacters(in: .whitespaces).isEmpty else { return line }
 
             if line.hasPrefix("#") {
-                return lineByReplacingURI(line: line, forOriginURL: originURL)
+                if line.hasPrefix("#EXT") {
+                    return lineByReplacingURI(line: line, forOriginURL: originURL)
+                } else {
+                    return line
+                }
             }
 
             if let originalSegmentURL = absoluteURL(from: line, forOriginURL: originURL),
@@ -110,7 +114,7 @@ class ReverseProxyServer {
     var segmentCache: URLCache
 
     var eventRecorder: EventRecorder = EventRecorder()
-    var manifestReversifier: ManifestReversifier = ManifestReversifier()
+    var manifestReversifier: PlaylistLocalURLMapper = PlaylistLocalURLMapper()
 
     let port: UInt = 1234
     let originURLKey: String = "__hls_origin_url"

@@ -1,5 +1,5 @@
 //
-//  ManifestReversifierTests.swift
+//  PlaylistLocalURLMapperTests.swift
 //
 //
 
@@ -8,7 +8,7 @@ import XCTest
 
 @testable import MuxPlayerSwift
 
-class ManifestReversifierTests: XCTestCase {
+class PlaylistLocalURLMapperTests: XCTestCase {
 
     func testMultivariantPlaylistReversification() throws {
         let originalMultivariantPlaylist = """
@@ -47,7 +47,7 @@ class ManifestReversifierTests: XCTestCase {
         #EXT-X-ENDLIST
         """
 
-        let reversifier = ReverseProxyServer.ManifestReversifier()
+        let reversifier = ReverseProxyServer.PlaylistLocalURLMapper()
 
 
         let encodedOriginalManifest = try XCTUnwrap(
@@ -118,7 +118,7 @@ class ManifestReversifierTests: XCTestCase {
         #EXT-X-ENDLIST
         """
 
-        let reversifier = ReverseProxyServer.ManifestReversifier()
+        let reversifier = ReverseProxyServer.PlaylistLocalURLMapper()
 
 
         let encodedOriginalManifest = try XCTUnwrap(
