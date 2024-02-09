@@ -235,23 +235,10 @@ class ReverseProxyServer {
                     }
 
                     // Swap playlist entries to use proxied URLs
-
-                    let originalManifest = String(
-                        data: data,
-                        encoding: .utf8
-                    )
-                    let parsedManifest = originalManifest?
-                        .components(separatedBy: .newlines)
-                        .map { line in self.processPlaylistLine(line, forOriginURL: originURL) }
-                        .joined(separator: "\n")
-
-                    print("AJLB Original Manifest: \n\(originalManifest!)")
-
-                    print("AJLB Parsed Manifest: \n\(parsedManifest!)")
-
-                    let contentType = response.mimeType ?? "application/x-mpegurl"
-
-                    guard let serializedParsedManifest = parsedManifest?.data(using: .utf8) else {
+                    guard let parsedManifest = self.manifestReversifier.reversifyManifest(
+                        encodedManifest: data,
+                        manifestOriginURL: originURL
+                    ) else {
                         return completion(
                             GCDWebServerErrorResponse(
                                 statusCode: 500
@@ -259,11 +246,11 @@ class ReverseProxyServer {
                         )
                     }
 
-                    print("AJLB Manifest Response: \(originURL.absoluteString)")
+                    let contentType = response.mimeType ?? "application/x-mpegurl"
 
                     return completion(
                         GCDWebServerDataResponse(
-                            data: serializedParsedManifest,
+                            data: parsedManifest,
                             contentType: contentType
                         )
                     )
@@ -344,7 +331,16 @@ class ReverseProxyServer {
 
                 let task = self.session.dataTask(
                     with: reverseProxyRequest
-                ) { data, response, error in
+                ) { [weak self] data, response, error in
+
+                    guard let self = self else {
+                        completion(
+                            GCDWebServerErrorResponse(
+                                statusCode: 400
+                            )
+                        )
+                        return
+                    }
 
                     guard let data = data, let response = response else {
                         return completion(GCDWebServerErrorResponse(statusCode: 500))
@@ -388,68 +384,4 @@ class ReverseProxyServer {
             }
         }
     }
-
-    private func processPlaylistLine(
-        _ line: String,
-        forOriginURL originURL: URL
-    ) -> String {
-        guard !line.isEmpty else { return line }
-
-        if line.hasPrefix("#") {
-            return lineByReplacingURI(line: line, forOriginURL: originURL)
-        }
-
-        if let originalSegmentURL = absoluteURL(from: line, forOriginURL: originURL),
-           let reverseProxyURL = reverseProxyURL(from: originalSegmentURL) {
-            return reverseProxyURL.absoluteString
-        }
-        return line
-    }
-
-    private func lineByReplacingURI(line: String, forOriginURL originURL: URL) -> String {
-        let uriPattern = try! NSRegularExpression(pattern: "URI=\"([^\"]*)\"")
-        let lineRange = NSRange(location: 0, length: line.count)
-        guard let result = uriPattern.firstMatch(in: line, options: [], range: lineRange) else { return line }
-
-        let uri = (line as NSString).substring(with: result.range(at: 1))
-        guard let absoluteURL = absoluteURL(from: uri, forOriginURL: originURL) else { return line }
-        guard let reverseProxyURL = reverseProxyURL(from: absoluteURL) else { return line }
-
-        return uriPattern.stringByReplacingMatches(in: line, options: [], range: lineRange, withTemplate: "URI=\"\(reverseProxyURL.absoluteString)\"")
-    }
-
-    private func absoluteURL(from line: String, forOriginURL originURL: URL) -> URL? {
-        if line.hasPrefix("http://") || line.hasPrefix("https://") {
-            return URL(string: line)
-        }
-
-        guard let scheme = originURL.scheme,
-              let host = originURL.host
-        else {
-            print("Error: bad url")
-            return nil
-        }
-
-        let path: String
-        if line.hasPrefix("/") {
-            path = line
-        } else {
-            path = originURL.deletingLastPathComponent().appendingPathComponent(line).path
-        }
-
-        return URL(string: scheme + "://" + host + path)?.standardized
-    }
-
-    func reverseProxyURL(from originURL: URL) -> URL? {
-        guard var components = URLComponents(url: originURL, resolvingAgainstBaseURL: false) else { return nil }
-        components.scheme = "http"
-        components.host = "127.0.0.1"
-        components.port = Int(port)
-
-        let originURLQueryItem = URLQueryItem(name: originURLKey, value: originURL.absoluteString)
-        components.queryItems = (components.queryItems ?? []) + [originURLQueryItem]
-
-        return components.url
-    }
-
 }
