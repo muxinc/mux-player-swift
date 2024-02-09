@@ -6,51 +6,11 @@ import Foundation
 
 import GCDWebServer
 
-
 class ReverseProxyServer {
-
-    struct Event: CustomStringConvertible {
-
-        enum Kind {
-            case manifestRequestReceived
-            case segmentRequestReceived
-            case segmentCacheMiss(
-                key: URLRequest
-            )
-            case segmentCacheHit(
-                key: URLRequest
-            )
-            case segmentCacheStored(
-                key: URLRequest,
-                cacheDiskUsageInBytes: Int,
-                segmentSizeInBytes: Int
-            )
-        }
-
-        let originURL: URL
-
-        let kind: Kind
-
-        var description: String {
-            switch kind {
-            case .manifestRequestReceived:
-                return "Manifest Request - Origin URL: \(originURL.absoluteString)"
-            case .segmentRequestReceived:
-                return "Segment Request Received - Origin URL: \(originURL.absoluteString)"
-            case .segmentCacheMiss(key: let key):
-                return "Segment Cache Miss - Key: \(key) Origin URL: \(originURL.absoluteString)"
-            case .segmentCacheHit(key: let key):
-                return "Segment Cache Hit - Key: \(key) Origin URL: \(originURL.absoluteString)"
-            case .segmentCacheStored(key: let key, cacheDiskUsageInBytes: let cacheDiskUsageInBytes, segmentSizeInBytes: let segmentSizeInBytes):
-                return "Segment Cache Stored - Key: \(key) CacheDiskUsageInBytes: \(cacheDiskUsageInBytes) SegmentSizeInBytes: \(segmentSizeInBytes) Origin URL: \(originURL.absoluteString)"
-            }
-        }
-
-    }
 
     class EventRecorder {
 
-        func didRecord(event: Event) {
+        func didRecord(event: ReverseProxyEvent) {
             print("RPS - \(Date()) - \(event.description)")
         }
 
@@ -216,7 +176,7 @@ class ReverseProxyServer {
             }
 
             eventRecorder.didRecord(
-                event: Event(
+                event: ReverseProxyEvent(
                     originURL: originURL,
                     kind: .manifestRequestReceived
                 )
@@ -280,7 +240,7 @@ class ReverseProxyServer {
             }
 
             eventRecorder.didRecord(
-                event: Event(
+                event: ReverseProxyEvent(
                     originURL: originURL,
                     kind: .segmentRequestReceived
                 )
@@ -306,7 +266,7 @@ class ReverseProxyServer {
             ) {
 
                 eventRecorder.didRecord(
-                    event: Event(
+                    event: ReverseProxyEvent(
                         originURL: originURL,
                         kind: .segmentCacheHit(key: strippedRequest)
                     )
@@ -323,7 +283,7 @@ class ReverseProxyServer {
             } else {
 
                 eventRecorder.didRecord(
-                    event: Event(
+                    event: ReverseProxyEvent(
                         originURL: originURL,
                         kind: .segmentCacheMiss(key: strippedRequest)
                     )
@@ -369,7 +329,7 @@ class ReverseProxyServer {
                     let cacheDiskUsageInBytes = self.segmentCache.currentDiskUsage
 
                     self.eventRecorder.didRecord(
-                        event: Event(
+                        event: ReverseProxyEvent(
                             originURL: originURL,
                             kind: .segmentCacheStored(
                                 key: strippedRequest,
