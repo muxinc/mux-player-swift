@@ -16,22 +16,22 @@ class ReverseProxyServer {
 
     }
 
-    class ManifestReversifier {
+    class PlaylistLocalURLMapper {
         let port: UInt = 1234
         let originURLKey: String = "__hls_origin_url"
 
-        func reversifyManifest(
-            encodedManifest: Data,
-            manifestOriginURL: URL
+        func processEncodedPlaylist(
+            _ playlist: Data,
+            playlistOriginURL: URL
         ) -> Data? {
-            let originalManifest = String(
-                data: encodedManifest,
+            let originalPlaylist = String(
+                data: playlist,
                 encoding: .utf8
             )
 
-            let parsedManifest = originalManifest?
+            let parsedManifest = originalPlaylist?
                 .components(separatedBy: .newlines)
-                .map { line in self.processPlaylistLine(line, forOriginURL: manifestOriginURL) }
+                .map { line in self.processPlaylistLine(line, forOriginURL: playlistOriginURL) }
                 .joined(separator: "\n")
 
             return parsedManifest?.data(using: .utf8)
@@ -41,10 +41,14 @@ class ReverseProxyServer {
             _ line: String,
             forOriginURL originURL: URL
         ) -> String {
-            guard !line.isEmpty else { return line }
+            guard !line.trimmingCharacters(in: .whitespaces).isEmpty else { return line }
 
             if line.hasPrefix("#") {
-                return lineByReplacingURI(line: line, forOriginURL: originURL)
+                if line.hasPrefix("#EXT") {
+                    return lineByReplacingURI(line: line, forOriginURL: originURL)
+                } else {
+                    return line
+                }
             }
 
             if let originalSegmentURL = absoluteURL(from: line, forOriginURL: originURL),
@@ -110,7 +114,7 @@ class ReverseProxyServer {
     var segmentCache: URLCache
 
     var eventRecorder: EventRecorder = EventRecorder()
-    var manifestReversifier: ManifestReversifier = ManifestReversifier()
+    var playlistLocalURLMapper: PlaylistLocalURLMapper = PlaylistLocalURLMapper()
 
     let port: UInt = 1234
     let originURLKey: String = "__hls_origin_url"
@@ -195,9 +199,9 @@ class ReverseProxyServer {
                     }
 
                     // Swap playlist entries to use proxied URLs
-                    guard let parsedManifest = self.manifestReversifier.reversifyManifest(
-                        encodedManifest: data,
-                        manifestOriginURL: originURL
+                    guard let parsedManifest = self.playlistLocalURLMapper.processEncodedPlaylist(
+                        data,
+                        playlistOriginURL: originURL
                     ) else {
                         return completion(
                             GCDWebServerErrorResponse(

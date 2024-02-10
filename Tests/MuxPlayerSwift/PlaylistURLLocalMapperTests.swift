@@ -1,5 +1,5 @@
 //
-//  ManifestReversifierTests.swift
+//  PlaylistLocalURLMapperTests.swift
 //
 //
 
@@ -8,9 +8,9 @@ import XCTest
 
 @testable import MuxPlayerSwift
 
-class ManifestReversifierTests: XCTestCase {
+class PlaylistLocalURLMapperTests: XCTestCase {
 
-    func testMultivariantPlaylistReversification() throws {
+    func testMultivariantPlaylistLocalURLMapping() throws {
         let originalMultivariantPlaylist = """
         #EXTM3U
         #EXT-X-VERSION:3
@@ -29,7 +29,7 @@ class ManifestReversifierTests: XCTestCase {
         #EXT-X-ENDLIST
         """
 
-        let expectedReversifiedMultivarantPlaylist = """
+        let expectedMappedMultivarantPlaylist = """
         #EXTM3U
         #EXT-X-VERSION:3
         #EXT-X-TARGETDURATION:6
@@ -47,41 +47,41 @@ class ManifestReversifierTests: XCTestCase {
         #EXT-X-ENDLIST
         """
 
-        let reversifier = ReverseProxyServer.ManifestReversifier()
+        let mapper = ReverseProxyServer.PlaylistLocalURLMapper()
 
 
-        let encodedOriginalManifest = try XCTUnwrap(
+        let encodedOriginalPlaylist = try XCTUnwrap(
             originalMultivariantPlaylist.data(
                 using: .utf8
             ),
             "Couldn't encode original multivariant playlist"
         )
 
-        let manifestOriginURL = try XCTUnwrap(
+        let playlistOriginURL = try XCTUnwrap(
             URL(string: "https://stream.mux.com/a4nOgmxGWg6gULfcBbAa00gXyfcwPnAFldF8RdsNyk8M.m3u8"),
             "Couldn't create manifest origin URL"
         )
 
-        let encodedReversifiedMultivariantPlaylist = try XCTUnwrap(
-            reversifier.reversifyManifest(
-                encodedManifest: encodedOriginalManifest,
-                manifestOriginURL: manifestOriginURL
+        let encodedMappedMultivariantPlaylist = try XCTUnwrap(
+            mapper.processEncodedPlaylist(
+                encodedOriginalPlaylist,
+                playlistOriginURL: playlistOriginURL
             ),
-            "Couldn't reversify multivariant playlist"
+            "Couldn't map to local URLs in multivariant playlist"
         )
 
-        let reversifiedMultivariantPlaylist = String(
-            data: encodedReversifiedMultivariantPlaylist,
+        let mappedMultivariantPlaylist = String(
+            data: encodedMappedMultivariantPlaylist,
             encoding: .utf8
         )
 
         XCTAssertEqual(
-            reversifiedMultivariantPlaylist,
-            expectedReversifiedMultivarantPlaylist
+            mappedMultivariantPlaylist,
+            expectedMappedMultivarantPlaylist
         )
     }
 
-    func testRenditionPlaylistManifestReversification() throws {
+    func testRenditionPlaylistPlaylistLocalURLMapping() throws {
         let originalRenditionPlaylist = """
         #EXTM3U
         #EXT-X-VERSION:3
@@ -100,7 +100,7 @@ class ManifestReversifierTests: XCTestCase {
         #EXT-X-ENDLIST
         """
 
-        let expectedReversifiedRenditionPlaylist = """
+        let expectedMappedRenditionPlaylist = """
         #EXTM3U
         #EXT-X-VERSION:3
         #EXT-X-TARGETDURATION:6
@@ -118,40 +118,40 @@ class ManifestReversifierTests: XCTestCase {
         #EXT-X-ENDLIST
         """
 
-        let reversifier = ReverseProxyServer.ManifestReversifier()
+        let mapper = ReverseProxyServer.PlaylistLocalURLMapper()
 
 
-        let encodedOriginalManifest = try XCTUnwrap(
+        let encodedOriginalPlaylist = try XCTUnwrap(
             originalRenditionPlaylist.data(
                 using: .utf8
             ),
             "Couldn't encode original rendition playlist"
         )
 
-        let manifestOriginURL = try XCTUnwrap(
+        let playlistOriginURL = try XCTUnwrap(
             URL(string: "https://manifest-gcp-us-east1-vop1.fastly.mux.com/qyHnst9BVpSF4nZpMK8AcilKpgoNrCgNjEPLuepuB5rNKh008j8zOxI00VMlBMfKo7QFnBpHhQ6I8/rendition.m3u8?cdn=fastly&expires=1708059600&skid=default&signature=NjVjZWViZDBfMWNlMjdjZDFlNTg1MGVlNjJmMjVmNDFkMjY0ZTY0M2I2YWJhYzQ0ZjRhMTNlYjQ2YmNiMDMyZjYzNTFmMDI2Ng==&vsid=UxwWoZ023025LmoJn1vaJvtoDTLKPhmpL35e5wQtduTwfFSQyqcThzqR3Tw3fD7Jaq02Uc01nbIQBZg"),
             "Couldn't create manifest origin URL"
         )
 
-        let encodedReversifiedRenditionPlaylist = try XCTUnwrap(
-            reversifier.reversifyManifest(
-                encodedManifest: encodedOriginalManifest,
-                manifestOriginURL: manifestOriginURL
+        let encodedMappedRenditionPlaylist = try XCTUnwrap(
+            mapper.processEncodedPlaylist(
+                encodedOriginalPlaylist,
+                playlistOriginURL: playlistOriginURL
             ),
-            "Couldn't reversify rendition playlist"
+            "Couldn't map to local URLs in rendition playlist"
         )
 
-        let reversifiedRenditionPlaylist = try XCTUnwrap(
+        let mappedRenditionPlaylist = try XCTUnwrap(
             String(
-                data: encodedReversifiedRenditionPlaylist,
+                data: encodedMappedRenditionPlaylist,
                 encoding: .utf8
             ),
             "Couldn't decode rendition playlist"
         )
 
         XCTAssertEqual(
-            reversifiedRenditionPlaylist,
-            expectedReversifiedRenditionPlaylist
+            mappedRenditionPlaylist,
+            expectedMappedRenditionPlaylist
         )
     }
 }
