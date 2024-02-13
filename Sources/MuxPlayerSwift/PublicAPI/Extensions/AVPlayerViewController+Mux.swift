@@ -25,7 +25,7 @@ extension AVPlayerViewController {
             playbackID: playbackID
         )
 
-        Monitor.shared.setupMonitoring(
+        PlayerSDK.shared.monitor.setupMonitoring(
             playerViewController: self,
             options: monitoringOptions
         )
@@ -51,7 +51,7 @@ extension AVPlayerViewController {
 
         self.player = player
 
-        Monitor.shared.setupMonitoring(
+        PlayerSDK.shared.monitor.setupMonitoring(
             playerViewController: self,
             options: monitoringOptions
         )
@@ -84,7 +84,7 @@ extension AVPlayerViewController {
             playbackID: playbackID
         )
 
-        Monitor.shared.setupMonitoring(
+        PlayerSDK.shared.monitor.setupMonitoring(
             playerViewController: self,
             options: monitoringOptions
         )
@@ -116,7 +116,7 @@ extension AVPlayerViewController {
 
         self.player = player
 
-        Monitor.shared.setupMonitoring(
+        PlayerSDK.shared.monitor.setupMonitoring(
             playerViewController: self,
             options: monitoringOptions
         )
@@ -124,7 +124,7 @@ extension AVPlayerViewController {
 
     /// Stops monitoring the player
     public func stopMonitoring() {
-        Monitor.shared.tearDownMonitoring(playerViewController: self)
+        PlayerSDK.shared.monitor.tearDownMonitoring(playerViewController: self)
     }
 
 }

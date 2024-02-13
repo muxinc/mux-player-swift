@@ -16,8 +16,6 @@ class Monitor {
         var binding: MUXSDKPlayerBinding
     }
 
-    static let shared = Monitor()
-
     var bindings: [ObjectIdentifier: MonitoredPlayer] = [:]
 
     func setupMonitoring(
