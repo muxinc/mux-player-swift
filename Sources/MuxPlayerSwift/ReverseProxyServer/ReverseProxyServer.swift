@@ -3,6 +3,7 @@
 //
 
 import Foundation
+import os
 
 import GCDWebServer
 
@@ -11,7 +12,10 @@ class ReverseProxyServer {
     class EventRecorder {
 
         func didRecord(event: ReverseProxyEvent) {
-            print("RPS - \(Date()) - \(event.description)")
+
+            PlayerSDK.shared
+                     .diagnosticsLogger
+                     .debug("RPS - \(Date()) - \(event.description)")
         }
 
     }
