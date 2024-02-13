@@ -15,7 +15,6 @@ class PlaylistLocalURLMapperTests: XCTestCase {
         #EXTM3U
         #EXT-X-VERSION:5
         #EXT-X-INDEPENDENT-SEGMENTS
-
         #EXT-X-STREAM-INF:BANDWIDTH=2493700,AVERAGE-BANDWIDTH=2493700,CODECS="mp4a.40.2,avc1.640020",RESOLUTION=1280x720,CLOSED-CAPTIONS=NONE
         https://manifest-gcp-us-east1-vop1.fastly.mux.com/w7aPwt8ZueCTvWOdX8OjshX7ipMHxnEFg3LgFtFxH016QQE6MZ5h3K02TSXKnhoi00H5sQY74Z6UC5sfvRzsws5YhA4caNfqTiL6rpDHEqjH9Y/rendition.m3u8?cdn=fastly&expires=1708365600&skid=default&signature=NjVkMzk3MjBfMGJjZDYyN2Q2ZDdlMWI1ZGVmZDUyZjYzMzcwNjczZjIyNTMxNjZkODAwZjJhY2UxOTQ2OGZhZjY1ZWIwZDZjZg==&vsid=8Iw6mvr7mGWpU4MkpUdLjwd1pULkM01cNB8eICCQyucjeZhoK1TDipXenu7pAPVPTvWtRbLU00Yxk
         #EXT-X-STREAM-INF:BANDWIDTH=1625800,AVERAGE-BANDWIDTH=1625800,CODECS="mp4a.40.2,avc1.640020",RESOLUTION=960x540,CLOSED-CAPTIONS=NONE
@@ -67,9 +66,12 @@ class PlaylistLocalURLMapperTests: XCTestCase {
             "Couldn't map to local URLs in multivariant playlist"
         )
 
-        let mappedMultivariantPlaylist = String(
-            data: encodedMappedMultivariantPlaylist,
-            encoding: .utf8
+        let mappedMultivariantPlaylist = try XCTUnwrap(
+            String(
+                data: encodedMappedMultivariantPlaylist,
+                encoding: .utf8
+            )?.removingPercentEncoding,
+            "Couldn't decode multivariant playlist"
         )
 
         XCTAssertEqual(
