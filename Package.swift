@@ -22,6 +22,10 @@ let package = Package(
             url: "https://github.com/apple/swift-docc-plugin",
             from: "1.2.0"
         ),
+        .package(
+            url: "https://github.com/yene/GCDWebServer",
+            exact: "3.5.7"
+        ),
     ],
     targets: [
         .target(
@@ -30,6 +34,10 @@ let package = Package(
                 .product(
                     name: "MUXSDKStats",
                     package: "mux-stats-sdk-avplayer"
+                ),
+                .product(
+                    name: "GCDWebServer",
+                    package: "GCDWebServer"
                 )
             ]
         ),

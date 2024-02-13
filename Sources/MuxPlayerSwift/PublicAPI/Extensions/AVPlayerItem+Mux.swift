@@ -11,6 +11,7 @@ fileprivate func makePlaybackURL(
 ) -> URL {
 
     var components = URLComponents()
+
     components.scheme = "https"
 
     if let customDomain = playbackOptions.customDomain {
@@ -74,6 +75,25 @@ fileprivate func makePlaybackURL(
 
         components.queryItems = queryItems
 
+    }
+
+    let isReverseProxyEnabled = !playbackOptions.disableCaching
+
+    if isReverseProxyEnabled {
+        var nonProxiedURLComponents = components
+
+        // TODO: clean up
+        components.queryItems = (components.queryItems ?? []) + [
+            URLQueryItem(
+                name: "__hls_origin_url",
+                value: components.url!.absoluteString
+            )
+        ]
+
+        // TODO: currently enables reverse proxying unless caching is disabled
+        components.scheme = "http"
+        components.host = "127.0.0.1"
+        components.port = Int(1234)
     }
 
     guard let playbackURL = components.url else {

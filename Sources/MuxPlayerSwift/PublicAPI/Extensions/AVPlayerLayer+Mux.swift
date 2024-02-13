@@ -25,7 +25,7 @@ extension AVPlayerLayer {
             playbackID: playbackID
         )
 
-        Monitor.shared.setupMonitoring(
+        PlayerSDK.shared.monitor.setupMonitoring(
             playerLayer: self,
             options: monitoringOptions
         )
@@ -39,7 +39,7 @@ extension AVPlayerLayer {
     ///   you'd like to play
     ///   - playbackOptions: playback-related options such
     ///   as custom domain and maximum resolution
-    convenience init(
+    public convenience init(
         playbackID: String,
         playbackOptions: PlaybackOptions
     ) {
@@ -58,7 +58,7 @@ extension AVPlayerLayer {
             playbackID: playbackID
         )
 
-        Monitor.shared.setupMonitoring(
+        PlayerSDK.shared.monitor.setupMonitoring(
             playerLayer: self,
             options: monitoringOptions
         )
@@ -74,7 +74,7 @@ extension AVPlayerLayer {
     ///   as custom domain and maximum resolution
     ///   - monitoringOptions: Options to customize monitoring
     ///   data reported by Mux
-    convenience init(
+    public convenience init(
         playbackID: String,
         playbackOptions: PlaybackOptions,
         monitoringOptions: MonitoringOptions
@@ -90,7 +90,7 @@ extension AVPlayerLayer {
 
         self.player = player
 
-        Monitor.shared.setupMonitoring(
+        PlayerSDK.shared.monitor.setupMonitoring(
             playerLayer: self,
             options: monitoringOptions
         )
@@ -98,7 +98,7 @@ extension AVPlayerLayer {
 
     /// Stops monitoring the player
     public func stopMonitoring() {
-        Monitor.shared.tearDownMonitoring(playerLayer: self)
+        PlayerSDK.shared.monitor.tearDownMonitoring(playerLayer: self)
     }
     
 
@@ -218,7 +218,7 @@ extension AVPlayerLayer {
             )
         }
 
-        Monitor.shared.setupMonitoring(
+        PlayerSDK.shared.monitor.setupMonitoring(
             playerLayer: self,
             options: monitoringOptions
         )

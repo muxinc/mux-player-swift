@@ -8,8 +8,13 @@ import XCTest
 
 final class PlaybackURLTests: XCTestCase {
     func testPlaybackURL() throws {
+
+        var playbackOptions = PlaybackOptions()
+        playbackOptions.disableCaching = true
+
         let playerItem = AVPlayerItem(
-            playbackID: "abc"
+            playbackID: "abc",
+            playbackOptions: playbackOptions
         )
 
         XCTAssertEqual(
@@ -37,9 +42,10 @@ final class PlaybackURLTests: XCTestCase {
         ]
 
         for tier in tiers {
-            let playbackOptions = PlaybackOptions(
+            var playbackOptions = PlaybackOptions(
                 maximumResolutionTier: tier
             )
+            playbackOptions.disableCaching = true
 
             let playerItem = AVPlayerItem(
                 playbackID: "abc",
@@ -83,9 +89,10 @@ final class PlaybackURLTests: XCTestCase {
         ]
 
         for tier in tiers {
-            let playbackOptions = PlaybackOptions(
+            var playbackOptions = PlaybackOptions(
                 minimumResolutionTier: tier
             )
+            playbackOptions.disableCaching = true
 
             let playerItem = AVPlayerItem(
                 playbackID: "abc",
@@ -117,9 +124,10 @@ final class PlaybackURLTests: XCTestCase {
         ]
 
         for tier in tiers {
-            let playbackOptions = PlaybackOptions(
+            var playbackOptions = PlaybackOptions(
                 renditionOrder: tier
             )
+            playbackOptions.disableCaching = true
 
             let playerItem = AVPlayerItem(
                 playbackID: "abc",
@@ -134,12 +142,13 @@ final class PlaybackURLTests: XCTestCase {
     }
     
     func testMultiplePlaybackOptionParams() throws {
-        let playbackOptions = PlaybackOptions(
+        var playbackOptions = PlaybackOptions(
             maximumResolutionTier: MaxResolutionTier.upTo2160p,
             minimumResolutionTier: MinResolutionTier.atLeast1440p,
             renditionOrder: RenditionOrder.ascending
         )
-        
+        playbackOptions.disableCaching = true
+
         let playerItem = AVPlayerItem(
             playbackID: "abc",
             playbackOptions: playbackOptions
@@ -153,9 +162,10 @@ final class PlaybackURLTests: XCTestCase {
     
     func testCustomDomainPlaybackURL() throws {
 
-        let playbackOptions = PlaybackOptions(
+        var playbackOptions = PlaybackOptions(
             customDomain: "play.example.com"
         )
+        playbackOptions.disableCaching = true
 
         let playerItem = AVPlayerItem(
             playbackID: "abc",
@@ -170,9 +180,10 @@ final class PlaybackURLTests: XCTestCase {
 
     func testSignedPlaybackURL() throws {
 
-        let playbackOptions = PlaybackOptions(
+        var playbackOptions = PlaybackOptions(
             playbackToken: "WhoooopsNotAnActualToken"
         )
+        playbackOptions.disableCaching = true
 
         let playerItem = AVPlayerItem(
             playbackID: "abc",
@@ -187,10 +198,11 @@ final class PlaybackURLTests: XCTestCase {
 
     func testCustomDomainSignedPlaybackURL() throws {
 
-        let playbackOptions = PlaybackOptions(
+        var playbackOptions = PlaybackOptions(
             customDomain: "play.example.com",
             playbackToken: "WhoooopsNotAnActualToken"
         )
+        playbackOptions.disableCaching = true
 
         let playerItem = AVPlayerItem(
             playbackID: "abc",
@@ -200,6 +212,22 @@ final class PlaybackURLTests: XCTestCase {
         XCTAssertEqual(
             (playerItem.asset as! AVURLAsset).url.absoluteString,
             "https://stream.play.example.com/abc.m3u8?token=WhoooopsNotAnActualToken"
+        )
+    }
+
+    func testReverseProxyTargetingURL() throws {
+        let playbackOptions = PlaybackOptions(
+            customDomain: "play.example.com"
+        )
+
+        let playerItem = AVPlayerItem(
+            playbackID: "abc",
+            playbackOptions: playbackOptions
+        )
+
+        XCTAssertEqual(
+            (playerItem.asset as! AVURLAsset).url.absoluteString,
+            "http://127.0.0.1:1234/abc.m3u8?redundant_streams=true&__hls_origin_url=https://stream.play.example.com/abc.m3u8?redundant_streams%3Dtrue"
         )
     }
 }

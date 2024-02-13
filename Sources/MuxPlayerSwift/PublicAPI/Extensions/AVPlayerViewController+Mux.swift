@@ -25,7 +25,7 @@ extension AVPlayerViewController {
             playbackID: playbackID
         )
 
-        Monitor.shared.setupMonitoring(
+        PlayerSDK.shared.monitor.setupMonitoring(
             playerViewController: self,
             options: monitoringOptions
         )
@@ -51,7 +51,7 @@ extension AVPlayerViewController {
 
         self.player = player
 
-        Monitor.shared.setupMonitoring(
+        PlayerSDK.shared.monitor.setupMonitoring(
             playerViewController: self,
             options: monitoringOptions
         )
@@ -65,7 +65,7 @@ extension AVPlayerViewController {
     ///   you'd like to play
     ///   - playbackOptions: playback-related options such
     ///   as custom domain and maximum resolution
-    convenience init(
+    public convenience init(
         playbackID: String,
         playbackOptions: PlaybackOptions
     ) {
@@ -84,7 +84,7 @@ extension AVPlayerViewController {
             playbackID: playbackID
         )
 
-        Monitor.shared.setupMonitoring(
+        PlayerSDK.shared.monitor.setupMonitoring(
             playerViewController: self,
             options: monitoringOptions
         )
@@ -100,7 +100,7 @@ extension AVPlayerViewController {
     ///   as custom domain and maximum resolution
     ///   - monitoringOptions: Options to customize monitoring
     ///   data reported by Mux
-    convenience init(
+    public convenience init(
         playbackID: String,
         playbackOptions: PlaybackOptions,
         monitoringOptions: MonitoringOptions
@@ -116,7 +116,7 @@ extension AVPlayerViewController {
 
         self.player = player
 
-        Monitor.shared.setupMonitoring(
+        PlayerSDK.shared.monitor.setupMonitoring(
             playerViewController: self,
             options: monitoringOptions
         )
@@ -124,7 +124,7 @@ extension AVPlayerViewController {
 
     /// Stops monitoring the player
     public func stopMonitoring() {
-        Monitor.shared.tearDownMonitoring(playerViewController: self)
+        PlayerSDK.shared.monitor.tearDownMonitoring(playerViewController: self)
     }
 
 }

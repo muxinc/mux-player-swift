@@ -134,6 +134,9 @@ public struct PlaybackOptions {
     var playbackPolicy: PlaybackPolicy
 
     var customDomain: String?
+
+    // TODO: workshop API spelling
+    var disableCaching: Bool = false
 }
 
 extension PlaybackOptions {

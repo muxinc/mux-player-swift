@@ -1,6 +1,15 @@
 {
   "pins" : [
     {
+      "identity" : "gcdwebserver",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/yene/GCDWebServer",
+      "state" : {
+        "revision" : "c2f837b30038ef716b77225f40cc8d104b6ff645",
+        "version" : "3.5.7"
+      }
+    },
+    {
       "identity" : "mux-stats-sdk-avplayer",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/muxinc/mux-stats-sdk-avplayer",
