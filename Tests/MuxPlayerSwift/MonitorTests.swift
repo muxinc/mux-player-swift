@@ -27,7 +27,7 @@ class MonitorTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
-        Monitor.shared.bindings.removeAll()
+        PlayerSDK.shared.monitor.bindings.removeAll()
     }
 
     func testPlayerViewControllerMonitoringLifecycle() throws {
@@ -36,7 +36,7 @@ class MonitorTests: XCTestCase {
             playbackID: "abc"
         )
 
-        let monitor = Monitor.shared
+        let monitor = PlayerSDK.shared.monitor
 
         XCTAssertEqual(
             monitor.bindings.count,
@@ -57,7 +57,7 @@ class MonitorTests: XCTestCase {
             playbackID: "abc"
         )
 
-        let monitor = Monitor.shared
+        let monitor = PlayerSDK.shared.monitor
 
         XCTAssertEqual(
             monitor.bindings.count,
@@ -84,7 +84,7 @@ class MonitorTests: XCTestCase {
             playbackID: "abc"
         )
 
-        let monitor = Monitor.shared
+        let monitor = PlayerSDK.shared.monitor
 
         XCTAssertEqual(
             monitor.bindings.count,
