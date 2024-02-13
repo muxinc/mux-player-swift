@@ -15,8 +15,13 @@ class PlayerSDK {
 
     let monitor: Monitor
 
+    let reverseProxyServer: ReverseProxyServer
+
     init() {
         self.monitor = Monitor()
+        self.reverseProxyServer = ReverseProxyServer()
+
+        self.reverseProxyServer.start()
     }
 
 }

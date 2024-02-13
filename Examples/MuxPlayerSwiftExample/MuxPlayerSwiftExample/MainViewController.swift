@@ -58,7 +58,8 @@ class MainViewController: UIViewController {
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        playerViewController.player?.play()
+
+        self.playerViewController.player?.play()
     }
 
     override func viewWillDisappear(_ animated: Bool) {
