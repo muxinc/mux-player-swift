@@ -10,7 +10,8 @@ import MuxPlayerSwift
 
 class ExperimentalCacheViewController: UIViewController {
 
-    var playbackID: String = "a4nOgmxGWg6gULfcBbAa00gXyfcwPnAFldF8RdsNyk8M"
+//    var playbackID: String = "a4nOgmxGWg6gULfcBbAa00gXyfcwPnAFldF8RdsNyk8M" // Playback ID w/TS
+    var playbackID: String = "u1v00DuRr01bjKb01E8TEFgBfDDggNLWYSk" // Playback ID w/CMAF
 
     lazy var topPlayerViewController = AVPlayerViewController(
         playbackID: playbackID,
