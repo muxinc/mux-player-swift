@@ -140,7 +140,8 @@ class ReverseProxyServer {
         }
 
         self.setupManifestRequestHandler()
-        self.setupSegmentHandler()
+        self.setupCMAFSegmentHandler()
+        self.setupTSSegmentHandler()
 
         webServer.start(
             withPort: port,
@@ -232,7 +233,7 @@ class ReverseProxyServer {
 
     }
 
-    private func setupSegmentHandler() {
+    private func setupTSSegmentHandler() {
         self.webServer.addHandler(
             forMethod: "GET",
             pathRegex: "^/.*\\.ts$",
@@ -315,6 +316,127 @@ class ReverseProxyServer {
                     }
 
                     let contentType = response.mimeType ?? "video/mp2t"
+                    completion(
+                        GCDWebServerDataResponse(
+                            data: data,
+                            contentType: contentType
+                        )
+                    )
+
+                    let cachedURLResponse = CachedURLResponse(
+                        response: response,
+                        data: data
+                    )
+
+                    self.segmentCache.storeCachedResponse(
+                        cachedURLResponse,
+                        for: strippedRequest
+                    )
+
+                    let segmentSizeInBytes = data.count
+
+                    let cacheDiskUsageInBytes = self.segmentCache.currentDiskUsage
+
+                    self.eventRecorder.didRecord(
+                        event: ReverseProxyEvent(
+                            originURL: originURL,
+                            kind: .segmentCacheStored(
+                                key: strippedRequest,
+                                cacheDiskUsageInBytes: cacheDiskUsageInBytes,
+                                segmentSizeInBytes: segmentSizeInBytes
+                            )
+                        )
+                    )
+                }
+
+                task.resume()
+            }
+        }
+    }
+    
+    private func setupCMAFSegmentHandler() {
+        self.webServer.addHandler(
+            forMethod: "GET",
+            pathRegex: "^/.*\\.m4s$",
+            request: GCDWebServerRequest.self
+        ) { [weak self] request, completion in
+
+            guard let self = self else {
+                return completion(GCDWebServerDataResponse(statusCode: 500))
+            }
+
+            guard let originURL = self.originURL(from: request) else {
+                return completion(GCDWebServerErrorResponse(statusCode: 400))
+            }
+
+            eventRecorder.didRecord(
+                event: ReverseProxyEvent(
+                    originURL: originURL,
+                    kind: .segmentRequestReceived
+                )
+            )
+
+            var reverseProxyRequest = URLRequest(url: originURL)
+            reverseProxyRequest.httpMethod = "GET"
+
+            // Construct a modified request that will be the
+            // same across segment requests
+            // - Remove query parameters
+            // - Replace cdn-specific hosts with generic
+            //
+            // This request only used as a cache key
+            var components = URLComponents(url: originURL, resolvingAgainstBaseURL: false)
+            components?.queryItems = nil
+            components?.host = "stream.mux.com"
+
+            var strippedRequest = URLRequest(url: components!.url!)
+
+            if let cachedResponse = self.segmentCache.cachedResponse(
+                for: strippedRequest
+            ) {
+
+                eventRecorder.didRecord(
+                    event: ReverseProxyEvent(
+                        originURL: originURL,
+                        kind: .segmentCacheHit(key: strippedRequest)
+                    )
+                )
+
+                let contentType = cachedResponse.response.mimeType ?? "video/mp4"
+
+                completion(
+                    GCDWebServerDataResponse(
+                        data: cachedResponse.data,
+                        contentType: contentType
+                    )
+                )
+            } else {
+
+                eventRecorder.didRecord(
+                    event: ReverseProxyEvent(
+                        originURL: originURL,
+                        kind: .segmentCacheMiss(key: strippedRequest)
+                    )
+                )
+
+                let task = self.session.dataTask(
+                    with: reverseProxyRequest
+                ) { [weak self] data, response, error in
+
+                    guard let self = self else {
+                        completion(
+                            GCDWebServerErrorResponse(
+                                statusCode: 400
+                            )
+                        )
+                        return
+                    }
+
+                    guard let data = data, let response = response else {
+                        return completion(GCDWebServerErrorResponse(statusCode: 500))
+                    }
+
+                    let contentType = response.mimeType ?? "video/mp4"
                     completion(
                         GCDWebServerDataResponse(
                             data: data,
