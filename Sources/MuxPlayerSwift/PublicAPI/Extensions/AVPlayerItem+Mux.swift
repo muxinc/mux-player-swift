@@ -77,11 +77,9 @@ fileprivate func makePlaybackURL(
 
     }
 
-    let isReverseProxyEnabled = !playbackOptions.disableCaching
+    let isReverseProxyEnabled = playbackOptions.enableSmartCache
 
     if isReverseProxyEnabled {
-        var nonProxiedURLComponents = components
-
         // TODO: clean up
         components.queryItems = (components.queryItems ?? []) + [
             URLQueryItem(
