@@ -9,8 +9,7 @@ import XCTest
 final class PlaybackURLTests: XCTestCase {
     func testPlaybackURL() throws {
 
-        var playbackOptions = PlaybackOptions()
-        playbackOptions.disableCaching = true
+        let playbackOptions = PlaybackOptions()
 
         let playerItem = AVPlayerItem(
             playbackID: "abc",
@@ -42,10 +41,9 @@ final class PlaybackURLTests: XCTestCase {
         ]
 
         for tier in tiers {
-            var playbackOptions = PlaybackOptions(
+            let playbackOptions = PlaybackOptions(
                 maximumResolutionTier: tier
             )
-            playbackOptions.disableCaching = true
 
             let playerItem = AVPlayerItem(
                 playbackID: "abc",
@@ -89,10 +87,9 @@ final class PlaybackURLTests: XCTestCase {
         ]
 
         for tier in tiers {
-            var playbackOptions = PlaybackOptions(
+            let playbackOptions = PlaybackOptions(
                 minimumResolutionTier: tier
             )
-            playbackOptions.disableCaching = true
 
             let playerItem = AVPlayerItem(
                 playbackID: "abc",
@@ -124,10 +121,9 @@ final class PlaybackURLTests: XCTestCase {
         ]
 
         for tier in tiers {
-            var playbackOptions = PlaybackOptions(
+            let playbackOptions = PlaybackOptions(
                 renditionOrder: tier
             )
-            playbackOptions.disableCaching = true
 
             let playerItem = AVPlayerItem(
                 playbackID: "abc",
@@ -142,12 +138,11 @@ final class PlaybackURLTests: XCTestCase {
     }
     
     func testMultiplePlaybackOptionParams() throws {
-        var playbackOptions = PlaybackOptions(
+        let playbackOptions = PlaybackOptions(
             maximumResolutionTier: MaxResolutionTier.upTo2160p,
             minimumResolutionTier: MinResolutionTier.atLeast1440p,
             renditionOrder: RenditionOrder.ascending
         )
-        playbackOptions.disableCaching = true
 
         let playerItem = AVPlayerItem(
             playbackID: "abc",
@@ -162,10 +157,9 @@ final class PlaybackURLTests: XCTestCase {
     
     func testCustomDomainPlaybackURL() throws {
 
-        var playbackOptions = PlaybackOptions(
+        let playbackOptions = PlaybackOptions(
             customDomain: "play.example.com"
         )
-        playbackOptions.disableCaching = true
 
         let playerItem = AVPlayerItem(
             playbackID: "abc",
@@ -180,10 +174,9 @@ final class PlaybackURLTests: XCTestCase {
 
     func testSignedPlaybackURL() throws {
 
-        var playbackOptions = PlaybackOptions(
+        let playbackOptions = PlaybackOptions(
             playbackToken: "WhoooopsNotAnActualToken"
         )
-        playbackOptions.disableCaching = true
 
         let playerItem = AVPlayerItem(
             playbackID: "abc",
@@ -198,11 +191,10 @@ final class PlaybackURLTests: XCTestCase {
 
     func testCustomDomainSignedPlaybackURL() throws {
 
-        var playbackOptions = PlaybackOptions(
+        let playbackOptions = PlaybackOptions(
             customDomain: "play.example.com",
             playbackToken: "WhoooopsNotAnActualToken"
         )
-        playbackOptions.disableCaching = true
 
         let playerItem = AVPlayerItem(
             playbackID: "abc",
@@ -217,7 +209,8 @@ final class PlaybackURLTests: XCTestCase {
 
     func testReverseProxyTargetingURL() throws {
         let playbackOptions = PlaybackOptions(
-            customDomain: "play.example.com"
+            customDomain: "play.example.com",
+            enableSmartCache: true
         )
 
         let playerItem = AVPlayerItem(

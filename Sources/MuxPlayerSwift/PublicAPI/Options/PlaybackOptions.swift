@@ -135,8 +135,7 @@ public struct PlaybackOptions {
 
     var customDomain: String?
 
-    // TODO: workshop API spelling
-    var disableCaching: Bool = false
+    var enableSmartCache: Bool = false
 }
 
 extension PlaybackOptions {
@@ -150,10 +149,13 @@ extension PlaybackOptions {
     ///   video the player will download
     ///   - renditionOrder: ordering of available renditions
     ///   in the manifest
+    ///   - enableSmartCache: enable smart cache to store
+    ///   on-demand HTTP live stream on disk
     public init(
         maximumResolutionTier: MaxResolutionTier = .default,
         minimumResolutionTier: MinResolutionTier = .default,
-        renditionOrder: RenditionOrder = .default
+        renditionOrder: RenditionOrder = .default,
+        enableSmartCache: Bool = false
     ) {
         self.playbackPolicy = .public(
             PublicPlaybackOptions(
@@ -163,6 +165,7 @@ extension PlaybackOptions {
                 useRedundantStreams: true
             )
         )
+        self.enableSmartCache = enableSmartCache
     }
 
 
@@ -183,11 +186,14 @@ extension PlaybackOptions {
     ///   video the player will download
     ///   - renditionOrder: ordering of available renditions
     ///   in the manifest
+    ///   - enableSmartCache: enable smart cache to store
+    ///   on-demand HTTP live stream on disk
     public init(
         customDomain: String,
         maximumResolutionTier: MaxResolutionTier = .default,
         minimumResolutionTier: MinResolutionTier = .default,
-        renditionOrder: RenditionOrder = .default
+        renditionOrder: RenditionOrder = .default,
+        enableSmartCache: Bool = false
     ) {
         self.customDomain = customDomain
         self.playbackPolicy = .public(
@@ -198,6 +204,7 @@ extension PlaybackOptions {
                 useRedundantStreams: true
             )
         )
+        self.enableSmartCache = enableSmartCache
     }
 
     /// Initializes playback options with a
