@@ -59,15 +59,37 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
     private func handleContentKeyRequest(_ session: AVContentKeySession, request: AVContentKeyRequest) {
         // "the identifier must be an NSURL that matches a key URI in the Media Playlist." from the docs
         guard let keyURLStr = request.identifier as? String,
-              let keyURL = URL(string: keyURLStr) else {
+              let keyURL = URL(string: keyURLStr),
+              let assetIDData = keyURLStr.data(using: .utf8)
+        else {
             print("request identifier was not a key url, this is exceptional for hls")
             return
         }
         
-        // step: get app cert (ContentKeyRequest wants to know if this failed) synchronously
+        // step: get app cert (ContentKeyRequest wants to know if this failed)
+        //  the drmtoday example does this synchronously with DispatchGroups, but do we really need to do that?
+        var applicationCertificate: Data?
+        let group = DispatchGroup()
+        FairplaySessionManager.shared.requestCertificate(
+            playbackID: "", // todo - get through-line from api
+            drmKey: "", // todo - get through-line from api
+            completion: { result in
+                if let cert = try? result.get() {
+                    applicationCertificate = cert
+                }
+                    
+            }
+        )
+        
+        request.makeStreamingContentKeyRequestData(forApp: applicationCertificate,
+                                                      contentIdentifier: assetIDData,
+                                                      options: [AVContentKeyRequestProtocolVersionsKey: [1]],
+                                                      completionHandler: completionHandler)
         
         // step: exchange app cert for SPC using KeyRequest w/completion handler
         
         // step: exchange SPC for CKC using KeyRequest w/completion handler
     }
+    
+    private func
 }
