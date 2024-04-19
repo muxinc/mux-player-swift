@@ -124,6 +124,7 @@ public struct PlaybackOptions {
 
     struct SignedPlaybackOptions {
         var playbackToken: String
+        var drmToken: String?
     }
 
     enum PlaybackPolicy {
@@ -201,12 +202,15 @@ extension PlaybackOptions {
     /// signed playback token
     /// - Parameter playbackToken: JSON web token signed
     /// with a signing key
+    /// - Parameter drmToken: JSON web token for DRM playback
     public init(
-        playbackToken: String
+        playbackToken: String,
+        drmToken: String?
     ) {
         self.playbackPolicy = .signed(
             SignedPlaybackOptions(
-                playbackToken: playbackToken
+                playbackToken: playbackToken,
+                drmToken: drmToken
             )
         )
     }
