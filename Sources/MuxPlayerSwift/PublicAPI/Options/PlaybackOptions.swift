@@ -124,12 +124,17 @@ public struct PlaybackOptions {
 
     struct SignedPlaybackOptions {
         var playbackToken: String
-        var drmToken: String?
+    }
+    
+    struct DrmPlaybackOptions {
+        var playbackToken: String
+        var drmToken: String
     }
 
     enum PlaybackPolicy {
         case `public`(PublicPlaybackOptions)
         case signed(SignedPlaybackOptions)
+        case fairPlay(DrmPlaybackOptions)
     }
 
     var playbackPolicy: PlaybackPolicy
@@ -198,17 +203,17 @@ extension PlaybackOptions {
         )
     }
 
-    /// Initializes playback options with a
+    /// Initializes playback options for use with Mux Video DRM
     /// signed playback token
     /// - Parameter playbackToken: JSON web token signed
     /// with a signing key
     /// - Parameter drmToken: JSON web token for DRM playback
     public init(
         playbackToken: String,
-        drmToken: String?
+        drmToken: String
     ) {
-        self.playbackPolicy = .signed(
-            SignedPlaybackOptions(
+        self.playbackPolicy = .fairPlay(
+            DrmPlaybackOptions(
                 playbackToken: playbackToken,
                 drmToken: drmToken
             )
