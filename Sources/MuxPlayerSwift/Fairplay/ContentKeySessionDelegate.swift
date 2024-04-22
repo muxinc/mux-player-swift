@@ -57,7 +57,7 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
     // MARK: Logic
     
     private func handleContentKeyRequest(_ session: AVContentKeySession, request: AVContentKeyRequest) {
-        // "the identifier must be an NSURL that matches a key URI in the Media Playlist." from the docs
+        // for hls, "the identifier must be an NSURL that matches a key URI in the Media Playlist." from the docs
         guard let keyURLStr = request.identifier as? String,
               let keyURL = URL(string: keyURLStr),
               let assetIDData = keyURLStr.data(using: .utf8)
@@ -68,12 +68,12 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
         
         // get app cert
         var applicationCertificate: Data?
-        //  the drmtoday example does this synchronously with DispatchGroups, but do we really need to do that?
+        //  the drmtoday example does this by joining a dispatch group, but is this best?
         let group = DispatchGroup()
         group.enter()
         FairplaySessionManager.shared.requestCertificate(
             playbackID: "", // todo - get from sdk caller
-            drmKey: "", // todo - get from sdk caller
+            drmToken: "", // todo - get from sdk caller
             completion: { result in
                 if let cert = try? result.get() {
                     applicationCertificate = cert
@@ -84,6 +84,7 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
         group.wait()
         guard let applicationCertificate = applicationCertificate else {
             print("failed to get application certificate")
+            return
         }
         
         // step: exchange app cert for SPC using KeyRequest w/completion handler (request wants to know if failed)
@@ -96,77 +97,41 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
             }
             
             guard let spcData = spcData else {
-                print("SPC request failed")
+                print("No SPC Data in spc response")
                 // `error` will be non-nil by contract
                 request.processContentKeyResponseError(error!)
                 return
             }
-            do {
-                // step: exchange SPC for CKC using KeyRequest w/completion handler (request wants to know if failed)
-                try handleContentKeyResponse(spcData: spcData, request: request)
-            } catch {
-                request.processContentKeyResponseError(error)
-            }
+            // step: exchange SPC for CKC using KeyRequest w/completion handler (request wants to know if failed)
+            // todo - drmToken from Asset
+            handleContentKeyResponse(spcData: spcData, drmToken: "", request: request)
         }
     }
     
-    private func handleContentKeyResponse(spcData: Data, request: AVContentKeyRequest)  {
-        do {
-            // Send SPC to Key Server and obtain CKC
-            let asset: AVURLAsset // todo - obtain from sdk caller
-            let playbackID: String // todo - obtain from sdk caller / url of asset
-            
-            // todo - DRM Today example does this synchronously with DispatchGroup. Is that really necessary?
-            let ckcData = try requestContentKeyFromKeySecurityModule(nil, spcData: spcData, playbackID: playbackID, persistable: false)
-            
-            /*
-             AVContentKeyResponse is used to represent the data returned from the key server when requesting a key for
-             decrypting content.
-             */
-            let keyResponse = AVContentKeyResponse(fairPlayStreamingKeyResponseData: ckcData)
-            
-            /*
-             Provide the content key response to make protected content available for processing.
-             */
-            request.processContentKeyResponse(keyResponse)
-        } catch {
-            request.processContentKeyResponseError(error)
-        }
-    }
-    
-    func requestContentKeyFromKeySecurityModule(_ asset: AVURLAsset?, spcData: Data, playbackID: String, persistable: Bool) throws -> Data {
+    private func handleContentKeyResponse(spcData: Data, drmToken: String, request: AVContentKeyRequest)  {
+        // Send SPC to Key Server and obtain CKC
+        let asset: AVURLAsset // todo - obtain from sdk caller
+        let playbackID: String = "" // todo - obtain from sdk caller / url of asset
         
-        // MARK: ADAPT - You must implement this method to request a CKC from your KSM.
-        
-        guard let asset = asset else {
-                    return Data()
-                }
-        
+        // todo - DRM Today example does this by joining a DispatchGroup. Is this acutally preferable
         var ckcData: Data? = nil
-                
-        let data = try JSONEncoder().encode(asset.stream)
-        let stream = try JSONDecoder().decode(Stream.self, from: data)
-        let token : String? = nil // "{authToken}"
-        
         let group = DispatchGroup()
         group.enter()
-        DRMtoday.getLicense(stream: stream, spcData: spcData, token: token, offline: persistable) { (ckc) in
-            ckcData = ckc
-            let escapedName = asset.stream.name.addingPercentEncoding(withAllowedCharacters: .urlHostAllowed)
-            let filename = self.getDocumentsDirectory().appendingPathComponent("").appendingPathComponent(escapedName! + (persistable ? "offline" : "online") + ".dat")
-            do {
-                try ckcData?.write(to: filename, options: .atomicWrite)
-            } catch {
-                print("Unable to write a license file")
+        FairplaySessionManager.shared.requestLicense(spcData, playbackID: playbackID, drmToken: drmToken, offline: false) { result in
+            if let data = try? result.get() {
+                ckcData = data
             }
             group.leave()
         }
         group.wait()
         
-        guard ckcData != nil else {
-            throw ProgramError.noCKCReturnedByKSM
+        guard let ckcData = ckcData else {
+            print("no CKC Data in CKC response")
+            return
         }
         
-        return ckcData!
+        let keyResponse = AVContentKeyResponse(fairPlayStreamingKeyResponseData: ckcData)
+        
+        request.processContentKeyResponse(keyResponse)
     }
 }
