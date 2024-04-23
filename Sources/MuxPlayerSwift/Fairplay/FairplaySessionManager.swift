@@ -12,6 +12,8 @@ class FairplaySessionManager {
     
     static let shared = FairplaySessionManager()
     
+    static let AVURLAssetOptionsKeyDrmToken = "com.mux.player.drmtoken"
+    
     let contentKeySession: AVContentKeySession
     let sessionDelegate: AVContentKeySessionDelegate
     

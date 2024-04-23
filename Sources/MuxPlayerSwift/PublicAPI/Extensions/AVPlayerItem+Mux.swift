@@ -83,6 +83,24 @@ fileprivate func makePlaybackURL(
     return playbackURL
 }
 
+/// Create a new `AVAsset` that has been preparted for playback
+/// Currently, being "prepared for playback" means only that the DRM token was added to the asset's options if present
+fileprivate func makeAVAsset(playbackID: String, playbackOptions: PlaybackOptions) -> AVAsset {
+    let url = makePlaybackURL(playbackID: playbackID, playbackOptions: playbackOptions)
+    
+    switch playbackOptions.playbackPolicy {
+    case .drm(let options): do {
+        return AVURLAsset(
+            url: url,
+            options: [FairplaySessionManager.AVURLAssetOptionsKeyDrmToken: options.drmToken]
+        )
+    }
+    default: break
+    }
+    
+    return AVURLAsset(url: url)
+}
+
 internal extension AVPlayerItem {
 
     /// Initializes a player item with a playback URL that
@@ -120,6 +138,8 @@ internal extension AVPlayerItem {
             playbackOptions: playbackOptions
         )
 
-        self.init(url: playbackURL)
+        self.init(
+            asset: makeAVAsset(playbackID: playbackID, playbackOptions: playbackOptions)
+        )
     }
 }
