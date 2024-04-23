@@ -16,7 +16,7 @@ class FairplaySessionManager {
         // todo - request app certficate from the backend
     }
     
-    public func requestLicense(_ spcData: Data, playbackID: String, drmToken: String?, offline: Bool, completion: (Result<Data, Error>) -> Void) {
+    public func requestLicense(spcData: Data, playbackID: String, drmToken: String?, offline: Bool, completion: (Result<Data, Error>) -> Void) {
         // todo request license from backend for the playback id, drmToken, and spc data
     }
     

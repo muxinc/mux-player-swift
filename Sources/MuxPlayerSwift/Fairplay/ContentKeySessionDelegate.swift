@@ -117,7 +117,7 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
         var ckcData: Data? = nil
         let group = DispatchGroup()
         group.enter()
-        FairplaySessionManager.shared.requestLicense(spcData, playbackID: playbackID, drmToken: drmToken, offline: false) { result in
+        FairplaySessionManager.shared.requestLicense(spcData: spcData, playbackID: playbackID, drmToken: drmToken, offline: false) { result in
             if let data = try? result.get() {
                 ckcData = data
             }
