@@ -63,7 +63,7 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
         //  need to have the playback ID in the key URL for this same thing to work
         
         let playbackID = "todo - process key url for playbackID"
-        return FairplaySessionManager.shared.getDrmToken(for: playbackID)
+        return PlayerSDK.shared.fairplaySessionManager.drmToken(for: playbackID)
     }
     
     private func handleContentKeyRequest(_ session: AVContentKeySession, request: AVContentKeyRequest) {
@@ -87,7 +87,7 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
         //  the drmtoday example does this by joining a dispatch group, but is this best?
         let group = DispatchGroup()
         group.enter()
-        FairplaySessionManager.shared.requestCertificate(
+        PlayerSDK.shared.fairplaySessionManager.requestCertificate(
             playbackID: "", // todo - get from sdk caller
             drmToken: "", // todo - get from sdk caller
             completion: { result in
@@ -133,7 +133,7 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
         var ckcData: Data? = nil
         let group = DispatchGroup()
         group.enter()
-        FairplaySessionManager.shared.requestLicense(spcData: spcData, playbackID: playbackID, drmToken: drmToken, offline: false) { result in
+        PlayerSDK.shared.fairplaySessionManager.requestLicense(spcData: spcData, playbackID: playbackID, drmToken: drmToken, offline: false) { result in
             if let data = try? result.get() {
                 ckcData = data
             }

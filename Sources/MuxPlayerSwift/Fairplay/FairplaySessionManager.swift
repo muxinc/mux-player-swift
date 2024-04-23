@@ -10,8 +10,6 @@ import AVFoundation
 
 class FairplaySessionManager {
     
-    static let shared = FairplaySessionManager()
-    
     // todo - unused, probably not needed unless you can get the AVURLAsset of a player
     static let AVURLAssetOptionsKeyDrmToken = "com.mux.player.drmtoken"
     
@@ -41,7 +39,7 @@ class FairplaySessionManager {
     }
     
     /// Gets a DRM token previously registered via ``registerDrmToken``
-    func getDrmToken(for playbackID: String) -> String? {
+    func drmToken(for playbackID: String) -> String? {
         return drmAssetsByPlaybackId[playbackID]
     }
     

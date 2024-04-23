@@ -63,13 +63,7 @@ extension PlayerSDK {
             options: [.old, .new]
         ) { player, change in
             if let oldAsset = change.oldValue??.asset as? AVURLAsset {
-                FairplaySessionManager.shared.contentKeySession.removeContentKeyRecipient(oldAsset)
-            }
-            
-            // todo - if someone *did* re-set the asset, it probably wouldn't work with drm
-            //   (maybe if the drm token was in the url, but not sure if that is strictly allowed)
-            if let newAsset = change.newValue??.asset as? AVURLAsset {
-                FairplaySessionManager.shared.contentKeySession.addContentKeyRecipient(newAsset)
+                PlayerSDK.shared.fairplaySessionManager.contentKeySession.removeContentKeyRecipient(oldAsset)
             }
         }
     }

@@ -88,11 +88,17 @@ fileprivate func makePlaybackURL(
 fileprivate func makeAVAsset(playbackID: String, playbackOptions: PlaybackOptions) -> AVAsset {
     let url = makePlaybackURL(playbackID: playbackID, playbackOptions: playbackOptions)
     
+    var asset: AVURLAsset
     if case .drm(let options) = playbackOptions.playbackPolicy {
-        FairplaySessionManager.shared.registerDrmToken(options.drmToken, for: playbackID)
+        PlayerSDK.shared.fairplaySessionManager.registerDrmToken(options.drmToken, for: playbackID)
+        asset = AVURLAsset(url: url)
+        // asset must be attached as early as possible to avoid crashes when attaching later
+        PlayerSDK.shared.fairplaySessionManager.contentKeySession.addContentKeyRecipient(asset)
+    } else {
+        asset = AVURLAsset(url: url)
     }
     
-    return AVURLAsset(url: url)
+    return asset
 }
 
 internal extension AVPlayerItem {
