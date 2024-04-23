@@ -134,7 +134,7 @@ public struct PlaybackOptions {
     enum PlaybackPolicy {
         case `public`(PublicPlaybackOptions)
         case signed(SignedPlaybackOptions)
-        case fairPlay(DrmPlaybackOptions)
+        case drm(DrmPlaybackOptions)
     }
 
     var playbackPolicy: PlaybackPolicy
@@ -212,7 +212,7 @@ extension PlaybackOptions {
         playbackToken: String,
         drmToken: String
     ) {
-        self.playbackPolicy = .fairPlay(
+        self.playbackPolicy = .drm(
             DrmPlaybackOptions(
                 playbackToken: playbackToken,
                 drmToken: drmToken

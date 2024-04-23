@@ -113,7 +113,7 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
         let asset: AVURLAsset // todo - obtain from sdk caller
         let playbackID: String = "" // todo - obtain from sdk caller / url of asset
         
-        // todo - DRM Today example does this by joining a DispatchGroup. Is this acutally preferable
+        // todo - DRM Today example does this by joining a DispatchGroup. Is this really preferable??
         var ckcData: Data? = nil
         let group = DispatchGroup()
         group.enter()
