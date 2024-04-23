@@ -52,7 +52,7 @@ class FairplaySessionManager {
     
     // MARK: initializers
     
-    private convenience init() {
+    convenience init() {
         let session = AVContentKeySession(keySystem: .fairPlayStreaming)
         let delegate = ContentKeySessionDelegate()
         
@@ -63,7 +63,7 @@ class FairplaySessionManager {
         )
     }
     
-    private init(
+    init(
         contentKeySession: AVContentKeySession,
         sessionDelegate: AVContentKeySessionDelegate,
         sessionDelegateQueue: DispatchQueue

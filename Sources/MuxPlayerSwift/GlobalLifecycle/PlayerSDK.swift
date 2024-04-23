@@ -17,10 +17,13 @@ class PlayerSDK {
     let monitor: Monitor
 
     let keyValueObservation: KeyValueObservation
+    
+    let fairplaySessionManager: FairplaySessionManager
 
     init() {
         self.monitor = Monitor()
         self.keyValueObservation = KeyValueObservation()
+        self.fairplaySessionManager = FairplaySessionManager()
     }
 
     class KeyValueObservation {
