@@ -56,6 +56,16 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
     
     // MARK: Logic
     
+    private func lookUpDRMToken(byKeyURL url: String) -> String? {
+        // TODO: We need to be able to look up our DRM Key & Playback ID here.
+        //  DRMToday example uses keyURLStr, but not known if we can do the same
+        //  The keyURL is provided by the delivery infra, and our implementation would
+        //  need to have the playback ID in the key URL for this same thing to work
+        
+        let playbackID = "todo - process key url for playbackID"
+        return FairplaySessionManager.shared.getDrmToken(for: playbackID)
+    }
+    
     private func handleContentKeyRequest(_ session: AVContentKeySession, request: AVContentKeyRequest) {
         // for hls, "the identifier must be an NSURL that matches a key URI in the Media Playlist." from the docs
         guard let keyURLStr = request.identifier as? String,
@@ -63,6 +73,12 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
               let assetIDData = keyURLStr.data(using: .utf8)
         else {
             print("request identifier was not a key url, this is exceptional for hls")
+            return
+        }
+        
+        let drmToken = lookUpDRMToken(byKeyURL: keyURLStr)
+        guard let drmToken = drmToken else {
+            print("DRM Tokens must be registered when the AVPlayerItem is created, using FairplaySessionManager")
             return
         }
         

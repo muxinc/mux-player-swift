@@ -90,10 +90,8 @@ fileprivate func makeAVAsset(playbackID: String, playbackOptions: PlaybackOption
     
     switch playbackOptions.playbackPolicy {
     case .drm(let options): do {
-        return AVURLAsset(
-            url: url,
-            options: [FairplaySessionManager.AVURLAssetOptionsKeyDrmToken: options.drmToken]
-        )
+        FairplaySessionManager.shared.registerDrmToken(options.drmToken, for: playbackID)
+        return AVURLAsset(url: url)
     }
     default: break
     }
@@ -133,13 +131,11 @@ internal extension AVPlayerItem {
         playbackID: String,
         playbackOptions: PlaybackOptions
     ) {
-        let playbackURL = makePlaybackURL(
+        let asset = makeAVAsset(
             playbackID: playbackID,
             playbackOptions: playbackOptions
         )
 
-        self.init(
-            asset: makeAVAsset(playbackID: playbackID, playbackOptions: playbackOptions)
-        )
+        self.init(asset: asset)
     }
 }
