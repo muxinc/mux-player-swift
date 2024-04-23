@@ -89,7 +89,7 @@ fileprivate func makeAVAsset(playbackID: String, playbackOptions: PlaybackOption
     let url = makePlaybackURL(playbackID: playbackID, playbackOptions: playbackOptions)
     
     if case .drm(let options) = playbackOptions.playbackPolicy {
-        FairplaySessionManager.shared.registerDrmToken(options.drmToken, for: playbackID)
+        PlayerSDK.shared.fairplaySessionManager.registerDrmToken(options.drmToken, for: playbackID)
     }
     
     return AVURLAsset(url: url)
