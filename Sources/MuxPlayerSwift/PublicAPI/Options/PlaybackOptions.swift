@@ -202,9 +202,20 @@ extension PlaybackOptions {
             )
         )
     }
+    
+    /// Initializes playback options for use with a signed playback token
+    /// signed playback token
+    /// - Parameter playbackToken: JSON web token signed
+    /// with a signing key
+    public init(
+        playbackToken: String
+    ) {
+        self.playbackPolicy = .signed(
+            SignedPlaybackOptions(playbackToken: playbackToken)
+        )
+    }
 
     /// Initializes playback options for use with Mux Video DRM
-    /// signed playback token
     /// - Parameter playbackToken: JSON web token signed
     /// with a signing key
     /// - Parameter drmToken: JSON web token for DRM playback
