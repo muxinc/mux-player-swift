@@ -56,7 +56,7 @@ class PlayerSDK {
 
 // MARK extension for observations for DRM
 extension PlayerSDK {
-    func observePlayerForDrm(_ player: AVPlayer) {
+    func observePlayerForDRM(_ player: AVPlayer) {
         keyValueObservation.register(
             player,
             for: \AVPlayer.currentItem,
