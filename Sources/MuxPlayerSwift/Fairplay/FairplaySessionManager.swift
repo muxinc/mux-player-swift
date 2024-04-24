@@ -15,8 +15,17 @@ class FairplaySessionManager {
     
     private var drmAssetsByPlaybackId: [String: String] = [:]
     
-    let contentKeySession: AVContentKeySession
-    let sessionDelegate: AVContentKeySessionDelegate
+    // note - null on simulators or other environments where fairplay isn't supported
+    private let contentKeySession: AVContentKeySession?
+    private let sessionDelegate: AVContentKeySessionDelegate?
+    
+    func addContentKeyRecipient(_ recipient: AVContentKeyRecipient) {
+        contentKeySession?.addContentKeyRecipient(recipient)
+    }
+    
+    func removeContentKeyRecipient(_ recipient: AVContentKeyRecipient) {
+        contentKeySession?.removeContentKeyRecipient(recipient)
+    }
     
     // MARK: Requesting licenses and certs
     
@@ -51,8 +60,13 @@ class FairplaySessionManager {
     // MARK: initializers
     
     convenience init() {
+#if targetEnvironment(simulator)
+        let session: AVContentKeySession? = nil
+        let delegate: AVContentKeySessionDelegate? = nil
+#else
         let session = AVContentKeySession(keySystem: .fairPlayStreaming)
         let delegate = ContentKeySessionDelegate()
+#endif
         
         self.init(
             contentKeySession: session,
@@ -62,11 +76,14 @@ class FairplaySessionManager {
     }
     
     init(
-        contentKeySession: AVContentKeySession,
-        sessionDelegate: AVContentKeySessionDelegate,
+        contentKeySession: AVContentKeySession?,
+        sessionDelegate: AVContentKeySessionDelegate?,
         sessionDelegateQueue: DispatchQueue
     ) {
-        contentKeySession.setDelegate(sessionDelegate, queue: sessionDelegateQueue)
+        print(">>>>>>>>>>>>>>>>>")
+        print(ProcessInfo.processInfo.environment["APP_CERT_BASE64"])
+        
+        contentKeySession?.setDelegate(sessionDelegate, queue: sessionDelegateQueue)
         
         self.contentKeySession = contentKeySession
         self.sessionDelegate = sessionDelegate

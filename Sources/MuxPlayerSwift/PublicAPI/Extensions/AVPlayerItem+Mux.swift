@@ -93,7 +93,7 @@ fileprivate func makeAVAsset(playbackID: String, playbackOptions: PlaybackOption
         PlayerSDK.shared.fairplaySessionManager.registerDrmToken(options.drmToken, for: playbackID)
         asset = AVURLAsset(url: url)
         // asset must be attached as early as possible to avoid crashes when attaching later
-        PlayerSDK.shared.fairplaySessionManager.contentKeySession.addContentKeyRecipient(asset)
+        PlayerSDK.shared.fairplaySessionManager.addContentKeyRecipient(asset)
     } else {
         asset = AVURLAsset(url: url)
     }

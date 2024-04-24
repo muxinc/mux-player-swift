@@ -63,7 +63,7 @@ extension PlayerSDK {
             options: [.old, .new]
         ) { player, change in
             if let oldAsset = change.oldValue??.asset as? AVURLAsset {
-                PlayerSDK.shared.fairplaySessionManager.contentKeySession.removeContentKeyRecipient(oldAsset)
+                PlayerSDK.shared.fairplaySessionManager.removeContentKeyRecipient(oldAsset)
             }
         }
     }
