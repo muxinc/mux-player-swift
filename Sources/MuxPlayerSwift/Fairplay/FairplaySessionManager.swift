@@ -14,7 +14,6 @@ class FairplaySessionManager {
     static let AVURLAssetOptionsKeyDrmToken = "com.mux.player.drmtoken"
     
     private var drmAssetsByPlaybackId: [String: String] = [:]
-    
     // note - null on simulators or other environments where fairplay isn't supported
     private let contentKeySession: AVContentKeySession?
     private let sessionDelegate: AVContentKeySessionDelegate?
@@ -66,6 +65,12 @@ class FairplaySessionManager {
     /// Registers a DRM Token as belonging to a playback ID.
     func unregisterDrmToken(for playabckID: String) {
         drmAssetsByPlaybackId.removeValue(forKey: playabckID)
+    }
+    
+    // MARK: helpers
+    
+    private func licenseUrl(playbackId: String, drmToken: String, domain: String) -> String {
+        return "https://\(domain)/fairplay/\(playbackId)?\(drmToken)"
     }
     
     // MARK: initializers
