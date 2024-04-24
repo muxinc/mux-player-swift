@@ -98,6 +98,7 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
             }
         )
         group.wait()
+        print("CERTIFICATE :: Giving App Cert to CDM: \(applicationCertificate)")
         guard let applicationCertificate = applicationCertificate else {
             print("failed to get application certificate")
             return
