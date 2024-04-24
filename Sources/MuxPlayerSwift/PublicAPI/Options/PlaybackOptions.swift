@@ -126,7 +126,7 @@ public struct PlaybackOptions {
         var playbackToken: String
     }
     
-    struct DrmPlaybackOptions {
+    struct DRMPlaybackOptions {
         var playbackToken: String
         var drmToken: String
     }
@@ -134,7 +134,7 @@ public struct PlaybackOptions {
     enum PlaybackPolicy {
         case `public`(PublicPlaybackOptions)
         case signed(SignedPlaybackOptions)
-        case drm(DrmPlaybackOptions)
+        case drm(DRMPlaybackOptions)
     }
 
     var playbackPolicy: PlaybackPolicy
@@ -225,7 +225,7 @@ extension PlaybackOptions {
         customDomain: String? = nil
     ) {
         self.playbackPolicy = .drm(
-            DrmPlaybackOptions(
+            DRMPlaybackOptions(
                 playbackToken: playbackToken,
                 drmToken: drmToken
             )
