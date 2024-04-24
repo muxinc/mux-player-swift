@@ -18,6 +18,8 @@ class FairplaySessionManager {
     private let contentKeySession: AVContentKeySession?
     private let sessionDelegate: AVContentKeySessionDelegate?
     
+    private let urlSession = URLSession.shared
+    
     func addContentKeyRecipient(_ recipient: AVContentKeyRecipient) {
         contentKeySession?.addContentKeyRecipient(recipient)
     }
@@ -44,9 +46,54 @@ class FairplaySessionManager {
         completion(Result.success(certData))
     }
     
+    static func encode(value url: String?) -> String {
+        let queryKeyValueString = CharacterSet(charactersIn: ":?=&+").inverted
+        return url?.addingPercentEncoding(withAllowedCharacters: queryKeyValueString) ?? ""
+    }
+    
     /// Requests a license to play based on the given SPC data
-    func requestLicense(spcData: Data, playbackID: String, drmToken: String?, offline: Bool, completion: (Result<Data, Error>) -> Void) {
-        // todo request license from backend for the playback id, drmToken, and spc data
+    func requestLicense(
+        spcData: Data,
+        playbackID: String,
+        drmToken: String,
+        domain: String,
+        offline: Bool, 
+        completion: @escaping (Result<Data, Error>) -> Void
+    ) {
+        // no need to track license request tasks since we are not prewarming
+        //  and we don't need to worry about re-joinining any existing license
+        //  reqs.
+        
+        var request = URLRequest(url: licenseURL(playbackId: playbackID, drmToken: drmToken, domain: domain))
+        request.httpMethod = "POST"
+        
+        // todo - Do we need special encoding options? like with padding or newlines
+        let spcDataBase64 = spcData.base64EncodedString()
+        request.httpBody = spcDataBase64.data(using: .utf8, allowLossyConversion: true)
+        
+        let task = urlSession.dataTask(with: request) { [completion] data, response, error in
+            if let httpResponse = response as? HTTPURLResponse {
+                let responseBody = data?.base64EncodedString()
+                print("Certificate response body: ", responseBody!)
+                print("Certificate response headers: ", httpResponse.allHeaderFields)
+            }
+            
+            if let error = error {
+                print("URL Session Task Failed: %@", error.localizedDescription)
+                completion(Result.failure(error)) // todo - real Error type
+                return
+            }
+            
+            if let ckcData = data {
+                let ckcMessage = Data(base64Encoded: ckcData)
+                let ckcBase64 = ckcData.base64EncodedString()
+                print("CKC base64:", ckcBase64)
+                completion(Result.success(ckcData))
+            } else {
+                completion(Result.failure(CancellationError())) // todo - real Error Type
+            }
+        }
+        task.resume()
     }
     
     // MARK: registering assets
@@ -69,8 +116,10 @@ class FairplaySessionManager {
     
     // MARK: helpers
     
-    private func licenseUrl(playbackId: String, drmToken: String, domain: String) -> String {
-        return "https://\(domain)/fairplay/\(playbackId)?\(drmToken)"
+    private func licenseURL(playbackId: String, drmToken: String, domain: String) -> URL {
+        let baseStr = "https://\(domain)/fairplay/\(playbackId)?token=\(drmToken)"
+        let url = URL(string: baseStr)
+        return url!
     }
     
     // MARK: initializers

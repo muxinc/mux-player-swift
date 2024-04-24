@@ -121,11 +121,11 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
             }
             // step: exchange SPC for CKC using KeyRequest w/completion handler (request wants to know if failed)
             // todo - drmToken from Asset
-            handleContentKeyResponse(spcData: spcData, drmToken: "", request: request)
+            handleContentKeyResponse(spcData: spcData, drmToken: "", domain: "", request: request)
         }
     }
     
-    private func handleContentKeyResponse(spcData: Data, drmToken: String, request: AVContentKeyRequest)  {
+    private func handleContentKeyResponse(spcData: Data, drmToken: String, domain: String, request: AVContentKeyRequest)  {
         // Send SPC to Key Server and obtain CKC
         let asset: AVURLAsset // todo - obtain from sdk caller
         let playbackID: String = "" // todo - obtain from sdk caller / url of asset
@@ -134,7 +134,7 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
         var ckcData: Data? = nil
         let group = DispatchGroup()
         group.enter()
-        PlayerSDK.shared.fairplaySessionManager.requestLicense(spcData: spcData, playbackID: playbackID, drmToken: drmToken, offline: false) { result in
+        PlayerSDK.shared.fairplaySessionManager.requestLicense(spcData: spcData, playbackID: playbackID, drmToken: drmToken, domain: domain, offline: false) { result in
             if let data = try? result.get() {
                 ckcData = data
             }
