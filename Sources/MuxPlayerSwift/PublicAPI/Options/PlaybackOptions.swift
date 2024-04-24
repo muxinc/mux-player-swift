@@ -221,7 +221,8 @@ extension PlaybackOptions {
     /// - Parameter drmToken: JSON web token for DRM playback
     public init(
         playbackToken: String,
-        drmToken: String
+        drmToken: String,
+        customDomain: String? = nil
     ) {
         self.playbackPolicy = .drm(
             DrmPlaybackOptions(
@@ -229,6 +230,7 @@ extension PlaybackOptions {
                 drmToken: drmToken
             )
         )
+        self.customDomain = customDomain
     }
 
 
