@@ -76,8 +76,6 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
         }
         print("|| PlaybackID from \(uri) is \(playbackID)")
         
-        
-        
         let playbackOptions = PlayerSDK.shared.fairplaySessionManager
             .findRegisteredPlaybackOptions(for: playbackID)
         if let playbackOptions = playbackOptions,
@@ -159,7 +157,7 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
         var ckcData: Data? = nil
         let group = DispatchGroup()
         group.enter()
-        PlayerSDK.shared.fairplaySessionManager.requestLicense(spcData: spcData, playbackID: playbackID, drmToken: drmToken, domain: domain, offline: false) { result in
+        PlayerSDK.shared.fairplaySessionManager.requestLicense(spcData: spcData, playbackID: playbackID, drmToken: drmToken, playbackDomain: domain, offline: false) { result in
             if let data = try? result.get() {
                 ckcData = data
             }

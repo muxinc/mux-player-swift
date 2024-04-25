@@ -47,20 +47,27 @@ class FairplaySessionManager {
     }
     
     /// Requests a license to play based on the given SPC data
+    /// - parameter playbackDomain - Domain for the playback URL, (eg, stream.mux.com or a custom domain)
     func requestLicense(
         spcData: Data,
         playbackID: String,
         drmToken: String,
-        domain: String,
+        playbackDomain: String,
         offline: Bool, 
         completion: @escaping (Result<Data, Error>) -> Void
     ) {
         // no need to track license request tasks since we are not prewarming
-        //  and we don't need to worry about re-joinining any existing license
-        //  reqs.
+        //  and therefore don't need to worry about re-joinining any existing
+        //  license reqs.
         
-        var request = URLRequest(url: licenseURL(playbackId: playbackID, drmToken: drmToken, domain: domain))
+        // TODO: Need to calculate license Domain from input playbackDomain
+        //  ie, stream.mux.com -> license.mux.com or custom.domain.com -> TODO: ????
+        let licenseDomain = "license.gcp-us-west1-vos1.staging.mux.com"
+        
+        var request = URLRequest(url: licenseURL(playbackId: playbackID, drmToken: drmToken, licenseDomain: licenseDomain))
         request.httpMethod = "POST"
+        
+        // todo - this is where we need to do the encoding
         
         // todo - Do we need special encoding options? like with padding or newlines
         let spcDataBase64 = spcData.base64EncodedString()
@@ -119,10 +126,16 @@ class FairplaySessionManager {
     
     // MARK: helpers
     
-    private func licenseURL(playbackId: String, drmToken: String, domain: String) -> URL {
-        let baseStr = "https://\(domain)/fairplay/\(playbackId)?token=\(drmToken)"
+    private func licenseURL(playbackId: String, drmToken: String, licenseDomain: String) -> URL {
+        let baseStr = "https://\(licenseDomain)/fairplay/\(playbackId)?token=\(drmToken)"
         let url = URL(string: baseStr)
         return url!
+    }
+    
+    /// URL-encodes base-64 data, encoding these characters: `:?=&+`
+    private func urlEncodeBase64(value: String?) -> String {
+        let queryKeyValueString = CharacterSet(charactersIn: ":?=&+").inverted
+        return value?.addingPercentEncoding(withAllowedCharacters: queryKeyValueString) ?? ""
     }
     
     // MARK: initializers
