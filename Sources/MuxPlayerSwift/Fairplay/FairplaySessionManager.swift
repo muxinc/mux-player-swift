@@ -46,11 +46,6 @@ class FairplaySessionManager {
         completion(Result.success(certData))
     }
     
-//    static func encode(value url: String?) -> String {
-//        let queryKeyValueString = CharacterSet(charactersIn: ":?=&+").inverted
-//        return url?.addingPercentEncoding(withAllowedCharacters: queryKeyValueString) ?? ""
-//    }
-    
     /// Requests a license to play based on the given SPC data
     func requestLicense(
         spcData: Data,
