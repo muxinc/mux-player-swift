@@ -34,7 +34,7 @@ class FairplaySessionManager {
     func requestCertificate(playbackID: String, drmToken: String, completion: (Result<Data, Error>) -> Void) {
         // todo - request app certficate from the backend
         let tempCert = ProcessInfo.processInfo.environment["APP_CERT_BASE64"]
-        print("CERTIFICATE :: temp app cert is \(tempCert)")
+        //print("CERTIFICATE :: temp app cert is \(tempCert)")
         
         guard let tempCert = tempCert else {
             completion(Result.failure(CancellationError())) // todo - a real Error type
