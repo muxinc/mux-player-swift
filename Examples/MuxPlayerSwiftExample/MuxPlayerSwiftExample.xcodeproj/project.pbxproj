@@ -17,6 +17,7 @@
 		193228DC2ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 193228DB2ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITests.swift */; };
 		193228DE2ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 193228DD2ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITestsLaunchTests.swift */; };
 		193228EC2ACF6B3400966FE1 /* MuxPlayerSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 193228EB2ACF6B3400966FE1 /* MuxPlayerSwift */; };
+		358572022BD9FB700098C3F6 /* DRMExamples.swift in Sources */ = {isa = PBXBuildFile; fileRef = 358572012BD9FB700098C3F6 /* DRMExamples.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -50,6 +51,7 @@
 		193228D72ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MuxPlayerSwiftExampleUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		193228DB2ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MuxPlayerSwiftExampleUITests.swift; sourceTree = "<group>"; };
 		193228DD2ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MuxPlayerSwiftExampleUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		358572012BD9FB700098C3F6 /* DRMExamples.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DRMExamples.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -108,6 +110,7 @@
 				193228C32ACF6AC800966FE1 /* Assets.xcassets */,
 				193228C52ACF6AC800966FE1 /* LaunchScreen.storyboard */,
 				193228C82ACF6AC800966FE1 /* Info.plist */,
+				358572012BD9FB700098C3F6 /* DRMExamples.swift */,
 			);
 			path = MuxPlayerSwiftExample;
 			sourceTree = "<group>";
@@ -266,6 +269,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				358572022BD9FB700098C3F6 /* DRMExamples.swift in Sources */,
 				193228BF2ACF6AC700966FE1 /* MainViewController.swift in Sources */,
 				193228BB2ACF6AC700966FE1 /* AppDelegate.swift in Sources */,
 				193228BD2ACF6AC700966FE1 /* SceneDelegate.swift in Sources */,
