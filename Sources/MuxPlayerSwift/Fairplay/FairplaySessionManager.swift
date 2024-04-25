@@ -68,7 +68,7 @@ class FairplaySessionManager {
         var request = URLRequest(url: licenseURL(playbackId: playbackID, drmToken: drmToken, licenseDomain: licenseDomain))
         
         // NOTE: The format of this POST body is likely to change before release. Instead of accepting
-        //  this form-encoded body, a subsequent change will require only the HTTP body
+        //  this form-encoded body, a subsequent change will require only the Base64 SPC
         // BODY PARAMS
         // Base-64 the SPC, urlencode that, prepare form-encoded body with spc
         let encodedSpcMessage = urlEncodeBase64(spcData.base64EncodedString())
