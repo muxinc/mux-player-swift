@@ -56,14 +56,24 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
     
     // MARK: Logic
     
-    private func lookUpDRMToken(byKeyURL url: String) -> String? {
+    private func lookUpDRMOptions(byKeyURL url: String) -> PlaybackOptions.DRMPlaybackOptions? {
         // TODO: We need to be able to look up our DRM Key & Playback ID here.
         //  DRMToday example uses keyURLStr, but not known if we can do the same
         //  The keyURL is provided by the delivery infra, and our implementation would
         //  need to have the playback ID in the key URL for this same thing to work
         
         let playbackID = "todo - process key url for playbackID"
-        return PlayerSDK.shared.fairplaySessionManager.drmToken(for: playbackID)
+        
+        let playbackOptions = PlayerSDK.shared.fairplaySessionManager.findRegisteredPlaybackOptions(for: playbackID)
+        if let playbackOptions = playbackOptions, 
+            case .drm(let drmOptions) = playbackOptions.playbackPolicy
+        {
+            print("Found DRMPlaybackOptions for \(playbackID)")
+            return drmOptions
+        } else {
+            print("Found NO plyabck options for \(playbackID)")
+            return nil
+        }
     }
     
     private func handleContentKeyRequest(_ session: AVContentKeySession, request: AVContentKeyRequest) {

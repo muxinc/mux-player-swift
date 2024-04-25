@@ -13,7 +13,7 @@ class FairplaySessionManager {
     // todo - unused, probably not needed unless you can get the AVURLAsset of a player
     static let AVURLAssetOptionsKeyDrmToken = "com.mux.player.drmtoken"
     
-    private var drmAssetsByPlaybackId: [String: String] = [:]
+    private var playbackOptionsByPlaybackID: [String: PlaybackOptions] = [:]
     // note - null on simulators or other environments where fairplay isn't supported
     private let contentKeySession: AVContentKeySession?
     private let sessionDelegate: AVContentKeySessionDelegate?
@@ -46,10 +46,10 @@ class FairplaySessionManager {
         completion(Result.success(certData))
     }
     
-    static func encode(value url: String?) -> String {
-        let queryKeyValueString = CharacterSet(charactersIn: ":?=&+").inverted
-        return url?.addingPercentEncoding(withAllowedCharacters: queryKeyValueString) ?? ""
-    }
+//    static func encode(value url: String?) -> String {
+//        let queryKeyValueString = CharacterSet(charactersIn: ":?=&+").inverted
+//        return url?.addingPercentEncoding(withAllowedCharacters: queryKeyValueString) ?? ""
+//    }
     
     /// Requests a license to play based on the given SPC data
     func requestLicense(
@@ -73,9 +73,12 @@ class FairplaySessionManager {
         
         let task = urlSession.dataTask(with: request) { [completion] data, response, error in
             if let httpResponse = response as? HTTPURLResponse {
+                let responseCode = httpResponse.statusCode
+                print("License response: \(httpResponse.statusCode)")
+
                 let responseBody = data?.base64EncodedString()
-                print("Certificate response body: ", responseBody!)
-                print("Certificate response headers: ", httpResponse.allHeaderFields)
+                print("License response body: ", responseBody!)
+                print("License response headers: ", httpResponse.allHeaderFields)
             }
             
             if let error = error {
@@ -86,8 +89,11 @@ class FairplaySessionManager {
             
             if let ckcData = data {
                 let ckcMessage = Data(base64Encoded: ckcData)
+                
+                // Also log the CKC
                 let ckcBase64 = ckcData.base64EncodedString()
-                print("CKC base64:", ckcBase64)
+                print("CKC Response Body base64:", ckcBase64)
+                
                 completion(Result.success(ckcData))
             } else {
                 completion(Result.failure(CancellationError())) // todo - real Error Type
@@ -98,20 +104,20 @@ class FairplaySessionManager {
     
     // MARK: registering assets
     
-    /// Registers a DRM Token as belonging to a playback ID.
-    func registerDrmToken(_ token: String, for playbackID: String) {
+    /// Registers a ``PlaybackOptions`` for DRM playback, associated with the given playbackID
+    func registerPlaybackOptions(_ token: PlaybackOptions, for playbackID: String) {
         // todo - i wonder if the cache branch has a handy function for extracting playback ids
-        drmAssetsByPlaybackId[playbackID] = token
+        playbackOptionsByPlaybackID[playbackID] = token
     }
     
     /// Gets a DRM token previously registered via ``registerDrmToken``
-    func drmToken(for playbackID: String) -> String? {
-        return drmAssetsByPlaybackId[playbackID]
+    func findRegisteredPlaybackOptions(for playbackID: String) -> PlaybackOptions? {
+        return playbackOptionsByPlaybackID[playbackID]
     }
     
-    /// Registers a DRM Token as belonging to a playback ID.
-    func unregisterDrmToken(for playabckID: String) {
-        drmAssetsByPlaybackId.removeValue(forKey: playabckID)
+    /// Unregisters a ``PlaybackOptions`` for DRM playback, given the assiciated playback ID
+    func unregisterPlaybackOptions(for playabckID: String) {
+        playbackOptionsByPlaybackID.removeValue(forKey: playabckID)
     }
     
     // MARK: helpers
