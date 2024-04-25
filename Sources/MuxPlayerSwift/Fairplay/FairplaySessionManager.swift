@@ -105,19 +105,21 @@ class FairplaySessionManager {
     // MARK: registering assets
     
     /// Registers a ``PlaybackOptions`` for DRM playback, associated with the given playbackID
-    func registerPlaybackOptions(_ token: PlaybackOptions, for playbackID: String) {
-        // todo - i wonder if the cache branch has a handy function for extracting playback ids
-        playbackOptionsByPlaybackID[playbackID] = token
+    func registerPlaybackOptions(_ opts: PlaybackOptions, for playbackID: String) {
+        print("Registering playbackID \(playbackID)")
+        playbackOptionsByPlaybackID[playbackID] = opts
     }
     
-    /// Gets a DRM token previously registered via ``registerDrmToken``
+    /// Gets a DRM token previously registered via ``registerPlaybackOptions``
     func findRegisteredPlaybackOptions(for playbackID: String) -> PlaybackOptions? {
+        print("Finding playbackID \(playbackID)")
         return playbackOptionsByPlaybackID[playbackID]
     }
     
     /// Unregisters a ``PlaybackOptions`` for DRM playback, given the assiciated playback ID
-    func unregisterPlaybackOptions(for playabckID: String) {
-        playbackOptionsByPlaybackID.removeValue(forKey: playabckID)
+    func unregisterPlaybackOptions(for playbackID: String) {
+        print("UN-Registering playbackID \(playbackID)")
+        playbackOptionsByPlaybackID.removeValue(forKey: playbackID)
     }
     
     // MARK: helpers

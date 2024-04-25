@@ -86,12 +86,13 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
             print("Found DRMPlaybackOptions for \(playbackID)")
             return drmOptions
         } else {
-            print("Found NO plyabck options for \(playbackID)")
+            print("Found NO playback options for \(playbackID)")
             return nil
         }
     }
     
     private func handleContentKeyRequest(_ session: AVContentKeySession, request: AVContentKeyRequest) {
+        print("<><>handleContentKeyRequest: Called")
         // for hls, "the identifier must be an NSURL that matches a key URI in the Media Playlist." from the docs
         guard let keyURLStr = request.identifier as? String,
               let keyURL = URL(string: keyURLStr),
@@ -101,8 +102,8 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
             return
         }
         
-        let drmToken = lookUpDRMOptions(bySKDKeyUri: keyURL)
-        guard let drmToken = drmToken else {
+        let drmOptions = lookUpDRMOptions(bySKDKeyUri: keyURL)
+        guard let drmToken = drmOptions else {
             print("DRM Tokens must be registered when the AVPlayerItem is created, using FairplaySessionManager")
             return
         }
@@ -123,7 +124,7 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
             }
         )
         group.wait()
-        print("CERTIFICATE :: Giving App Cert to CDM: \(applicationCertificate)")
+        print("CERTIFICATE :: Giving App Cert to CDM: \(applicationCertificate?.base64EncodedString())")
         guard let applicationCertificate = applicationCertificate else {
             print("failed to get application certificate")
             return
