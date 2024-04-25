@@ -68,7 +68,7 @@ class FairplaySessionManager {
         var request = URLRequest(url: licenseURL(playbackId: playbackID, drmToken: drmToken, licenseDomain: licenseDomain))
         
         // NOTE: The format of this POST body is likely to change before release. Instead of accepting
-        //  this form-encoded body, a subsequent change will required only the HTTP body
+        //  this form-encoded body, a subsequent change will require only the HTTP body
         // BODY PARAMS
         // Base-64 the SPC, urlencode that, prepare form-encoded body with spc
         let encodedSpcMessage = urlEncodeBase64(spcData.base64EncodedString())
@@ -83,8 +83,6 @@ class FairplaySessionManager {
         
         request.httpMethod = "POST"
         request.httpBody = postData.data(using: .utf8, allowLossyConversion: true)
-        
-        // TODO: application/x-www-form-urlencoded
         
         let task = urlSession.dataTask(with: request) { [completion] data, response, error in
             if let httpResponse = response as? HTTPURLResponse {
@@ -103,6 +101,7 @@ class FairplaySessionManager {
             }
             
             if let ckcData = data {
+                // TODO: This assumes the response body is base64
                 let ckcMessage = Data(base64Encoded: ckcData)
                 
                 // Also log the CKC
