@@ -16,7 +16,7 @@ fileprivate func makePlaybackURL(
     if let customDomain = playbackOptions.customDomain {
         components.host = "stream.\(customDomain)"
     } else {
-        components.host = "stream.mux.com"
+        components.host = "stream.staging.mux.com"
     }
 
     components.path = "/\(playbackID).m3u8"
@@ -69,6 +69,19 @@ fileprivate func makePlaybackURL(
             URLQueryItem(
                 name: "token",
                 value: signedPlaybackOptions.playbackToken
+            )
+        )
+
+        components.queryItems = queryItems
+
+    } else if case PlaybackOptions.PlaybackPolicy.drm(let drmPlaybackOptions) = playbackOptions.playbackPolicy {
+        
+        var queryItems: [URLQueryItem] = []
+
+        queryItems.append(
+            URLQueryItem(
+                name: "token",
+                value: drmPlaybackOptions.playbackToken
             )
         )
 

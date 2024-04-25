@@ -145,8 +145,8 @@ class FairplaySessionManager {
         sessionDelegate: AVContentKeySessionDelegate?,
         sessionDelegateQueue: DispatchQueue
     ) {
-        print(">>>>>>>>>>>>>>>>>")
-        print(ProcessInfo.processInfo.environment["APP_CERT_BASE64"])
+//        print(">>>>>>>>>>>>>>>>>")
+//        print(ProcessInfo.processInfo.environment["APP_CERT_BASE64"])
         
         contentKeySession?.setDelegate(sessionDelegate, queue: sessionDelegateQueue)
         
