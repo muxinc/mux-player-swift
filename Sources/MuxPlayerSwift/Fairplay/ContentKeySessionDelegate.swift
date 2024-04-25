@@ -56,17 +56,32 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
     
     // MARK: Logic
     
-    private func lookUpDRMOptions(byKeyURL url: String) -> PlaybackOptions.DRMPlaybackOptions? {
+    private func lookUpDRMOptions(bySKDKeyUri uri: URL) -> PlaybackOptions.DRMPlaybackOptions? {
         // TODO: We need to be able to look up our DRM Key & Playback ID here.
         //  DRMToday example uses keyURLStr, but not known if we can do the same
         //  The keyURL is provided by the delivery infra, and our implementation would
         //  need to have the playback ID in the key URL for this same thing to work
         
-        let playbackID = "todo - process key url for playbackID"
+        let urlComponents = URLComponents(url: uri, resolvingAgainstBaseURL: false)
+        guard let urlComponents = urlComponents else {
+            // not likely
+            print("!! Error: Cannot Parse URI")
+            return nil
+        }
         
-        let playbackOptions = PlayerSDK.shared.fairplaySessionManager.findRegisteredPlaybackOptions(for: playbackID)
-        if let playbackOptions = playbackOptions, 
-            case .drm(let drmOptions) = playbackOptions.playbackPolicy
+        let playbackID = urlComponents.findQueryValue(key: "playbackId")
+        guard let playbackID = playbackID else {
+            print("!! Error: URI [\(uri)] did not have playbackId!")
+            return nil
+        }
+        print("|| PlaybackID from \(uri) is \(playbackID)")
+        
+        
+        
+        let playbackOptions = PlayerSDK.shared.fairplaySessionManager
+            .findRegisteredPlaybackOptions(for: playbackID)
+        if let playbackOptions = playbackOptions,
+           case .drm(let drmOptions) = playbackOptions.playbackPolicy
         {
             print("Found DRMPlaybackOptions for \(playbackID)")
             return drmOptions
@@ -86,7 +101,7 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
             return
         }
         
-        let drmToken = lookUpDRMToken(byKeyURL: keyURLStr)
+        let drmToken = lookUpDRMOptions(bySKDKeyUri: keyURL)
         guard let drmToken = drmToken else {
             print("DRM Tokens must be registered when the AVPlayerItem is created, using FairplaySessionManager")
             return
@@ -160,5 +175,19 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
         let keyResponse = AVContentKeyResponse(fairPlayStreamingKeyResponseData: ckcData)
         
         request.processContentKeyResponse(keyResponse)
+    }
+}
+
+extension URLComponents {
+    func findQueryValue(key: String) -> String? {
+        if let items = self.queryItems {
+            for item in items {
+                if item.name.lowercased() == key.lowercased() {
+                    return item.value
+                }
+            }
+        }
+        
+        return nil
     }
 }
