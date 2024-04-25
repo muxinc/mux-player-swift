@@ -73,6 +73,9 @@ class FairplaySessionManager {
         print("SPC base64:", encodedSpcMessage)
         var postData = String(format: "spc=%@", encodedSpcMessage)
         
+        // QUERY PARAMS
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        request.setValue(String(format: "%lu", request.httpBody?.count ?? 0), forHTTPHeaderField: "Content-Length")
         
         request.httpMethod = "POST"
         request.httpBody = postData.data(using: .utf8, allowLossyConversion: true)
