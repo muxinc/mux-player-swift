@@ -81,8 +81,12 @@ class FairplaySessionManager {
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         request.setValue(String(format: "%lu", request.httpBody?.count ?? 0), forHTTPHeaderField: "Content-Length")
         
+        print("POST BODY: \(postData)")
+        
         request.httpMethod = "POST"
         request.httpBody = postData.data(using: .utf8, allowLossyConversion: true)
+        
+        print("Sending License/CKC Request to: \(request.url?.absoluteString)")
         
         let task = urlSession.dataTask(with: request) { [completion] data, response, error in
             if let httpResponse = response as? HTTPURLResponse {
@@ -139,7 +143,7 @@ class FairplaySessionManager {
     // MARK: helpers
     
     private func licenseURL(playbackId: String, drmToken: String, licenseDomain: String) -> URL {
-        let baseStr = "https://\(licenseDomain)/fairplay/\(playbackId)?token=\(drmToken)"
+        let baseStr = "https://\(licenseDomain)/license/fairplay/\(playbackId)?token=\(drmToken)"
         let url = URL(string: baseStr)
         return url!
     }
