@@ -67,12 +67,16 @@ class FairplaySessionManager {
         
         var request = URLRequest(url: licenseURL(playbackId: playbackID, drmToken: drmToken, licenseDomain: licenseDomain))
         
+        // NOTE: The format of this POST body is likely to change before release. Instead of accepting
+        //  this form-encoded body, a subsequent change will required only the HTTP body
         // BODY PARAMS
         // Base-64 the SPC, urlencode that, prepare form-encoded body with spc
         let encodedSpcMessage = urlEncodeBase64(spcData.base64EncodedString())
         print("SPC base64:", encodedSpcMessage)
         var postData = String(format: "spc=%@", encodedSpcMessage)
-        
+        // DRMToday example appends `offline` to POST body, but we are not doing offline keys yet
+        //  also, we don't like the form-encoded POST body
+
         // QUERY PARAMS
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         request.setValue(String(format: "%lu", request.httpBody?.count ?? 0), forHTTPHeaderField: "Content-Length")
