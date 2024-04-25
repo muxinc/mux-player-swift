@@ -48,12 +48,13 @@ class FairplaySessionManager {
     
     /// Requests a license to play based on the given SPC data
     /// - parameter playbackDomain - Domain for the playback URL, (eg, stream.mux.com or a custom domain)
+    /// - parameter offline - Not currently used, may not ever be used in short-term, maybe delete?
     func requestLicense(
         spcData: Data,
         playbackID: String,
         drmToken: String,
         playbackDomain: String,
-        offline: Bool, 
+        offline _: Bool,
         completion: @escaping (Result<Data, Error>) -> Void
     ) {
         // no need to track license request tasks since we are not prewarming
@@ -65,13 +66,18 @@ class FairplaySessionManager {
         let licenseDomain = "license.gcp-us-west1-vos1.staging.mux.com"
         
         var request = URLRequest(url: licenseURL(playbackId: playbackID, drmToken: drmToken, licenseDomain: licenseDomain))
+        
+        // BODY PARAMS
+        // Base-64 the SPC, urlencode that, prepare form-encoded body with spc
+        let encodedSpcMessage = urlEncodeBase64(spcData.base64EncodedString())
+        print("SPC base64:", encodedSpcMessage)
+        var postData = String(format: "spc=%@", encodedSpcMessage)
+        
+        
         request.httpMethod = "POST"
+        request.httpBody = postData.data(using: .utf8, allowLossyConversion: true)
         
-        // todo - this is where we need to do the encoding
-        
-        // todo - Do we need special encoding options? like with padding or newlines
-        let spcDataBase64 = spcData.base64EncodedString()
-        request.httpBody = spcDataBase64.data(using: .utf8, allowLossyConversion: true)
+        // TODO: application/x-www-form-urlencoded
         
         let task = urlSession.dataTask(with: request) { [completion] data, response, error in
             if let httpResponse = response as? HTTPURLResponse {
@@ -133,7 +139,9 @@ class FairplaySessionManager {
     }
     
     /// URL-encodes base-64 data, encoding these characters: `:?=&+`
-    private func urlEncodeBase64(value: String?) -> String {
+    ///  This function (probably) isn't appropriate for general URL-encoding.
+    ///  it's just for base64, just for license/cert requests
+    private func urlEncodeBase64(_ value: String?) -> String {
         let queryKeyValueString = CharacterSet(charactersIn: ":?=&+").inverted
         return value?.addingPercentEncoding(withAllowedCharacters: queryKeyValueString) ?? ""
     }
