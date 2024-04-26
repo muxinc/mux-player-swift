@@ -10,9 +10,6 @@ import AVFoundation
 
 class FairplaySessionManager {
     
-    // todo - unused, probably not needed unless you can get the AVURLAsset of a player
-    static let AVURLAssetOptionsKeyDrmToken = "com.mux.player.drmtoken"
-    
     private var playbackOptionsByPlaybackID: [String: PlaybackOptions] = [:]
     // note - null on simulators or other environments where fairplay isn't supported
     private let contentKeySession: AVContentKeySession?
