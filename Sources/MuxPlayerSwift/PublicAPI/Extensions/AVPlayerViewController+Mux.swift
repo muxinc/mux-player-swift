@@ -25,9 +25,9 @@ extension AVPlayerViewController {
             playbackID: playbackID
         )
 
-        PlayerSDK.shared.monitor.setupMonitoring(
+        PlayerSDK.shared.registerPlayerViewController(
             playerViewController: self,
-            options: monitoringOptions
+            monitoringOptions: monitoringOptions
         )
     }
 
@@ -51,9 +51,9 @@ extension AVPlayerViewController {
 
         self.player = player
 
-        PlayerSDK.shared.monitor.setupMonitoring(
+        PlayerSDK.shared.registerPlayerViewController(
             playerViewController: self,
-            options: monitoringOptions
+            monitoringOptions: monitoringOptions
         )
     }
 
@@ -84,9 +84,10 @@ extension AVPlayerViewController {
             playbackID: playbackID
         )
 
-        PlayerSDK.shared.monitor.setupMonitoring(
+        PlayerSDK.shared.registerPlayerViewController(
             playerViewController: self,
-            options: monitoringOptions
+            monitoringOptions: monitoringOptions,
+            requiresReverseProxying: playbackOptions.enableSmartCache
         )
     }
 
@@ -116,9 +117,10 @@ extension AVPlayerViewController {
 
         self.player = player
 
-        PlayerSDK.shared.monitor.setupMonitoring(
+        PlayerSDK.shared.registerPlayerViewController(
             playerViewController: self,
-            options: monitoringOptions
+            monitoringOptions: monitoringOptions,
+            requiresReverseProxying: playbackOptions.enableSmartCache
         )
     }
 
