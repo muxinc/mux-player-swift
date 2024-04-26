@@ -164,12 +164,14 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
         }
         group.wait()
         
+        // TODO - On error, CKC request returns a body so we can't rely on this
         guard let ckcData = ckcData else {
             print("no CKC Data in CKC response")
             return
         }
         
         print("<><> Providing CKC to System!")
+        // Send CKC to CDM/wherever else so we can finally play our content
         let keyResponse = AVContentKeyResponse(fairPlayStreamingKeyResponseData: ckcData)
         request.processContentKeyResponse(keyResponse)
     }
