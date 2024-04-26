@@ -112,7 +112,8 @@ class FairplaySessionManager {
                 let ckcMessage = Data(base64Encoded: ckcData)
                 
                 // Also log the CKC
-                let ckcBase64 = ckcData.base64EncodedString()
+                //let ckcBase64 = ckcData.base64EncodedString()
+                let ckcBase64 = ckcMessage!.base64EncodedString()
                 print("CKC Response Body base64:", ckcBase64)
                 print("")
 
