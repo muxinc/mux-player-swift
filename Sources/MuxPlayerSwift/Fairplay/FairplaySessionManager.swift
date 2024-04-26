@@ -72,23 +72,24 @@ class FairplaySessionManager {
         // BODY PARAMS
         // Base-64 the SPC, urlencode that, prepare form-encoded body with spc
         let encodedSpcMessage = urlEncodeBase64(spcData.base64EncodedString())
-        print("SPC base64:", encodedSpcMessage)
+        //print("SPC base64:", encodedSpcMessage) // we dump the encoded version too
         var postData = String(format: "spc=%@", encodedSpcMessage)
         // DRMToday example appends `offline` to POST body, but we are not doing offline keys yet
         //  also, we don't like the form-encoded POST body
 
-        // QUERY PARAMS
-        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
-        request.setValue(String(format: "%lu", request.httpBody?.count ?? 0), forHTTPHeaderField: "Content-Length")
         
         print("POST BODY: \(postData)")
-        
         request.httpMethod = "POST"
         request.httpBody = postData.data(using: .utf8, allowLossyConversion: true)
         
+        // QUERY PARAMS
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        request.setValue(String(format: "%lu", request.httpBody?.count ?? 0), forHTTPHeaderField: "Content-Length")
         print("Sending License/CKC Request to: \(request.url?.absoluteString)")
-        
+        print("\t with header fields: \(request.allHTTPHeaderFields)")
+
         let task = urlSession.dataTask(with: request) { [completion] data, response, error in
+            print("<><> GOT LICENSE RESPONSE")
             if let httpResponse = response as? HTTPURLResponse {
                 let responseCode = httpResponse.statusCode
                 print("License response: \(httpResponse.statusCode)")
@@ -111,7 +112,8 @@ class FairplaySessionManager {
                 // Also log the CKC
                 let ckcBase64 = ckcData.base64EncodedString()
                 print("CKC Response Body base64:", ckcBase64)
-                
+                print("")
+
                 completion(Result.success(ckcData))
             } else {
                 completion(Result.failure(CancellationError())) // todo - real Error Type

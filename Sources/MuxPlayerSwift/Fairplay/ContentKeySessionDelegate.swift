@@ -169,8 +169,8 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
             return
         }
         
+        print("<><> Providing CKC to System!")
         let keyResponse = AVContentKeyResponse(fairPlayStreamingKeyResponseData: ckcData)
-        
         request.processContentKeyResponse(keyResponse)
     }
 }
