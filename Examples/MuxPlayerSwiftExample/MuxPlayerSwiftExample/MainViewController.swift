@@ -34,7 +34,7 @@ class MainViewController: UIViewController {
         super.viewDidLoad()
 
         view.backgroundColor = .black
-
+        
         playerViewController.willMove(toParent: self)
         addChild(playerViewController)
         view.addSubview(playerViewController.view)
@@ -51,16 +51,16 @@ class MainViewController: UIViewController {
                 equalTo: view.centerYAnchor
             ),
             playerViewController.view.leadingAnchor.constraint(
-                equalTo: view.leadingAnchor
+                equalTo: view.safeAreaLayoutGuide.leadingAnchor
             ),
             playerViewController.view.trailingAnchor.constraint(
-                equalTo: view.trailingAnchor
+                equalTo: view.safeAreaLayoutGuide.trailingAnchor
             ),
             playerViewController.view.layoutMarginsGuide.topAnchor.constraint(
-                equalTo: view.topAnchor
+                equalTo: view.safeAreaLayoutGuide.topAnchor
             ),
             playerViewController.view.layoutMarginsGuide.bottomAnchor
-                .constraint(equalTo: view.bottomAnchor),
+                .constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
         ])
         
         let player = playerViewController.player
