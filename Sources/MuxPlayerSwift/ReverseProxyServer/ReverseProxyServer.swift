@@ -8,196 +8,6 @@ import os
 import GCDWebServer
 
 class ReverseProxyServer {
-
-    class EventRecorder {
-
-        func didRecordSegmentRequested(
-            originURL: URL
-        ) {
-            didRecord(
-                event: ReverseProxyEvent(
-                    originURL: originURL,
-                    kind: .segmentRequestReceived
-                )
-            )
-        }
-
-        func didRecordManifestRequestReceived(
-            originURL: URL
-        ) {
-            didRecord(
-                event: ReverseProxyEvent(
-                    originURL: originURL,
-                    kind: .manifestRequestReceived
-                )
-            )
-        }
-
-        func didRecordSegmentRequestReceived(
-            originURL: URL
-        ) {
-            didRecord(
-                event: ReverseProxyEvent(
-                    originURL: originURL,
-                    kind: .segmentRequestReceived
-                )
-            )
-        }
-
-        func didRecordSegmentCacheHit(
-            originURL: URL,
-            strippedRequest: URLRequest
-        ) {
-            didRecord(
-                event: ReverseProxyEvent(
-                    originURL: originURL,
-                    kind: .segmentCacheHit(key: strippedRequest)
-                )
-            )
-        }
-
-        func didRecordSegmentCacheMiss(
-            originURL: URL,
-            strippedRequest: URLRequest
-        ) {
-            didRecord(
-                event: ReverseProxyEvent(
-                    originURL: originURL,
-                    kind: .segmentCacheMiss(key: strippedRequest)
-                )
-            )
-        }
-
-        func didRecordSegmentCacheWrite(
-            originURL: URL,
-            strippedRequest: URLRequest,
-            cacheDiskUsageInBytes: Int,
-            segmentSizeInBytes: Int
-        ) {
-            didRecord(
-                event: ReverseProxyEvent(
-                    originURL: originURL,
-                    kind: .segmentCacheStored(
-                        key: strippedRequest,
-                        cacheDiskUsageInBytes: cacheDiskUsageInBytes,
-                        segmentSizeInBytes: segmentSizeInBytes
-                    )
-                )
-            )
-        }
-
-        func didRecord(event: ReverseProxyEvent) {
-
-            PlayerSDK.shared
-                     .diagnosticsLogger
-                     .debug("RPS - \(Date()) - \(event.description)")
-        }
-
-    }
-
-    class PlaylistLocalURLMapper {
-        let port: UInt = 1234
-        let originURLKey: String = "__hls_origin_url"
-
-        func processEncodedPlaylist(
-            _ playlist: Data,
-            playlistOriginURL: URL
-        ) -> Data? {
-            let originalPlaylist = String(
-                data: playlist,
-                encoding: .utf8
-            )
-
-            let parsedManifest = originalPlaylist?
-                .components(separatedBy: .newlines)
-                .map { line in self.processPlaylistLine(line, forOriginURL: playlistOriginURL) }
-                .joined(separator: "\n")
-                .removingPercentEncoding
-
-            return parsedManifest?.data(using: .utf8)
-        }
-
-        func processPlaylistLine(
-            _ line: String,
-            forOriginURL originURL: URL
-        ) -> String {
-            guard !line.trimmingCharacters(in: .whitespaces).isEmpty else { return line }
-
-            if line.hasPrefix("#") {
-                if line.hasPrefix("#EXT") {
-                    return lineByReplacingURI(line: line, forOriginURL: originURL)
-                } else {
-                    return line
-                }
-            }
-
-            if let originalSegmentURL = absoluteURL(from: line, forOriginURL: originURL),
-               let reverseProxyURL = reverseProxyURL(from: originalSegmentURL) {
-                return reverseProxyURL.absoluteString
-            }
-            return line
-        }
-
-        func lineByReplacingURI(
-            line: String,
-            forOriginURL originURL: URL
-        ) -> String {
-            let uriPattern = try! NSRegularExpression(pattern: "URI=\"([^\"]*)\"")
-            let lineRange = NSRange(location: 0, length: line.count)
-            guard let result = uriPattern.firstMatch(in: line, options: [], range: lineRange) else { return line }
-
-            let uri = (line as NSString).substring(with: result.range(at: 1))
-            guard let absoluteURL = absoluteURL(from: uri, forOriginURL: originURL) else { return line }
-            guard let reverseProxyURL = reverseProxyURL(from: absoluteURL) else { return line }
-
-            return uriPattern.stringByReplacingMatches(in: line, options: [], range: lineRange, withTemplate: "URI=\"\(reverseProxyURL.absoluteString)\"")
-        }
-
-        func absoluteURL(from line: String, forOriginURL originURL: URL) -> URL? {
-            if line.hasPrefix("http://") || line.hasPrefix("https://") {
-                return URL(string: line)
-            }
-
-            guard let scheme = originURL.scheme,
-                  let host = originURL.host
-            else {
-                print("Error: bad url")
-                return nil
-            }
-
-            let path: String
-            if line.hasPrefix("/") {
-                path = line
-            } else {
-                path = originURL.deletingLastPathComponent().appendingPathComponent(line).path
-            }
-
-            return URL(string: scheme + "://" + host + path)?.standardized
-        }
-
-        func reverseProxyURL(from originURL: URL) -> URL? {
-            guard var components = URLComponents(url: originURL, resolvingAgainstBaseURL: false) else { return nil }
-            components.scheme = "http"
-            components.host = "127.0.0.1"
-            components.port = Int(port)
-
-            // Additional encoding step for ampersands is
-            // required to avoid truncating origin URL
-            let encodedOriginURLQueryValue = originURL.absoluteString
-                .addingPercentEncoding(
-                    withAllowedCharacters: CharacterSet.urlQueryAllowed.subtracting(CharacterSet(charactersIn:"&"))
-                )
-
-            let originURLQueryItem = URLQueryItem(
-                name: originURLKey,
-                value: encodedOriginURLQueryValue
-            )
-            components.queryItems = (components.queryItems ?? []) + [originURLQueryItem]
-
-            return components.url
-        }
-    }
-
     var session: URLSession = .shared
     var webServer: GCDWebServer
 
@@ -575,4 +385,196 @@ class ReverseProxyServer {
             }
         }
     }
+
+    // MARK: - Event Recorder
+    class EventRecorder {
+
+        func didRecordSegmentRequested(
+            originURL: URL
+        ) {
+            didRecord(
+                event: ReverseProxyEvent(
+                    originURL: originURL,
+                    kind: .segmentRequestReceived
+                )
+            )
+        }
+
+        func didRecordManifestRequestReceived(
+            originURL: URL
+        ) {
+            didRecord(
+                event: ReverseProxyEvent(
+                    originURL: originURL,
+                    kind: .manifestRequestReceived
+                )
+            )
+        }
+
+        func didRecordSegmentRequestReceived(
+            originURL: URL
+        ) {
+            didRecord(
+                event: ReverseProxyEvent(
+                    originURL: originURL,
+                    kind: .segmentRequestReceived
+                )
+            )
+        }
+
+        func didRecordSegmentCacheHit(
+            originURL: URL,
+            strippedRequest: URLRequest
+        ) {
+            didRecord(
+                event: ReverseProxyEvent(
+                    originURL: originURL,
+                    kind: .segmentCacheHit(key: strippedRequest)
+                )
+            )
+        }
+
+        func didRecordSegmentCacheMiss(
+            originURL: URL,
+            strippedRequest: URLRequest
+        ) {
+            didRecord(
+                event: ReverseProxyEvent(
+                    originURL: originURL,
+                    kind: .segmentCacheMiss(key: strippedRequest)
+                )
+            )
+        }
+
+        func didRecordSegmentCacheWrite(
+            originURL: URL,
+            strippedRequest: URLRequest,
+            cacheDiskUsageInBytes: Int,
+            segmentSizeInBytes: Int
+        ) {
+            didRecord(
+                event: ReverseProxyEvent(
+                    originURL: originURL,
+                    kind: .segmentCacheStored(
+                        key: strippedRequest,
+                        cacheDiskUsageInBytes: cacheDiskUsageInBytes,
+                        segmentSizeInBytes: segmentSizeInBytes
+                    )
+                )
+            )
+        }
+
+        func didRecord(event: ReverseProxyEvent) {
+
+            PlayerSDK.shared
+                     .diagnosticsLogger
+                     .debug("RPS - \(Date()) - \(event.description)")
+        }
+
+    }
+
+    // MARK: - Playlist Local URL Mapper
+    class PlaylistLocalURLMapper {
+        let port: UInt = 1234
+        let originURLKey: String = "__hls_origin_url"
+
+        func processEncodedPlaylist(
+            _ playlist: Data,
+            playlistOriginURL: URL
+        ) -> Data? {
+            let originalPlaylist = String(
+                data: playlist,
+                encoding: .utf8
+            )
+
+            let parsedManifest = originalPlaylist?
+                .components(separatedBy: .newlines)
+                .map { line in self.processPlaylistLine(line, forOriginURL: playlistOriginURL) }
+                .joined(separator: "\n")
+                .removingPercentEncoding
+
+            return parsedManifest?.data(using: .utf8)
+        }
+
+        func processPlaylistLine(
+            _ line: String,
+            forOriginURL originURL: URL
+        ) -> String {
+            guard !line.trimmingCharacters(in: .whitespaces).isEmpty else { return line }
+
+            if line.hasPrefix("#") {
+                if line.hasPrefix("#EXT") {
+                    return lineByReplacingURI(line: line, forOriginURL: originURL)
+                } else {
+                    return line
+                }
+            }
+
+            if let originalSegmentURL = absoluteURL(from: line, forOriginURL: originURL),
+               let reverseProxyURL = reverseProxyURL(from: originalSegmentURL) {
+                return reverseProxyURL.absoluteString
+            }
+            return line
+        }
+
+        func lineByReplacingURI(
+            line: String,
+            forOriginURL originURL: URL
+        ) -> String {
+            let uriPattern = try! NSRegularExpression(pattern: "URI=\"([^\"]*)\"")
+            let lineRange = NSRange(location: 0, length: line.count)
+            guard let result = uriPattern.firstMatch(in: line, options: [], range: lineRange) else { return line }
+
+            let uri = (line as NSString).substring(with: result.range(at: 1))
+            guard let absoluteURL = absoluteURL(from: uri, forOriginURL: originURL) else { return line }
+            guard let reverseProxyURL = reverseProxyURL(from: absoluteURL) else { return line }
+
+            return uriPattern.stringByReplacingMatches(in: line, options: [], range: lineRange, withTemplate: "URI=\"\(reverseProxyURL.absoluteString)\"")
+        }
+
+        func absoluteURL(from line: String, forOriginURL originURL: URL) -> URL? {
+            if line.hasPrefix("http://") || line.hasPrefix("https://") {
+                return URL(string: line)
+            }
+
+            guard let scheme = originURL.scheme,
+                  let host = originURL.host
+            else {
+                print("Error: bad url")
+                return nil
+            }
+
+            let path: String
+            if line.hasPrefix("/") {
+                path = line
+            } else {
+                path = originURL.deletingLastPathComponent().appendingPathComponent(line).path
+            }
+
+            return URL(string: scheme + "://" + host + path)?.standardized
+        }
+
+        func reverseProxyURL(from originURL: URL) -> URL? {
+            guard var components = URLComponents(url: originURL, resolvingAgainstBaseURL: false) else { return nil }
+            components.scheme = "http"
+            components.host = "127.0.0.1"
+            components.port = Int(port)
+
+            // Additional encoding step for ampersands is
+            // required to avoid truncating origin URL
+            let encodedOriginURLQueryValue = originURL.absoluteString
+                .addingPercentEncoding(
+                    withAllowedCharacters: CharacterSet.urlQueryAllowed.subtracting(CharacterSet(charactersIn:"&"))
+                )
+
+            let originURLQueryItem = URLQueryItem(
+                name: originURLKey,
+                value: encodedOriginURLQueryValue
+            )
+            components.queryItems = (components.queryItems ?? []) + [originURLQueryItem]
+
+            return components.url
+        }
+    }
+
 }
