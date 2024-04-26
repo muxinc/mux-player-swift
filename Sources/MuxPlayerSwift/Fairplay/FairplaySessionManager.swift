@@ -72,7 +72,7 @@ class FairplaySessionManager {
         // BODY PARAMS
         // Base-64 the SPC, urlencode that, prepare form-encoded body with spc
         let encodedSpcMessage = urlEncodeBase64(spcData.base64EncodedString())
-        //print("SPC base64:", encodedSpcMessage) // we dump the encoded version too
+        print("Raw (non-percent encoded) SPC base64:", spcData.base64EncodedString()) // we dump the encoded version too
         var postData = String(format: "spc=%@", encodedSpcMessage)
         // DRMToday example appends `offline` to POST body, but we are not doing offline keys yet
         //  also, we don't like the form-encoded POST body
