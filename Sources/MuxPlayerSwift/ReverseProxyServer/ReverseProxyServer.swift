@@ -11,6 +11,81 @@ class ReverseProxyServer {
 
     class EventRecorder {
 
+        func didRecordSegmentRequested(
+            originURL: URL
+        ) {
+            didRecord(
+                event: ReverseProxyEvent(
+                    originURL: originURL,
+                    kind: .segmentRequestReceived
+                )
+            )
+        }
+
+        func didRecordManifestRequestReceived(
+            originURL: URL
+        ) {
+            didRecord(
+                event: ReverseProxyEvent(
+                    originURL: originURL,
+                    kind: .manifestRequestReceived
+                )
+            )
+        }
+
+        func didRecordSegmentRequestReceived(
+            originURL: URL
+        ) {
+            didRecord(
+                event: ReverseProxyEvent(
+                    originURL: originURL,
+                    kind: .segmentRequestReceived
+                )
+            )
+        }
+
+        func didRecordSegmentCacheHit(
+            originURL: URL,
+            strippedRequest: URLRequest
+        ) {
+            didRecord(
+                event: ReverseProxyEvent(
+                    originURL: originURL,
+                    kind: .segmentCacheHit(key: strippedRequest)
+                )
+            )
+        }
+
+        func didRecordSegmentCacheMiss(
+            originURL: URL,
+            strippedRequest: URLRequest
+        ) {
+            didRecord(
+                event: ReverseProxyEvent(
+                    originURL: originURL,
+                    kind: .segmentCacheMiss(key: strippedRequest)
+                )
+            )
+        }
+
+        func didRecordSegmentCacheWrite(
+            originURL: URL,
+            strippedRequest: URLRequest,
+            cacheDiskUsageInBytes: Int,
+            segmentSizeInBytes: Int
+        ) {
+            didRecord(
+                event: ReverseProxyEvent(
+                    originURL: originURL,
+                    kind: .segmentCacheStored(
+                        key: strippedRequest,
+                        cacheDiskUsageInBytes: cacheDiskUsageInBytes,
+                        segmentSizeInBytes: segmentSizeInBytes
+                    )
+                )
+            )
+        }
+
         func didRecord(event: ReverseProxyEvent) {
 
             PlayerSDK.shared
@@ -199,11 +274,8 @@ class ReverseProxyServer {
                 return
             }
 
-            eventRecorder.didRecord(
-                event: ReverseProxyEvent(
-                    originURL: originURL,
-                    kind: .manifestRequestReceived
-                )
+            eventRecorder.didRecordManifestRequestReceived(
+                originURL: originURL
             )
 
             if originURL.pathExtension == "m3u8" {
@@ -230,7 +302,7 @@ class ReverseProxyServer {
                         )
                     }
 
-                    let contentType = response.mimeType ?? "application/x-mpegurl"
+                    let contentType = mimeType
 
                     return completion(
                         GCDWebServerDataResponse(
@@ -256,22 +328,30 @@ class ReverseProxyServer {
         ) { [weak self] request, completion in
 
             guard let self = self else {
-                return completion(GCDWebServerDataResponse(statusCode: 500))
-            }
-
-            guard let originURL = self.originURL(from: request) else {
-                return completion(GCDWebServerErrorResponse(statusCode: 400))
-            }
-
-            eventRecorder.didRecord(
-                event: ReverseProxyEvent(
-                    originURL: originURL,
-                    kind: .segmentRequestReceived
+                return completion(
+                    GCDWebServerDataResponse(
+                        statusCode: 500
+                    )
                 )
-            )
+            }
 
-            var reverseProxyRequest = URLRequest(url: originURL)
-            reverseProxyRequest.httpMethod = "GET"
+            guard let originURL = self.originURL(
+                from: request
+            ), 
+            var components = URLComponents(
+                url: originURL,
+                resolvingAgainstBaseURL: false
+            ) else {
+                return completion(
+                    GCDWebServerErrorResponse(
+                        statusCode: 400
+                    )
+                )
+            }
+
+            eventRecorder.didRecordSegmentRequested(
+                originURL: originURL
+            )
 
             // Construct a modified request that will be the
             // same across segment requests
@@ -279,21 +359,19 @@ class ReverseProxyServer {
             // - Replace cdn-specific hosts with generic
             //
             // This request only used as a cache key
-            var components = URLComponents(url: originURL, resolvingAgainstBaseURL: false)
-            components?.queryItems = nil
-            components?.host = "stream.mux.com"
+            components.queryItems = nil
+            components.host = "stream.mux.com"
 
-            var strippedRequest = URLRequest(url: components!.url!)
+            let strippedRequest = URLRequest(
+                url: components.url!
+            )
 
             if let cachedResponse = self.segmentCache.cachedResponse(
                 for: strippedRequest
             ) {
-
-                eventRecorder.didRecord(
-                    event: ReverseProxyEvent(
-                        originURL: originURL,
-                        kind: .segmentCacheHit(key: strippedRequest)
-                    )
+                eventRecorder.didRecordSegmentCacheHit(
+                    originURL: originURL,
+                    strippedRequest: strippedRequest
                 )
 
                 let contentType = cachedResponse.response.mimeType ?? "video/mp2t"
@@ -305,18 +383,19 @@ class ReverseProxyServer {
                     )
                 )
             } else {
-
-                eventRecorder.didRecord(
-                    event: ReverseProxyEvent(
-                        originURL: originURL,
-                        kind: .segmentCacheMiss(key: strippedRequest)
-                    )
+                eventRecorder.didRecordSegmentCacheMiss(
+                    originURL: originURL,
+                    strippedRequest: strippedRequest
                 )
 
-                let task = self.session.dataTask(
-                    with: reverseProxyRequest
-                ) { [weak self] data, response, error in
+                var originRequest = URLRequest(
+                    url: originURL
+                )
+                originRequest.httpMethod = "GET"
 
+                let task = self.session.dataTask(
+                    with: originRequest
+                ) { [weak self] data, response, error in
                     guard let self = self else {
                         completion(
                             GCDWebServerErrorResponse(
@@ -348,19 +427,11 @@ class ReverseProxyServer {
                         for: strippedRequest
                     )
 
-                    let segmentSizeInBytes = data.count
-
-                    let cacheDiskUsageInBytes = self.segmentCache.currentDiskUsage
-
-                    self.eventRecorder.didRecord(
-                        event: ReverseProxyEvent(
-                            originURL: originURL,
-                            kind: .segmentCacheStored(
-                                key: strippedRequest,
-                                cacheDiskUsageInBytes: cacheDiskUsageInBytes,
-                                segmentSizeInBytes: segmentSizeInBytes
-                            )
-                        )
+                    self.eventRecorder.didRecordSegmentCacheWrite(
+                        originURL: originURL,
+                        strippedRequest: strippedRequest,
+                        cacheDiskUsageInBytes: self.segmentCache.currentDiskUsage,
+                        segmentSizeInBytes: data.count
                     )
                 }
 
@@ -398,11 +469,8 @@ class ReverseProxyServer {
                 )
             }
 
-            eventRecorder.didRecord(
-                event: ReverseProxyEvent(
-                    originURL: originURL,
-                    kind: .segmentRequestReceived
-                )
+            eventRecorder.didRecordSegmentRequestReceived(
+                originURL: originURL
             )
 
             var originRequest = URLRequest(
@@ -419,18 +487,16 @@ class ReverseProxyServer {
             strippedRequestComponents.queryItems = nil
             strippedRequestComponents.host = "stream.mux.com"
 
-            var strippedRequest = URLRequest(
+            let strippedRequest = URLRequest(
                 url: strippedRequestComponents.url!
             )
 
             if let cachedResponse = self.segmentCache.cachedResponse(
                 for: strippedRequest
             ) {
-                eventRecorder.didRecord(
-                    event: ReverseProxyEvent(
-                        originURL: originURL,
-                        kind: .segmentCacheHit(key: strippedRequest)
-                    )
+                eventRecorder.didRecordSegmentCacheHit(
+                    originURL: originURL,
+                    strippedRequest: strippedRequest
                 )
 
                 let contentType = cachedResponse.response.mimeType ?? "video/mp4"
@@ -442,12 +508,9 @@ class ReverseProxyServer {
                     )
                 )
             } else {
-
-                eventRecorder.didRecord(
-                    event: ReverseProxyEvent(
-                        originURL: originURL,
-                        kind: .segmentCacheMiss(key: strippedRequest)
-                    )
+                eventRecorder.didRecordSegmentCacheMiss(
+                    originURL: originURL,
+                    strippedRequest: strippedRequest
                 )
 
                 let task = self.session.dataTask(
@@ -485,19 +548,11 @@ class ReverseProxyServer {
                         for: strippedRequest
                     )
 
-                    let segmentSizeInBytes = data.count
-
-                    let cacheDiskUsageInBytes = self.segmentCache.currentDiskUsage
-
-                    self.eventRecorder.didRecord(
-                        event: ReverseProxyEvent(
-                            originURL: originURL,
-                            kind: .segmentCacheStored(
-                                key: strippedRequest,
-                                cacheDiskUsageInBytes: cacheDiskUsageInBytes,
-                                segmentSizeInBytes: segmentSizeInBytes
-                            )
-                        )
+                    self.eventRecorder.didRecordSegmentCacheWrite(
+                        originURL: originURL,
+                        strippedRequest: strippedRequest,
+                        cacheDiskUsageInBytes: self.segmentCache.currentDiskUsage,
+                        segmentSizeInBytes: data.count
                     )
                 }
 
