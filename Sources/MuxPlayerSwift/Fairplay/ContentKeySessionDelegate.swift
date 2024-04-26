@@ -22,6 +22,7 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
     
     func contentKeySession(_ session: AVContentKeySession, shouldRetry keyRequest: AVContentKeyRequest,
                            reason retryReason: AVContentKeyRequest.RetryReason) -> Bool {
+        print("===shouldRetry called with reason \(retryReason)")
         
         var shouldRetry = false
         

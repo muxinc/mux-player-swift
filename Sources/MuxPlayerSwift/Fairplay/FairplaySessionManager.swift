@@ -80,10 +80,12 @@ class FairplaySessionManager {
         
         print("POST BODY: \(postData)")
         request.httpMethod = "POST"
-        request.httpBody = postData.data(using: .utf8, allowLossyConversion: true)
+        //request.httpBody = postData.data(using: .utf8, allowLossyConversion: true)
+        request.httpBody = spcData
+
         
         // QUERY PARAMS
-        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/octet-stream", forHTTPHeaderField: "Content-Type")
         request.setValue(String(format: "%lu", request.httpBody?.count ?? 0), forHTTPHeaderField: "Content-Length")
         print("Sending License/CKC Request to: \(request.url?.absoluteString)")
         print("\t with header fields: \(request.allHTTPHeaderFields)")
@@ -114,7 +116,8 @@ class FairplaySessionManager {
                 print("CKC Response Body base64:", ckcBase64)
                 print("")
 
-                completion(Result.success(ckcData))
+                //completion(Result.success(ckcData))
+                completion(Result.success(ckcMessage!))
             } else {
                 completion(Result.failure(CancellationError())) // todo - real Error Type
             }
