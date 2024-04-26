@@ -294,7 +294,11 @@ class ReverseProxyServer {
                           let response = response,
                           let mimeType = response.mimeType
                     else {
-                        return completion(GCDWebServerErrorResponse(statusCode: 500))
+                        return completion(
+                            GCDWebServerErrorResponse(
+                                statusCode: 500
+                            )
+                        )
                     }
 
                     // Swap playlist entries to use proxied URLs
@@ -534,7 +538,11 @@ class ReverseProxyServer {
                     }
 
                     guard let data = data, let response = response else {
-                        return completion(GCDWebServerErrorResponse(statusCode: 500))
+                        return completion(
+                            GCDWebServerErrorResponse(
+                                statusCode: 500
+                            )
+                        )
                     }
 
                     let contentType = response.mimeType ?? "video/mp4"
