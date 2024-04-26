@@ -250,12 +250,19 @@ class ReverseProxyServer {
     private func originURL(
         from request: GCDWebServerRequest
     ) -> URL? {
-
-        guard let encodedString = request.query?[originURLKey] else {
+        guard let originURLQueryValue = URLComponents(
+            url: request.url,
+            resolvingAgainstBaseURL: false
+        )?
+        .queryItems?
+        .first(where: { $0.name == self.originURLKey })?
+        .value else {
             return nil
         }
 
-        return URL(string: encodedString)
+        return URL(
+            string: originURLQueryValue
+        )
     }
 
     private func setupManifestRequestHandler() {
