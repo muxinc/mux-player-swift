@@ -103,33 +103,29 @@ class PlayerSDK {
         guard let components = URLComponents(
             url: urlAsset.url,
             resolvingAgainstBaseURL: false
-        ) else {
+        ), urlAsset.url.isReverseProxyable else {
             return
         }
 
-        if let port = components.port,
-           components.scheme == "http",
-           port == reverseProxyServer.port {
-            guard let originURLQueryComponentValue = components.queryItems?.first(
-                where: { $0.name == self.reverseProxyServer.originURLKey }
-            )?.value else {
-                // TODO: Handle more gracefully
-                fatalError("Invalid origin URL")
-            }
-
-            guard let originURL = URL(string: originURLQueryComponentValue) else {
-                // TODO: Handle more gracefully
-                fatalError("Invalid origin URL")
-            }
-
-            let playerItem = AVPlayerItem(
-                url: originURL
-            )
-
-            player.replaceCurrentItem(
-                with: playerItem
-            )
+        guard let originURLQueryComponentValue = components.queryItems?.first(
+            where: { $0.name == self.reverseProxyServer.originURLKey }
+        )?.value else {
+            // TODO: Handle more gracefully
+            fatalError("Invalid origin URL")
         }
+
+        guard let originURL = URL(string: originURLQueryComponentValue) else {
+            // TODO: Handle more gracefully
+            fatalError("Invalid origin URL")
+        }
+
+        let playerItem = AVPlayerItem(
+            url: originURL
+        )
+
+        player.replaceCurrentItem(
+            with: playerItem
+        )
     }
 
     class KeyValueObservation {

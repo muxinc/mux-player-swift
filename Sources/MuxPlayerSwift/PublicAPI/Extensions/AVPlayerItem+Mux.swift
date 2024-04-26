@@ -5,6 +5,14 @@
 import AVFoundation
 import Foundation
 
+internal enum PlaybackURLConstants {
+    static let reverseProxyScheme = "http"
+
+    static let reverseProxyHost = "127.0.0.1"
+
+    static let reverseProxyPort = Int(1234)
+}
+
 fileprivate func makePlaybackURL(
     playbackID: String,
     playbackOptions: PlaybackOptions
@@ -89,9 +97,9 @@ fileprivate func makePlaybackURL(
         ]
 
         // TODO: currently enables reverse proxying unless caching is disabled
-        components.scheme = "http"
-        components.host = "127.0.0.1"
-        components.port = Int(1234)
+        components.scheme = PlaybackURLConstants.reverseProxyScheme
+        components.host = PlaybackURLConstants.reverseProxyHost
+        components.port = PlaybackURLConstants.reverseProxyPort
     }
 
     guard let playbackURL = components.url else {
