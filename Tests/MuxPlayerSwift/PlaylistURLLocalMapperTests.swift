@@ -80,22 +80,22 @@ class PlaylistLocalURLMapperTests: XCTestCase {
         )
     }
 
-    func testRenditionPlaylistPlaylistLocalURLMapping() throws {
+    func testTransportStreamRenditionPlaylistPlaylistLocalURLMapping() throws {
         let originalRenditionPlaylist = """
         #EXTM3U
         #EXT-X-VERSION:3
         #EXT-X-TARGETDURATION:6
         #EXT-X-PLAYLIST-TYPE:VOD
         #EXTINF:5,
-        https://chunk-gcp-us-east1-vop1.fastly.mux.com/v1/chunk/OvBswJ01THCr9vVhhgKhWYo9FRKmPaVQPY1Cqc73ShNTX4XeNe01tCCk5hFCbXdyN3DEMtkXkkUKU02L502Vpnp17Q/0.ts?skid=default&signature=NjVjZWViZDBfYmNmMmExMTNiOTZjMzZjMDNmY2M1ODNlNDIyZDJjMzU2ODM1MjY4ODRmZmZjY2JkZmEwZDUxN2MzYjliYTY4Ng==&zone=1
+        https://chunk-gcp-us-east1-vop1.cfcdn.mux.com/v1/chunk/JNsWzeS01dx24HM3zilrng400O5Fw4euDtRvGFv7BuURYjm1QWCvTlZOAJv7HSZQVjZ3p2DmGLB8tWj6S3R5IW83U3lb3WRhzkiTrpfCWHKeY/0.ts?skid=default&signature=NjYzNDQ1MjBfYjYyN2FjY2JjYWE3NGE3OTM5NjUzMDU3MGYzYjg5ZDU3MTYwYzgyNzUwMGVhYWJiYjIyNzM4MTU3YTI3NDZhZQ==&zone=1&vsid=sHyWqRsgf013tXi5EvVRwRAbU8nNXcf01z5eD3ki302U00JLMobx023G2022aRKEyVkBCVgx02NCoVJnLE
         #EXTINF:5,
-        https://chunk-gcp-us-east1-vop1.fastly.mux.com/v1/chunk/OvBswJ01THCr9vVhhgKhWYo9FRKmPaVQPY1Cqc73ShNTX4XeNe01tCCk5hFCbXdyN3DEMtkXkkUKU02L502Vpnp17Q/1.ts?skid=default&signature=NjVjZWViZDBfMjNhYTM2M2Y3ZWUxM2NmNTk5MDgxYzc3YjZmMTljODQ5MTllYzc0ZWY4ODAyMGMxY2E5NmUzZWRkM2U3NWM3Yw==&zone=1
+        https://chunk-gcp-us-east1-vop1.cfcdn.mux.com/v1/chunk/JNsWzeS01dx24HM3zilrng400O5Fw4euDtRvGFv7BuURYjm1QWCvTlZOAJv7HSZQVjZ3p2DmGLB8tWj6S3R5IW83U3lb3WRhzkiTrpfCWHKeY/1.ts?skid=default&signature=NjYzNDQ1MjBfMzBjYTYxYmRmNTc5MWIyNzFiMDkyNjI4MGFkZWJlMTQ5OGFiZWQ1MDRiYjkwMjBjOWUzNGViZmQ2Y2FhNjIyYw==&zone=1&vsid=sHyWqRsgf013tXi5EvVRwRAbU8nNXcf01z5eD3ki302U00JLMobx023G2022aRKEyVkBCVgx02NCoVJnLE
         #EXTINF:5,
-        https://chunk-gcp-us-east1-vop1.fastly.mux.com/v1/chunk/SvqDW01AkSp3ZzD01rlejLGZAO52Ke4J1DWI02C00Kz4MfzreU00shhPgxSd7U5n9LGJBz7YJTH2EJbuXrJU2RJdm1w/2.ts?skid=default&signature=NjVjZWViZDBfMzA1ODExODZlMTM4MjFiNTEwNjQ3ZGFhMmNhZTNmYTY4MmI0ODc0OTBiMzg0YjM4MTg0MjJjODM0MDc2YTE0ZA==&zone=1
+        https://chunk-gcp-us-east1-vop1.cfcdn.mux.com/v1/chunk/L4cdUJY8t8g2uevcOQOn3hfdxdwz02iFPAaWz00Z7cHewjqO00MhlOgPShV01OGsfMBZkSReuBXcDLY45asjqxdmfjVNcwVBNv2dY165dPco01RA/2.ts?skid=default&signature=NjYzNDQ1MjBfMzk3ZDU2ODgzZWUyYjVkNjdjZDY2ZGRiMDhmMzRmMzE0NmVlZjg0OGYwYmUyYWFlYTY5ZTE3MTk0MWM1MTBkOA==&zone=1&vsid=sHyWqRsgf013tXi5EvVRwRAbU8nNXcf01z5eD3ki302U00JLMobx023G2022aRKEyVkBCVgx02NCoVJnLE
         #EXTINF:5,
-        https://chunk-gcp-us-east1-vop1.fastly.mux.com/v1/chunk/00F02RgxOeCOsfBQAy94c02kmytrY8hsu00yP1IjkR8knFX641jM6DJVuXIm2fPcR1pEJfl83z3H008SqfYXOupD8Rg/3.ts?skid=default&signature=NjVjZWViZDBfODY2MGRiMjBjY2JmNzU0N2Q4YjVkYWU2Yzg2YmQxM2RkYTlkMDMwMzg1NGUzODUwNDJlMDc2Yjg4ZjdkM2Y5Yg==&zone=1
+        https://chunk-gcp-us-east1-vop1.cfcdn.mux.com/v1/chunk/fvJht9xWvuYIONSoqqTggSc9PabvbVcdLmRzOZBuchhXtBVVx0276R2swE9Iv00NyFMPSskd6bE00Nn02ir7U6QbO3ELZsYzv02fh1R8b5BHNMkg/3.ts?skid=default&signature=NjYzNDQ1MjBfOWNiYjZmMGYwMDU3NDJmYzg3MTdlNDJiNWJkZWYxYWE5OWY5OTAwMDFiYzQzMzQ4Yzc1ZGY3NjIzNzQwYjQ3MA==&zone=1&vsid=sHyWqRsgf013tXi5EvVRwRAbU8nNXcf01z5eD3ki302U00JLMobx023G2022aRKEyVkBCVgx02NCoVJnLE
         #EXTINF:3.85717,
-        https://chunk-gcp-us-east1-vop1.fastly.mux.com/v1/chunk/qyHnst9BVpSF4nZpMK8AcilKpgoNrCgNjEPLuepuB5rNKh008j8zOxI00VMlBMfKo7QFnBpHhQ6I8/4.ts?skid=default&signature=NjVjZWViZDBfMDY5N2FjZTU2MTczYmM4NGE3NTM4NWQ1ZGRiMmVhNWY5NmNkMGM0NGZhOTc4YWFjOGQwZDE0NmE0MTJhMGU0OA==&zone=1
+        https://chunk-gcp-us-east1-vop1.cfcdn.mux.com/v1/chunk/w7aPwt8ZueCTvWOdX8OjshX7ipMHxnEFg3LgFtFxH016QQE6MZ5h3K02TSXKnhoi00H5sQY74Z6UC5sfvRzsws5YhA4caNfqTiL6rpDHEqjH9Y/4.ts?skid=default&signature=NjYzNDQ1MjBfNzAwYWIxMmY0NWIxMGViY2FhNDE3MmFlNmUwMmE1OGRjZmJhMTY1MDAxYTBiOWQ5YjA1MzczZjNkMDQ4YjRmMg==&zone=1&vsid=sHyWqRsgf013tXi5EvVRwRAbU8nNXcf01z5eD3ki302U00JLMobx023G2022aRKEyVkBCVgx02NCoVJnLE
         #EXT-X-ENDLIST
         """
 
@@ -105,20 +105,19 @@ class PlaylistLocalURLMapperTests: XCTestCase {
         #EXT-X-TARGETDURATION:6
         #EXT-X-PLAYLIST-TYPE:VOD
         #EXTINF:5,
-        http://127.0.0.1:1234/v1/chunk/OvBswJ01THCr9vVhhgKhWYo9FRKmPaVQPY1Cqc73ShNTX4XeNe01tCCk5hFCbXdyN3DEMtkXkkUKU02L502Vpnp17Q/0.ts?skid=default&signature=NjVjZWViZDBfYmNmMmExMTNiOTZjMzZjMDNmY2M1ODNlNDIyZDJjMzU2ODM1MjY4ODRmZmZjY2JkZmEwZDUxN2MzYjliYTY4Ng%3D%3D&zone=1&__hls_origin_url=https://chunk-gcp-us-east1-vop1.fastly.mux.com/v1/chunk/OvBswJ01THCr9vVhhgKhWYo9FRKmPaVQPY1Cqc73ShNTX4XeNe01tCCk5hFCbXdyN3DEMtkXkkUKU02L502Vpnp17Q/0.ts?skid%3Ddefault%26signature%3DNjVjZWViZDBfYmNmMmExMTNiOTZjMzZjMDNmY2M1ODNlNDIyZDJjMzU2ODM1MjY4ODRmZmZjY2JkZmEwZDUxN2MzYjliYTY4Ng%3D%3D%26zone%3D1
+        http://127.0.0.1:1234/v1/chunk/JNsWzeS01dx24HM3zilrng400O5Fw4euDtRvGFv7BuURYjm1QWCvTlZOAJv7HSZQVjZ3p2DmGLB8tWj6S3R5IW83U3lb3WRhzkiTrpfCWHKeY/0.ts?skid=default&signature=NjYzNDQ1MjBfYjYyN2FjY2JjYWE3NGE3OTM5NjUzMDU3MGYzYjg5ZDU3MTYwYzgyNzUwMGVhYWJiYjIyNzM4MTU3YTI3NDZhZQ==&zone=1&vsid=sHyWqRsgf013tXi5EvVRwRAbU8nNXcf01z5eD3ki302U00JLMobx023G2022aRKEyVkBCVgx02NCoVJnLE&__hls_origin_url=https://chunk-gcp-us-east1-vop1.cfcdn.mux.com/v1/chunk/JNsWzeS01dx24HM3zilrng400O5Fw4euDtRvGFv7BuURYjm1QWCvTlZOAJv7HSZQVjZ3p2DmGLB8tWj6S3R5IW83U3lb3WRhzkiTrpfCWHKeY/0.ts?skid=default&signature=NjYzNDQ1MjBfYjYyN2FjY2JjYWE3NGE3OTM5NjUzMDU3MGYzYjg5ZDU3MTYwYzgyNzUwMGVhYWJiYjIyNzM4MTU3YTI3NDZhZQ==&zone=1&vsid=sHyWqRsgf013tXi5EvVRwRAbU8nNXcf01z5eD3ki302U00JLMobx023G2022aRKEyVkBCVgx02NCoVJnLE
         #EXTINF:5,
-        http://127.0.0.1:1234/v1/chunk/OvBswJ01THCr9vVhhgKhWYo9FRKmPaVQPY1Cqc73ShNTX4XeNe01tCCk5hFCbXdyN3DEMtkXkkUKU02L502Vpnp17Q/1.ts?skid=default&signature=NjVjZWViZDBfMjNhYTM2M2Y3ZWUxM2NmNTk5MDgxYzc3YjZmMTljODQ5MTllYzc0ZWY4ODAyMGMxY2E5NmUzZWRkM2U3NWM3Yw%3D%3D&zone=1&__hls_origin_url=https://chunk-gcp-us-east1-vop1.fastly.mux.com/v1/chunk/OvBswJ01THCr9vVhhgKhWYo9FRKmPaVQPY1Cqc73ShNTX4XeNe01tCCk5hFCbXdyN3DEMtkXkkUKU02L502Vpnp17Q/1.ts?skid%3Ddefault%26signature%3DNjVjZWViZDBfMjNhYTM2M2Y3ZWUxM2NmNTk5MDgxYzc3YjZmMTljODQ5MTllYzc0ZWY4ODAyMGMxY2E5NmUzZWRkM2U3NWM3Yw%3D%3D%26zone%3D1
+        http://127.0.0.1:1234/v1/chunk/JNsWzeS01dx24HM3zilrng400O5Fw4euDtRvGFv7BuURYjm1QWCvTlZOAJv7HSZQVjZ3p2DmGLB8tWj6S3R5IW83U3lb3WRhzkiTrpfCWHKeY/1.ts?skid=default&signature=NjYzNDQ1MjBfMzBjYTYxYmRmNTc5MWIyNzFiMDkyNjI4MGFkZWJlMTQ5OGFiZWQ1MDRiYjkwMjBjOWUzNGViZmQ2Y2FhNjIyYw==&zone=1&vsid=sHyWqRsgf013tXi5EvVRwRAbU8nNXcf01z5eD3ki302U00JLMobx023G2022aRKEyVkBCVgx02NCoVJnLE&__hls_origin_url=https://chunk-gcp-us-east1-vop1.cfcdn.mux.com/v1/chunk/JNsWzeS01dx24HM3zilrng400O5Fw4euDtRvGFv7BuURYjm1QWCvTlZOAJv7HSZQVjZ3p2DmGLB8tWj6S3R5IW83U3lb3WRhzkiTrpfCWHKeY/1.ts?skid=default&signature=NjYzNDQ1MjBfMzBjYTYxYmRmNTc5MWIyNzFiMDkyNjI4MGFkZWJlMTQ5OGFiZWQ1MDRiYjkwMjBjOWUzNGViZmQ2Y2FhNjIyYw==&zone=1&vsid=sHyWqRsgf013tXi5EvVRwRAbU8nNXcf01z5eD3ki302U00JLMobx023G2022aRKEyVkBCVgx02NCoVJnLE
         #EXTINF:5,
-        http://127.0.0.1:1234/v1/chunk/SvqDW01AkSp3ZzD01rlejLGZAO52Ke4J1DWI02C00Kz4MfzreU00shhPgxSd7U5n9LGJBz7YJTH2EJbuXrJU2RJdm1w/2.ts?skid=default&signature=NjVjZWViZDBfMzA1ODExODZlMTM4MjFiNTEwNjQ3ZGFhMmNhZTNmYTY4MmI0ODc0OTBiMzg0YjM4MTg0MjJjODM0MDc2YTE0ZA%3D%3D&zone=1&__hls_origin_url=https://chunk-gcp-us-east1-vop1.fastly.mux.com/v1/chunk/SvqDW01AkSp3ZzD01rlejLGZAO52Ke4J1DWI02C00Kz4MfzreU00shhPgxSd7U5n9LGJBz7YJTH2EJbuXrJU2RJdm1w/2.ts?skid%3Ddefault%26signature%3DNjVjZWViZDBfMzA1ODExODZlMTM4MjFiNTEwNjQ3ZGFhMmNhZTNmYTY4MmI0ODc0OTBiMzg0YjM4MTg0MjJjODM0MDc2YTE0ZA%3D%3D%26zone%3D1
+        http://127.0.0.1:1234/v1/chunk/L4cdUJY8t8g2uevcOQOn3hfdxdwz02iFPAaWz00Z7cHewjqO00MhlOgPShV01OGsfMBZkSReuBXcDLY45asjqxdmfjVNcwVBNv2dY165dPco01RA/2.ts?skid=default&signature=NjYzNDQ1MjBfMzk3ZDU2ODgzZWUyYjVkNjdjZDY2ZGRiMDhmMzRmMzE0NmVlZjg0OGYwYmUyYWFlYTY5ZTE3MTk0MWM1MTBkOA==&zone=1&vsid=sHyWqRsgf013tXi5EvVRwRAbU8nNXcf01z5eD3ki302U00JLMobx023G2022aRKEyVkBCVgx02NCoVJnLE&__hls_origin_url=https://chunk-gcp-us-east1-vop1.cfcdn.mux.com/v1/chunk/L4cdUJY8t8g2uevcOQOn3hfdxdwz02iFPAaWz00Z7cHewjqO00MhlOgPShV01OGsfMBZkSReuBXcDLY45asjqxdmfjVNcwVBNv2dY165dPco01RA/2.ts?skid=default&signature=NjYzNDQ1MjBfMzk3ZDU2ODgzZWUyYjVkNjdjZDY2ZGRiMDhmMzRmMzE0NmVlZjg0OGYwYmUyYWFlYTY5ZTE3MTk0MWM1MTBkOA==&zone=1&vsid=sHyWqRsgf013tXi5EvVRwRAbU8nNXcf01z5eD3ki302U00JLMobx023G2022aRKEyVkBCVgx02NCoVJnLE
         #EXTINF:5,
-        http://127.0.0.1:1234/v1/chunk/00F02RgxOeCOsfBQAy94c02kmytrY8hsu00yP1IjkR8knFX641jM6DJVuXIm2fPcR1pEJfl83z3H008SqfYXOupD8Rg/3.ts?skid=default&signature=NjVjZWViZDBfODY2MGRiMjBjY2JmNzU0N2Q4YjVkYWU2Yzg2YmQxM2RkYTlkMDMwMzg1NGUzODUwNDJlMDc2Yjg4ZjdkM2Y5Yg%3D%3D&zone=1&__hls_origin_url=https://chunk-gcp-us-east1-vop1.fastly.mux.com/v1/chunk/00F02RgxOeCOsfBQAy94c02kmytrY8hsu00yP1IjkR8knFX641jM6DJVuXIm2fPcR1pEJfl83z3H008SqfYXOupD8Rg/3.ts?skid%3Ddefault%26signature%3DNjVjZWViZDBfODY2MGRiMjBjY2JmNzU0N2Q4YjVkYWU2Yzg2YmQxM2RkYTlkMDMwMzg1NGUzODUwNDJlMDc2Yjg4ZjdkM2Y5Yg%3D%3D%26zone%3D1
+        http://127.0.0.1:1234/v1/chunk/fvJht9xWvuYIONSoqqTggSc9PabvbVcdLmRzOZBuchhXtBVVx0276R2swE9Iv00NyFMPSskd6bE00Nn02ir7U6QbO3ELZsYzv02fh1R8b5BHNMkg/3.ts?skid=default&signature=NjYzNDQ1MjBfOWNiYjZmMGYwMDU3NDJmYzg3MTdlNDJiNWJkZWYxYWE5OWY5OTAwMDFiYzQzMzQ4Yzc1ZGY3NjIzNzQwYjQ3MA==&zone=1&vsid=sHyWqRsgf013tXi5EvVRwRAbU8nNXcf01z5eD3ki302U00JLMobx023G2022aRKEyVkBCVgx02NCoVJnLE&__hls_origin_url=https://chunk-gcp-us-east1-vop1.cfcdn.mux.com/v1/chunk/fvJht9xWvuYIONSoqqTggSc9PabvbVcdLmRzOZBuchhXtBVVx0276R2swE9Iv00NyFMPSskd6bE00Nn02ir7U6QbO3ELZsYzv02fh1R8b5BHNMkg/3.ts?skid=default&signature=NjYzNDQ1MjBfOWNiYjZmMGYwMDU3NDJmYzg3MTdlNDJiNWJkZWYxYWE5OWY5OTAwMDFiYzQzMzQ4Yzc1ZGY3NjIzNzQwYjQ3MA==&zone=1&vsid=sHyWqRsgf013tXi5EvVRwRAbU8nNXcf01z5eD3ki302U00JLMobx023G2022aRKEyVkBCVgx02NCoVJnLE
         #EXTINF:3.85717,
-        http://127.0.0.1:1234/v1/chunk/qyHnst9BVpSF4nZpMK8AcilKpgoNrCgNjEPLuepuB5rNKh008j8zOxI00VMlBMfKo7QFnBpHhQ6I8/4.ts?skid=default&signature=NjVjZWViZDBfMDY5N2FjZTU2MTczYmM4NGE3NTM4NWQ1ZGRiMmVhNWY5NmNkMGM0NGZhOTc4YWFjOGQwZDE0NmE0MTJhMGU0OA%3D%3D&zone=1&__hls_origin_url=https://chunk-gcp-us-east1-vop1.fastly.mux.com/v1/chunk/qyHnst9BVpSF4nZpMK8AcilKpgoNrCgNjEPLuepuB5rNKh008j8zOxI00VMlBMfKo7QFnBpHhQ6I8/4.ts?skid%3Ddefault%26signature%3DNjVjZWViZDBfMDY5N2FjZTU2MTczYmM4NGE3NTM4NWQ1ZGRiMmVhNWY5NmNkMGM0NGZhOTc4YWFjOGQwZDE0NmE0MTJhMGU0OA%3D%3D%26zone%3D1
+        http://127.0.0.1:1234/v1/chunk/w7aPwt8ZueCTvWOdX8OjshX7ipMHxnEFg3LgFtFxH016QQE6MZ5h3K02TSXKnhoi00H5sQY74Z6UC5sfvRzsws5YhA4caNfqTiL6rpDHEqjH9Y/4.ts?skid=default&signature=NjYzNDQ1MjBfNzAwYWIxMmY0NWIxMGViY2FhNDE3MmFlNmUwMmE1OGRjZmJhMTY1MDAxYTBiOWQ5YjA1MzczZjNkMDQ4YjRmMg==&zone=1&vsid=sHyWqRsgf013tXi5EvVRwRAbU8nNXcf01z5eD3ki302U00JLMobx023G2022aRKEyVkBCVgx02NCoVJnLE&__hls_origin_url=https://chunk-gcp-us-east1-vop1.cfcdn.mux.com/v1/chunk/w7aPwt8ZueCTvWOdX8OjshX7ipMHxnEFg3LgFtFxH016QQE6MZ5h3K02TSXKnhoi00H5sQY74Z6UC5sfvRzsws5YhA4caNfqTiL6rpDHEqjH9Y/4.ts?skid=default&signature=NjYzNDQ1MjBfNzAwYWIxMmY0NWIxMGViY2FhNDE3MmFlNmUwMmE1OGRjZmJhMTY1MDAxYTBiOWQ5YjA1MzczZjNkMDQ4YjRmMg==&zone=1&vsid=sHyWqRsgf013tXi5EvVRwRAbU8nNXcf01z5eD3ki302U00JLMobx023G2022aRKEyVkBCVgx02NCoVJnLE
         #EXT-X-ENDLIST
         """
 
         let mapper = ReverseProxyServer.PlaylistLocalURLMapper()
-
 
         let encodedOriginalPlaylist = try XCTUnwrap(
             originalRenditionPlaylist.data(
@@ -128,7 +127,7 @@ class PlaylistLocalURLMapperTests: XCTestCase {
         )
 
         let playlistOriginURL = try XCTUnwrap(
-            URL(string: "https://manifest-gcp-us-east1-vop1.fastly.mux.com/qyHnst9BVpSF4nZpMK8AcilKpgoNrCgNjEPLuepuB5rNKh008j8zOxI00VMlBMfKo7QFnBpHhQ6I8/rendition.m3u8?cdn=fastly&expires=1708059600&skid=default&signature=NjVjZWViZDBfMWNlMjdjZDFlNTg1MGVlNjJmMjVmNDFkMjY0ZTY0M2I2YWJhYzQ0ZjRhMTNlYjQ2YmNiMDMyZjYzNTFmMDI2Ng==&vsid=UxwWoZ023025LmoJn1vaJvtoDTLKPhmpL35e5wQtduTwfFSQyqcThzqR3Tw3fD7Jaq02Uc01nbIQBZg"),
+            URL(string: "https://manifest-gcp-us-east1-vop1.cfcdn.mux.com/w7aPwt8ZueCTvWOdX8OjshX7ipMHxnEFg3LgFtFxH016QQE6MZ5h3K02TSXKnhoi00H5sQY74Z6UC5sfvRzsws5YhA4caNfqTiL6rpDHEqjH9Y/rendition.m3u8?cdn=cloudflare&expires=1714701600&skid=default&signature=NjYzNDQ1MjBfYzc5OTQ3YjEzMWY0YzlhN2VmMDZlYTc0MDI0ZTJhMjA1MjQ4MjM3NTQ2MjNkYTg4MzdkNjNjZmU0NzAzNzhmOA==&vsid=sHyWqRsgf013tXi5EvVRwRAbU8nNXcf01z5eD3ki302U00JLMobx023G2022aRKEyVkBCVgx02NCoVJnLE"),
             "Couldn't create manifest origin URL"
         )
 
@@ -144,9 +143,108 @@ class PlaylistLocalURLMapperTests: XCTestCase {
             String(
                 data: encodedMappedRenditionPlaylist,
                 encoding: .utf8
-            ),
+            )?.removingPercentEncoding,
             "Couldn't decode rendition playlist"
         )
+
+        XCTAssertEqual(
+            mappedRenditionPlaylist.components(separatedBy: CharacterSet.newlines).count,
+            expectedMappedRenditionPlaylist.components(separatedBy: CharacterSet.newlines).count
+        )
+
+        for index in 0..<mappedRenditionPlaylist.components(separatedBy: CharacterSet.newlines).count {
+            XCTAssertEqual(
+                mappedRenditionPlaylist.components(separatedBy: CharacterSet.newlines)[index],
+                expectedMappedRenditionPlaylist.components(separatedBy: CharacterSet.newlines)[index]
+            )
+        }
+
+        XCTAssertEqual(
+            mappedRenditionPlaylist,
+            expectedMappedRenditionPlaylist
+        )
+    }
+
+    func testCommonMediaApplicationFormatRenditionPlaylistPlaylistLocalURLMapping() throws {
+        let originalRenditionPlaylist = """
+        #EXTM3U
+        #EXT-X-VERSION:7
+        #EXT-X-TARGETDURATION:5
+        #EXT-X-MAP:URI="https://chunk-gcp-us-east4-vop1.fastly.mux.com/v1/chunk/YmJ02e0202vINrpopc1z02GsyMjYGi7mb8fcTrCuzbf0100fV2qGB7QTYe00LZYS1lv5SfZnmZtld1f9vDe4Px33t7Z00PWEEIhraxdItMuBz9jtaww/18446744073709551615.m4s?skid=default&signature=NjYzNDQ1MjBfY2NiNDg1YWE0M2RiOTg5Nzc1NDJmYWVhZmMxZTdhMzYyYTk5Yzc1MDIzOWFlYzZkOGYwZDJhMTI4ODgxMjBlZQ==&zone=0&vsid=PzF8MS201Rjz6a6n01701kdrzsmUj1MTbYeBiaeCzAFui2yAbv01FD9DzN02gBmtd4GeiAt8wRRWBjgU"
+        #EXT-X-PLAYLIST-TYPE:VOD
+        #EXTINF:5,
+        https://chunk-gcp-us-east4-vop1.fastly.mux.com/v1/chunk/YmJ02e0202vINrpopc1z02GsyMjYGi7mb8fcTrCuzbf0100fV2qGB7QTYe00LZYS1lv5SfZnmZtld1f9vDe4Px33t7Z00PWEEIhraxdItMuBz9jtaww/0.m4s?skid=default&signature=NjYzNDQ1MjBfYmRhZjgwZTk4NWQ3MWQ4NzI2ZWYzYzlhNTk4ZGFjMjFmMzVhMzRjYjYyZWM3MTM4NGY5MmQ5YWM2OGM2ZWVhNQ==&zone=0&vsid=PzF8MS201Rjz6a6n01701kdrzsmUj1MTbYeBiaeCzAFui2yAbv01FD9DzN02gBmtd4GeiAt8wRRWBjgU
+        #EXTINF:5,
+        https://chunk-gcp-us-east4-vop1.fastly.mux.com/v1/chunk/YmJ02e0202vINrpopc1z02GsyMjYGi7mb8fcTrCuzbf0100fV2qGB7QTYe00LZYS1lv5SfZnmZtld1f9vDe4Px33t7Z00PWEEIhraxdItMuBz9jtaww/1.m4s?skid=default&signature=NjYzNDQ1MjBfNWFlMTAxZDUxNjM4ZDM3NGUwMzVjYmFiMGU3MTdhNjZmNDczNmVmZmUwMThjNTk1MzdlZDlhMDU5M2QzMjQyOA==&zone=0&vsid=PzF8MS201Rjz6a6n01701kdrzsmUj1MTbYeBiaeCzAFui2yAbv01FD9DzN02gBmtd4GeiAt8wRRWBjgU
+        #EXTINF:5,
+        https://chunk-gcp-us-east4-vop1.fastly.mux.com/v1/chunk/01kMRdxK00qua8np01BRijB5Mzj3YAtOo6by3wlOOZd008Fq01Z00m9FD9DggdgDROzLSgGhAeTF8fP5f6qySJz6gbhRnP7j7c4p02W02g01qYD2zmSg/2.m4s?skid=default&signature=NjYzNDQ1MjBfOGFjNTMyNzMzZDBlNjZmODRhZjFlMTdmY2E1NzRjOGM0ZWM0MGVhYmVlNGQxOWZhYmIwMjVjMzAxYmUzZjBiZA==&zone=0&vsid=PzF8MS201Rjz6a6n01701kdrzsmUj1MTbYeBiaeCzAFui2yAbv01FD9DzN02gBmtd4GeiAt8wRRWBjgU
+        #EXTINF:5,
+        https://chunk-gcp-us-east4-vop1.fastly.mux.com/v1/chunk/hpwcj01a1UaRF68TgfPme4LloXplUiXyTT01jYfBSc00ELcM01cAPF7D00XumM9HCRLxE49vFV2101XmXnh3Akvlwm9JRC6hx01544OMXmCXK027bxM/3.m4s?skid=default&signature=NjYzNDQ1MjBfODg0NGM3MzcyZGExMGNlOTJhMjgzOTc4ZGE1MDViNjFjNDhiZmFmYWIzODBlMGZlNzljNWQ3M2Y4YTYxOWY3NQ==&zone=0&vsid=PzF8MS201Rjz6a6n01701kdrzsmUj1MTbYeBiaeCzAFui2yAbv01FD9DzN02gBmtd4GeiAt8wRRWBjgU
+        #EXTINF:3.85717,
+        https://chunk-gcp-us-east4-vop1.fastly.mux.com/v1/chunk/W3YvyLLFCFvvjXQB2JgO3ApQfPFeWxDN4EZ01zuuRlieVPE9DF87YQ1CMD3zgvUoDayp7Vy4zK02CDxq2jmThORH0290002V588oQcHO02ld9PR2g/4.m4s?skid=default&signature=NjYzNDQ1MjBfZDQ5YzNmYTBiOTU0Yzc2MWI4NDhlMjBhZjY4MWM1NmE2ZDM4NTE4ZDM4YmY5YzllZWI4NDI0MmE1MmViM2E0Yg==&zone=0&vsid=PzF8MS201Rjz6a6n01701kdrzsmUj1MTbYeBiaeCzAFui2yAbv01FD9DzN02gBmtd4GeiAt8wRRWBjgU
+        #EXT-X-ENDLIST
+        """
+
+        let expectedMappedRenditionPlaylist = """
+        #EXTM3U
+        #EXT-X-VERSION:7
+        #EXT-X-TARGETDURATION:5
+        #EXT-X-MAP:URI="http://127.0.0.1:1234/v1/chunk/YmJ02e0202vINrpopc1z02GsyMjYGi7mb8fcTrCuzbf0100fV2qGB7QTYe00LZYS1lv5SfZnmZtld1f9vDe4Px33t7Z00PWEEIhraxdItMuBz9jtaww/18446744073709551615.m4s?skid=default&signature=NjYzNDQ1MjBfY2NiNDg1YWE0M2RiOTg5Nzc1NDJmYWVhZmMxZTdhMzYyYTk5Yzc1MDIzOWFlYzZkOGYwZDJhMTI4ODgxMjBlZQ==&zone=0&vsid=PzF8MS201Rjz6a6n01701kdrzsmUj1MTbYeBiaeCzAFui2yAbv01FD9DzN02gBmtd4GeiAt8wRRWBjgU&__hls_origin_url=https://chunk-gcp-us-east4-vop1.fastly.mux.com/v1/chunk/YmJ02e0202vINrpopc1z02GsyMjYGi7mb8fcTrCuzbf0100fV2qGB7QTYe00LZYS1lv5SfZnmZtld1f9vDe4Px33t7Z00PWEEIhraxdItMuBz9jtaww/18446744073709551615.m4s?skid=default&signature=NjYzNDQ1MjBfY2NiNDg1YWE0M2RiOTg5Nzc1NDJmYWVhZmMxZTdhMzYyYTk5Yzc1MDIzOWFlYzZkOGYwZDJhMTI4ODgxMjBlZQ==&zone=0&vsid=PzF8MS201Rjz6a6n01701kdrzsmUj1MTbYeBiaeCzAFui2yAbv01FD9DzN02gBmtd4GeiAt8wRRWBjgU"
+        #EXT-X-PLAYLIST-TYPE:VOD
+        #EXTINF:5,
+        http://127.0.0.1:1234/v1/chunk/YmJ02e0202vINrpopc1z02GsyMjYGi7mb8fcTrCuzbf0100fV2qGB7QTYe00LZYS1lv5SfZnmZtld1f9vDe4Px33t7Z00PWEEIhraxdItMuBz9jtaww/0.m4s?skid=default&signature=NjYzNDQ1MjBfYmRhZjgwZTk4NWQ3MWQ4NzI2ZWYzYzlhNTk4ZGFjMjFmMzVhMzRjYjYyZWM3MTM4NGY5MmQ5YWM2OGM2ZWVhNQ==&zone=0&vsid=PzF8MS201Rjz6a6n01701kdrzsmUj1MTbYeBiaeCzAFui2yAbv01FD9DzN02gBmtd4GeiAt8wRRWBjgU&__hls_origin_url=https://chunk-gcp-us-east4-vop1.fastly.mux.com/v1/chunk/YmJ02e0202vINrpopc1z02GsyMjYGi7mb8fcTrCuzbf0100fV2qGB7QTYe00LZYS1lv5SfZnmZtld1f9vDe4Px33t7Z00PWEEIhraxdItMuBz9jtaww/0.m4s?skid=default&signature=NjYzNDQ1MjBfYmRhZjgwZTk4NWQ3MWQ4NzI2ZWYzYzlhNTk4ZGFjMjFmMzVhMzRjYjYyZWM3MTM4NGY5MmQ5YWM2OGM2ZWVhNQ==&zone=0&vsid=PzF8MS201Rjz6a6n01701kdrzsmUj1MTbYeBiaeCzAFui2yAbv01FD9DzN02gBmtd4GeiAt8wRRWBjgU
+        #EXTINF:5,
+        http://127.0.0.1:1234/v1/chunk/YmJ02e0202vINrpopc1z02GsyMjYGi7mb8fcTrCuzbf0100fV2qGB7QTYe00LZYS1lv5SfZnmZtld1f9vDe4Px33t7Z00PWEEIhraxdItMuBz9jtaww/1.m4s?skid=default&signature=NjYzNDQ1MjBfNWFlMTAxZDUxNjM4ZDM3NGUwMzVjYmFiMGU3MTdhNjZmNDczNmVmZmUwMThjNTk1MzdlZDlhMDU5M2QzMjQyOA==&zone=0&vsid=PzF8MS201Rjz6a6n01701kdrzsmUj1MTbYeBiaeCzAFui2yAbv01FD9DzN02gBmtd4GeiAt8wRRWBjgU&__hls_origin_url=https://chunk-gcp-us-east4-vop1.fastly.mux.com/v1/chunk/YmJ02e0202vINrpopc1z02GsyMjYGi7mb8fcTrCuzbf0100fV2qGB7QTYe00LZYS1lv5SfZnmZtld1f9vDe4Px33t7Z00PWEEIhraxdItMuBz9jtaww/1.m4s?skid=default&signature=NjYzNDQ1MjBfNWFlMTAxZDUxNjM4ZDM3NGUwMzVjYmFiMGU3MTdhNjZmNDczNmVmZmUwMThjNTk1MzdlZDlhMDU5M2QzMjQyOA==&zone=0&vsid=PzF8MS201Rjz6a6n01701kdrzsmUj1MTbYeBiaeCzAFui2yAbv01FD9DzN02gBmtd4GeiAt8wRRWBjgU
+        #EXTINF:5,
+        http://127.0.0.1:1234/v1/chunk/01kMRdxK00qua8np01BRijB5Mzj3YAtOo6by3wlOOZd008Fq01Z00m9FD9DggdgDROzLSgGhAeTF8fP5f6qySJz6gbhRnP7j7c4p02W02g01qYD2zmSg/2.m4s?skid=default&signature=NjYzNDQ1MjBfOGFjNTMyNzMzZDBlNjZmODRhZjFlMTdmY2E1NzRjOGM0ZWM0MGVhYmVlNGQxOWZhYmIwMjVjMzAxYmUzZjBiZA==&zone=0&vsid=PzF8MS201Rjz6a6n01701kdrzsmUj1MTbYeBiaeCzAFui2yAbv01FD9DzN02gBmtd4GeiAt8wRRWBjgU&__hls_origin_url=https://chunk-gcp-us-east4-vop1.fastly.mux.com/v1/chunk/01kMRdxK00qua8np01BRijB5Mzj3YAtOo6by3wlOOZd008Fq01Z00m9FD9DggdgDROzLSgGhAeTF8fP5f6qySJz6gbhRnP7j7c4p02W02g01qYD2zmSg/2.m4s?skid=default&signature=NjYzNDQ1MjBfOGFjNTMyNzMzZDBlNjZmODRhZjFlMTdmY2E1NzRjOGM0ZWM0MGVhYmVlNGQxOWZhYmIwMjVjMzAxYmUzZjBiZA==&zone=0&vsid=PzF8MS201Rjz6a6n01701kdrzsmUj1MTbYeBiaeCzAFui2yAbv01FD9DzN02gBmtd4GeiAt8wRRWBjgU
+        #EXTINF:5,
+        http://127.0.0.1:1234/v1/chunk/hpwcj01a1UaRF68TgfPme4LloXplUiXyTT01jYfBSc00ELcM01cAPF7D00XumM9HCRLxE49vFV2101XmXnh3Akvlwm9JRC6hx01544OMXmCXK027bxM/3.m4s?skid=default&signature=NjYzNDQ1MjBfODg0NGM3MzcyZGExMGNlOTJhMjgzOTc4ZGE1MDViNjFjNDhiZmFmYWIzODBlMGZlNzljNWQ3M2Y4YTYxOWY3NQ==&zone=0&vsid=PzF8MS201Rjz6a6n01701kdrzsmUj1MTbYeBiaeCzAFui2yAbv01FD9DzN02gBmtd4GeiAt8wRRWBjgU&__hls_origin_url=https://chunk-gcp-us-east4-vop1.fastly.mux.com/v1/chunk/hpwcj01a1UaRF68TgfPme4LloXplUiXyTT01jYfBSc00ELcM01cAPF7D00XumM9HCRLxE49vFV2101XmXnh3Akvlwm9JRC6hx01544OMXmCXK027bxM/3.m4s?skid=default&signature=NjYzNDQ1MjBfODg0NGM3MzcyZGExMGNlOTJhMjgzOTc4ZGE1MDViNjFjNDhiZmFmYWIzODBlMGZlNzljNWQ3M2Y4YTYxOWY3NQ==&zone=0&vsid=PzF8MS201Rjz6a6n01701kdrzsmUj1MTbYeBiaeCzAFui2yAbv01FD9DzN02gBmtd4GeiAt8wRRWBjgU
+        #EXTINF:3.85717,
+        http://127.0.0.1:1234/v1/chunk/W3YvyLLFCFvvjXQB2JgO3ApQfPFeWxDN4EZ01zuuRlieVPE9DF87YQ1CMD3zgvUoDayp7Vy4zK02CDxq2jmThORH0290002V588oQcHO02ld9PR2g/4.m4s?skid=default&signature=NjYzNDQ1MjBfZDQ5YzNmYTBiOTU0Yzc2MWI4NDhlMjBhZjY4MWM1NmE2ZDM4NTE4ZDM4YmY5YzllZWI4NDI0MmE1MmViM2E0Yg==&zone=0&vsid=PzF8MS201Rjz6a6n01701kdrzsmUj1MTbYeBiaeCzAFui2yAbv01FD9DzN02gBmtd4GeiAt8wRRWBjgU&__hls_origin_url=https://chunk-gcp-us-east4-vop1.fastly.mux.com/v1/chunk/W3YvyLLFCFvvjXQB2JgO3ApQfPFeWxDN4EZ01zuuRlieVPE9DF87YQ1CMD3zgvUoDayp7Vy4zK02CDxq2jmThORH0290002V588oQcHO02ld9PR2g/4.m4s?skid=default&signature=NjYzNDQ1MjBfZDQ5YzNmYTBiOTU0Yzc2MWI4NDhlMjBhZjY4MWM1NmE2ZDM4NTE4ZDM4YmY5YzllZWI4NDI0MmE1MmViM2E0Yg==&zone=0&vsid=PzF8MS201Rjz6a6n01701kdrzsmUj1MTbYeBiaeCzAFui2yAbv01FD9DzN02gBmtd4GeiAt8wRRWBjgU
+        #EXT-X-ENDLIST
+        """
+
+        let mapper = ReverseProxyServer.PlaylistLocalURLMapper()
+
+        let encodedOriginalPlaylist = try XCTUnwrap(
+            originalRenditionPlaylist.data(
+                using: .utf8
+            ),
+            "Couldn't encode original rendition playlist"
+        )
+
+        let playlistOriginURL = try XCTUnwrap(
+            URL(string: "https://manifest-gcp-us-east4-vop1.cfcdn.mux.com/W3YvyLLFCFvvjXQB2JgO3ApQfPFeWxDN4EZ01zuuRlieVPE9DF87YQ1CMD3zgvUoDayp7Vy4zK02CDxq2jmThORH0290002V588oQcHO02ld9PR2g/rendition.m3u8?cdn=fastly&expires=1714701600&skid=default&signature=NjYzNDQ1MjBfOTJlMmY5NDUyOTE4ZDFjNmI1OTQ4ZWU3YzljZjllMTZkM2M0YmE5ZmFkMTk5ZmQ4OWVhNTZhNmQ5ODg0NGYzNw==&vsid=PzF8MS201Rjz6a6n01701kdrzsmUj1MTbYeBiaeCzAFui2yAbv01FD9DzN02gBmtd4GeiAt8wRRWBjgU"),
+            "Couldn't create manifest origin URL"
+        )
+
+        let encodedMappedRenditionPlaylist = try XCTUnwrap(
+            mapper.processEncodedPlaylist(
+                encodedOriginalPlaylist,
+                playlistOriginURL: playlistOriginURL
+            ),
+            "Couldn't map to local URLs in rendition playlist"
+        )
+
+        let mappedRenditionPlaylist = try XCTUnwrap(
+            String(
+                data: encodedMappedRenditionPlaylist,
+                encoding: .utf8
+            )?.removingPercentEncoding,
+            "Couldn't decode rendition playlist"
+        )
+
+        XCTAssertEqual(
+            mappedRenditionPlaylist.components(separatedBy: CharacterSet.newlines).count,
+            expectedMappedRenditionPlaylist.components(separatedBy: CharacterSet.newlines).count
+        )
+
+        for index in 0..<mappedRenditionPlaylist.components(separatedBy: CharacterSet.newlines).count {
+            XCTAssertEqual(
+                mappedRenditionPlaylist.components(separatedBy: CharacterSet.newlines)[index],
+                expectedMappedRenditionPlaylist.components(separatedBy: CharacterSet.newlines)[index]
+            )
+        }
 
         XCTAssertEqual(
             mappedRenditionPlaylist,
