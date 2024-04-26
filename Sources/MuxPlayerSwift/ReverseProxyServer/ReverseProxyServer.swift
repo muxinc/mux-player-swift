@@ -150,15 +150,19 @@ class ReverseProxyServer {
             return
         }
 
-        self.setupManifestRequestHandler()
-        self.setupCMAFSegmentHandler()
-        self.setupTSSegmentHandler()
+        setupRequestHandlers()
 
         webServer.start(
             withPort: port,
             bonjourName: nil
         )
     }
+
+    func setupRequestHandlers() {
+            setupManifestRequestHandler()
+            setupCMAFSegmentHandler()
+            setupTSSegmentHandler()
+        }
 
     func stop() {
         guard webServer.isRunning else {
