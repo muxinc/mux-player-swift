@@ -37,6 +37,7 @@ class ReverseProxyServer {
                 .components(separatedBy: .newlines)
                 .map { line in self.processPlaylistLine(line, forOriginURL: playlistOriginURL) }
                 .joined(separator: "\n")
+                .removingPercentEncoding
 
             return parsedManifest?.data(using: .utf8)
         }
@@ -105,7 +106,17 @@ class ReverseProxyServer {
             components.host = "127.0.0.1"
             components.port = Int(port)
 
-            let originURLQueryItem = URLQueryItem(name: originURLKey, value: originURL.absoluteString)
+            // Additional encoding step for ampersands is
+            // required to avoid truncating origin URL
+            let encodedOriginURLQueryValue = originURL.absoluteString
+                .addingPercentEncoding(
+                    withAllowedCharacters: CharacterSet.urlQueryAllowed.subtracting(CharacterSet(charactersIn:"&"))
+                )
+
+            let originURLQueryItem = URLQueryItem(
+                name: originURLKey,
+                value: encodedOriginURLQueryValue
+            )
             components.queryItems = (components.queryItems ?? []) + [originURLQueryItem]
 
             return components.url
@@ -362,11 +373,25 @@ class ReverseProxyServer {
         ) { [weak self] request, completion in
 
             guard let self = self else {
-                return completion(GCDWebServerDataResponse(statusCode: 500))
+                return completion(
+                    GCDWebServerDataResponse(
+                        statusCode: 500
+                    )
+                )
             }
 
-            guard let originURL = self.originURL(from: request) else {
-                return completion(GCDWebServerErrorResponse(statusCode: 400))
+            guard let originURL = self.originURL(
+                from: request
+            ),
+            var strippedRequestComponents = URLComponents(
+                url: originURL,
+                resolvingAgainstBaseURL: false
+            ) else {
+                return completion(
+                    GCDWebServerErrorResponse(
+                        statusCode: 400
+                    )
+                )
             }
 
             eventRecorder.didRecord(
@@ -376,8 +401,10 @@ class ReverseProxyServer {
                 )
             )
 
-            var reverseProxyRequest = URLRequest(url: originURL)
-            reverseProxyRequest.httpMethod = "GET"
+            var originRequest = URLRequest(
+                url: originURL
+            )
+            originRequest.httpMethod = "GET"
 
             // Construct a modified request that will be the
             // same across segment requests
@@ -385,16 +412,16 @@ class ReverseProxyServer {
             // - Replace cdn-specific hosts with generic
             //
             // This request only used as a cache key
-            var components = URLComponents(url: originURL, resolvingAgainstBaseURL: false)
-            components?.queryItems = nil
-            components?.host = "stream.mux.com"
+            strippedRequestComponents.queryItems = nil
+            strippedRequestComponents.host = "stream.mux.com"
 
-            var strippedRequest = URLRequest(url: components!.url!)
+            var strippedRequest = URLRequest(
+                url: strippedRequestComponents.url!
+            )
 
             if let cachedResponse = self.segmentCache.cachedResponse(
                 for: strippedRequest
             ) {
-
                 eventRecorder.didRecord(
                     event: ReverseProxyEvent(
                         originURL: originURL,
@@ -420,7 +447,7 @@ class ReverseProxyServer {
                 )
 
                 let task = self.session.dataTask(
-                    with: reverseProxyRequest
+                    with: originRequest
                 ) { [weak self] data, response, error in
 
                     guard let self = self else {
