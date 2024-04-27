@@ -75,8 +75,8 @@ class FairplaySessionManager {
         //  also, we don't like the form-encoded POST body
 
         
-        print("POST BODY: \(postData)")
         request.httpMethod = "POST"
+//        print("POST BODY: \(postData)")
         //request.httpBody = postData.data(using: .utf8, allowLossyConversion: true)
         request.httpBody = spcData
 
@@ -105,7 +105,7 @@ class FairplaySessionManager {
             }
             
             if let ckcData = data {
-                // TODO: This assumes the response body is base64
+                // TODO: This causes crashes when there are HTTP errors because there's still a response body for errors
                 let ckcMessage = Data(base64Encoded: ckcData)
                 
                 // Also log the CKC
