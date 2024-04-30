@@ -52,7 +52,7 @@ class FairplaySessionManager {
         drmToken: String,
         playbackDomain: String,
         offline _: Bool,
-        completion: @escaping (Result<Data, Error>) -> Void
+        completion licenseRequestComplete: @escaping (Result<Data, Error>) -> Void
     ) {
         // no need to track license request tasks since we are not prewarming
         //  and therefore don't need to worry about re-joinining any existing
@@ -87,7 +87,7 @@ class FairplaySessionManager {
         print("Sending License/CKC Request to: \(request.url?.absoluteString)")
         print("\t with header fields: \(request.allHTTPHeaderFields)")
 
-        let task = urlSession.dataTask(with: request) { [completion] data, response, error in
+        let task = urlSession.dataTask(with: request) { [licenseRequestComplete] data, response, error in
             print("<><> GOT LICENSE RESPONSE")
             var responseCode: Int? = nil
             if let httpResponse = response as? HTTPURLResponse {
@@ -99,13 +99,13 @@ class FairplaySessionManager {
             // error case: I/O finished with non-successful response
             guard responseCode == 200 else {
                 print("CKC request failed: \(responseCode)")
-                completion(Result.failure(TempError()))
+                licenseRequestComplete(Result.failure(TempError()))
                 return
             }
             // error case: I/O failed
             if let error = error {
                 print("URL Session Task Failed: \(error.localizedDescription)")
-                completion(Result.failure(error)) // todo - real Error type
+                licenseRequestComplete(Result.failure(error)) // todo - real Error type
                 return
             }
             // strange edge case: 200 with no response body
@@ -113,7 +113,7 @@ class FairplaySessionManager {
             //  with our drm vendor and probably shouldn't be relevant, but lets not crash
             guard let data = data else {
                 print("No CKC data despite server returning success")
-                completion(Result.failure(TempError())) // todo - real Error type
+                licenseRequestComplete(Result.failure(TempError())) // todo - real Error type
                 return
             }
             
@@ -131,7 +131,7 @@ class FairplaySessionManager {
                 print("")
 
                 //completion(Result.success(ckcData))
-                completion(Result.success(ckcMessage!))
+                licenseRequestComplete(Result.success(ckcMessage!))
             }
         task.resume()
     }
