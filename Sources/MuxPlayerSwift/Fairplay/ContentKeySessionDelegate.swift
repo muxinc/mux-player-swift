@@ -20,6 +20,27 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
         handleContentKeyRequest(session, request: keyRequest)
     }
     
+    func contentKeySession(_ session: AVContentKeySession, contentKeyRequestDidSucceed keyRequest: AVContentKeyRequest) {
+        // this func intentionally left blank
+        print("CKC Request Success")
+    }
+    
+    func contentKeySession(_ session: AVContentKeySession, contentKeyRequest keyRequest: AVContentKeyRequest, didFailWithError err: any Error) {
+        print("CKC Request Failed!!! \(err.localizedDescription)")
+    }
+    
+    func contentKeySessionContentProtectionSessionIdentifierDidChange(_ session: AVContentKeySession) {
+        print("Content Key session ID changed apparently")
+    }
+    
+    func contentKeySessionDidGenerateExpiredSessionReport(_ session: AVContentKeySession) {
+        print("Expired session report generated (whatever that means)")
+    }
+    
+    func contentKeySession(_ session: AVContentKeySession, externalProtectionStatusDidChangeFor contentKey: AVContentKey) {
+        print("External Protection status changed for a content key sesison")
+    }
+    
     func contentKeySession(_ session: AVContentKeySession, shouldRetry keyRequest: AVContentKeyRequest,
                            reason retryReason: AVContentKeyRequest.RetryReason) -> Bool {
         print("===shouldRetry called with reason \(retryReason)")
