@@ -64,14 +64,14 @@ class FairplaySessionManager {
         request.httpMethod = "POST"
         request.httpBody = spcData
         //print("Raw (non-percent encoded) SPC base64:", spcData.base64EncodedString()) // we dump the encoded version too
-
+        
         
         // QUERY PARAMS
         request.setValue("application/octet-stream", forHTTPHeaderField: "Content-Type")
         request.setValue(String(format: "%lu", request.httpBody?.count ?? 0), forHTTPHeaderField: "Content-Length")
         print("Sending License/CKC Request to: \(request.url?.absoluteString)")
         print("\t with header fields: \(request.allHTTPHeaderFields)")
-
+        
         let task = urlSession.dataTask(with: request) { [licenseRequestComplete] data, response, error in
             print("<><> GOT LICENSE RESPONSE")
             var responseCode: Int? = nil
@@ -79,7 +79,7 @@ class FairplaySessionManager {
                 responseCode = httpResponse.statusCode
                 print("License response code: \(httpResponse.statusCode)")
                 print("License response headers: ", httpResponse.allHeaderFields)
-
+                
             }
             // error case: I/O finished with non-successful response
             guard responseCode == 200 else {
@@ -102,22 +102,13 @@ class FairplaySessionManager {
                 return
             }
             
-            let responseBody = data.base64EncodedString()
+            let responseBody = data
             print("License response body: ", responseBody)
-
+            
             let ckcData = data
-                let ckcMessage = Data(base64Encoded: ckcData)
-                
-                // TODO: um do not in fact log the CKC
-                // Also log the CKC
-                //let ckcBase64 = ckcData.base64EncodedString()
-//                let ckcBase64 = ckcMessage!.base64EncodedString()
-//                print("CKC Response Body base64:", ckcBase64)
-                print("")
-
-                //completion(Result.success(ckcData))
-                licenseRequestComplete(Result.success(ckcMessage!))
-            }
+            print("")
+            licenseRequestComplete(Result.success(ckcData))
+        }
         task.resume()
     }
     
@@ -180,8 +171,9 @@ class FairplaySessionManager {
         sessionDelegate: AVContentKeySessionDelegate?,
         sessionDelegateQueue: DispatchQueue
     ) {
-//        print(">>>>>>>>>>>>>>>>>")
-//        print(ProcessInfo.processInfo.environment["APP_CERT_BASE64"])
+        // TODO: Remove when app cert endpoint is available
+        //        print(">>>>>>>>>>>>>>>>>")
+        //        print(ProcessInfo.processInfo.environment["APP_CERT_BASE64"])
         
         contentKeySession?.setDelegate(sessionDelegate, queue: sessionDelegateQueue)
         
