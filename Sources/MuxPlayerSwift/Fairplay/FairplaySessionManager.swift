@@ -54,31 +54,16 @@ class FairplaySessionManager {
         offline _: Bool,
         completion licenseRequestComplete: @escaping (Result<Data, Error>) -> Void
     ) {
-        // no need to track license request tasks since we are not prewarming
-        //  and therefore don't need to worry about re-joinining any existing
-        //  license reqs.
-        
         // TODO: Need to calculate license Domain from input playbackDomain
         //  ie, stream.mux.com -> license.mux.com or custom.domain.com -> TODO: ????
         let licenseDomain = "license.gcp-us-west1-vos1.staging.mux.com"
         
         var request = URLRequest(url: licenseURL(playbackId: playbackID, drmToken: drmToken, licenseDomain: licenseDomain))
         
-        // NOTE: The format of this POST body is likely to change before release. Instead of accepting
-        //  this form-encoded body, a subsequent change will require only the Base64 SPC
-        // BODY PARAMS
-        // Base-64 the SPC, urlencode that, prepare form-encoded body with spc
-        let encodedSpcMessage = urlEncodeBase64(spcData.base64EncodedString())
-        print("Raw (non-percent encoded) SPC base64:", spcData.base64EncodedString()) // we dump the encoded version too
-        var postData = String(format: "spc=%@", encodedSpcMessage)
-        // DRMToday example appends `offline` to POST body, but we are not doing offline keys yet
-        //  also, we don't like the form-encoded POST body
-
-        
+        // POST body is the SPC bytes
         request.httpMethod = "POST"
-//        print("POST BODY: \(postData)")
-        //request.httpBody = postData.data(using: .utf8, allowLossyConversion: true)
         request.httpBody = spcData
+        //print("Raw (non-percent encoded) SPC base64:", spcData.base64EncodedString()) // we dump the encoded version too
 
         
         // QUERY PARAMS
