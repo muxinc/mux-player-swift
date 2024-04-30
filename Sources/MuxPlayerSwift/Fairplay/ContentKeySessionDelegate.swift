@@ -133,8 +133,8 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
         let group = DispatchGroup()
         group.enter()
         PlayerSDK.shared.fairplaySessionManager.requestCertificate(
-            playbackID: "", // todo - get from sdk caller
-            drmToken: "", // todo - get from sdk caller
+            playbackID: playbackID, // todo - get from sdk caller
+            drmToken: drmOptions.drmToken, // todo - get from sdk caller
             completion: { result in
                 if let cert = try? result.get() {
                     applicationCertificate = cert
