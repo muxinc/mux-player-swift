@@ -79,18 +79,13 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
     // MARK: Logic
     
     private func lookUpDRMOptions(bySKDKeyUri uri: URL) -> (String, PlaybackOptions.DRMPlaybackOptions)? {
-        // TODO: We need to be able to look up our DRM Key & Playback ID here.
-        //  DRMToday example uses keyURLStr, but not known if we can do the same
-        //  The keyURL is provided by the delivery infra, and our implementation would
-        //  need to have the playback ID in the key URL for this same thing to work
-        
+        // pull the playbackID out of the uri to the key
         let urlComponents = URLComponents(url: uri, resolvingAgainstBaseURL: false)
         guard let urlComponents = urlComponents else {
             // not likely
             print("!! Error: Cannot Parse URI")
             return nil
         }
-        
         let playbackID = urlComponents.findQueryValue(key: "playbackId")
         guard let playbackID = playbackID else {
             print("!! Error: URI [\(uri)] did not have playbackId!")
