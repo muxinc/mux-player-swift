@@ -68,9 +68,8 @@ class FairplaySessionManager {
                 requestCompletion(Result.failure(error)) // todo - real Error type
                 return
             }
-            // strange edge case: 200 with no response body
             guard let data = data else {
-                print("No cert data despite server returning success")
+                print("Cert data unexpectedly nil from server")
                 requestCompletion(Result.failure(TempError())) // todo - real Error type
                 return
             }
@@ -92,7 +91,7 @@ class FairplaySessionManager {
         drmToken: String,
         rootDomain: String,
         offline _: Bool,
-        completion licenseRequestComplete: @escaping (Result<Data, Error>) -> Void
+        completion requestCompletion: @escaping (Result<Data, Error>) -> Void
     ) {
         let url = makeLicenseURL(
             playbackId: playbackID,
@@ -113,7 +112,7 @@ class FairplaySessionManager {
         print("Sending License/CKC Request to: \(request.url?.absoluteString)")
         print("\t with header fields: \(request.allHTTPHeaderFields)")
         
-        let task = urlSession.dataTask(with: request) { [licenseRequestComplete] data, response, error in
+        let task = urlSession.dataTask(with: request) { [requestCompletion] data, response, error in
             print("<><> GOT LICENSE RESPONSE")
             var responseCode: Int? = nil
             if let httpResponse = response as? HTTPURLResponse {
@@ -125,13 +124,13 @@ class FairplaySessionManager {
             // error case: I/O finished with non-successful response
             guard responseCode == 200 else {
                 print("CKC request failed: \(responseCode)")
-                licenseRequestComplete(Result.failure(TempError()))
+                requestCompletion(Result.failure(TempError()))
                 return
             }
             // error case: I/O failed
             if let error = error {
                 print("URL Session Task Failed: \(error.localizedDescription)")
-                licenseRequestComplete(Result.failure(error)) // todo - real Error type
+                requestCompletion(Result.failure(error)) // todo - real Error type
                 return
             }
             // strange edge case: 200 with no response body
@@ -139,7 +138,7 @@ class FairplaySessionManager {
             //  with our drm vendor and probably shouldn't be relevant, but lets not crash
             guard let data = data else {
                 print("No CKC data despite server returning success")
-                licenseRequestComplete(Result.failure(TempError())) // todo - real Error type
+                requestCompletion(Result.failure(TempError())) // todo - real Error type
                 return
             }
             
@@ -148,7 +147,7 @@ class FairplaySessionManager {
             
             let ckcData = data
             print("")
-            licenseRequestComplete(Result.success(ckcData))
+            requestCompletion(Result.success(ckcData))
         }
         task.resume()
     }
