@@ -161,13 +161,12 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
             }
             // step: exchange SPC for CKC using KeyRequest w/completion handler (request wants to know if failed)
             // todo - drmToken from Asset
-            handleContentKeyResponse(spcData: spcData, playbackID: playbackID, drmToken: drmOptions.drmToken, domain: "TODO - Not Hooked Up!", request: request)
+            handleSpcObtainedFromCDM(spcData: spcData, playbackID: playbackID, drmToken: drmOptions.drmToken, domain: "TODO - Not Hooked Up!", request: request)
         }
     }
     
-    private func handleContentKeyResponse(spcData: Data, playbackID: String, drmToken: String, domain: String, request: AVContentKeyRequest)  {
+    private func handleSpcObtainedFromCDM(spcData: Data, playbackID: String, drmToken: String, domain: String, request: AVContentKeyRequest)  {
         // Send SPC to Key Server and obtain CKC
-//        let playbackID: String = playbackID // todo - obtain from sdk caller / url of asset
         
         // todo - DRM Today example does this by joining a DispatchGroup. Is this really preferable??
         var ckcData: Data? = nil
@@ -191,6 +190,7 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
         // Send CKC to CDM/wherever else so we can finally play our content
         let keyResponse = AVContentKeyResponse(fairPlayStreamingKeyResponseData: ckcData)
         request.processContentKeyResponse(keyResponse)
+        // no further interaction is required from us to play.
     }
 }
 
