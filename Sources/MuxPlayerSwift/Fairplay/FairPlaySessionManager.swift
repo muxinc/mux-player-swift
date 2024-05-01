@@ -8,7 +8,7 @@
 import Foundation
 import AVFoundation
 
-class FairplaySessionManager {
+class FairPlaySessionManager {
     
     private var playbackOptionsByPlaybackID: [String: PlaybackOptions] = [:]
     // note - null on simulators or other environments where fairplay isn't supported
@@ -103,8 +103,6 @@ class FairplaySessionManager {
         // POST body is the SPC bytes
         request.httpMethod = "POST"
         request.httpBody = spcData
-        //print("Raw (non-percent encoded) SPC base64:", spcData.base64EncodedString()) // we dump the encoded version too
-        
         
         // QUERY PARAMS
         request.setValue("application/octet-stream", forHTTPHeaderField: "Content-Type")
@@ -135,7 +133,7 @@ class FairplaySessionManager {
             }
             // strange edge case: 200 with no response body
             //  this happened because of a client-side encoding difference causing an error
-            //  with our drm vendor and probably shouldn't be relevant, but lets not crash
+            //  with our drm vendor and probably shouldn't be reachable, but lets not crash
             guard let data = data else {
                 print("No CKC data despite server returning success")
                 requestCompletion(Result.failure(TempError())) // todo - real Error type
@@ -218,10 +216,6 @@ class FairplaySessionManager {
         sessionDelegate: AVContentKeySessionDelegate?,
         sessionDelegateQueue: DispatchQueue
     ) {
-        // TODO: Remove when app cert endpoint is available
-        //        print(">>>>>>>>>>>>>>>>>")
-        //        print(ProcessInfo.processInfo.environment["APP_CERT_BASE64"])
-        
         contentKeySession?.setDelegate(sessionDelegate, queue: sessionDelegateQueue)
         
         self.contentKeySession = contentKeySession
