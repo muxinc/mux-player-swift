@@ -29,23 +29,58 @@ class FairplaySessionManager {
     
     /// Requests the App Certificate for a playback id
     func requestCertificate(
-        fromDomain domain: String,
+        fromDomain rootDomain: String,
         playbackID: String,
         drmToken: String,
-        completion: (Result<Data, Error>) -> Void
+        completion requestCompletion: @escaping (Result<Data, Error>) -> Void
     ) {
-        // todo - request app certficate from the backend
-        let tempCert = ProcessInfo.processInfo.environment["APP_CERT_BASE64"]
-        //print("CERTIFICATE :: temp app cert is \(tempCert)")
+        let url = makeAppCertificateURL(
+            playbackId: playbackID,
+            drmToken: drmToken,
+            licenseDomain: makeLicenseDomain(rootDomain)
+        )
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
         
-        guard let tempCert = tempCert else {
-            completion(Result.failure(CancellationError())) // todo - a real Error type
-            return
+        print("Getting app cert from \(url)")
+        let dataTask = urlSession.dataTask(with: request) { [requestCompletion] data, response, error in
+            print("!--! APP CERT RESPONSE")
+            var responseCode: Int? = nil
+            if let httpResponse = response as? HTTPURLResponse {
+                responseCode = httpResponse.statusCode
+                print("Cert response code: \(httpResponse.statusCode)")
+                print("Cert response headers: ", httpResponse.allHeaderFields)
+                if let errorBody = data {
+                    let errorUtf = String(data: errorBody, encoding: .utf8)
+                    print("Cert Error: \(errorUtf)")
+                }
+                
+            }
+            // error case: I/O finished with non-successful response
+            guard responseCode == 200 else {
+                print("Cert request failed: \(responseCode)")
+                requestCompletion(Result.failure(TempError()))
+                return
+            }
+            // error case: I/O failed
+            if let error = error {
+                print("Cert Request Failed: \(error.localizedDescription)")
+                requestCompletion(Result.failure(error)) // todo - real Error type
+                return
+            }
+            // strange edge case: 200 with no response body
+            guard let data = data else {
+                print("No cert data despite server returning success")
+                requestCompletion(Result.failure(TempError())) // todo - real Error type
+                return
+            }
+            
+            print(">> App Cert Response data:\(data.base64EncodedString())")
+            
+            requestCompletion(Result.success(data))
         }
         
-        let certData = Data(base64Encoded: tempCert, options: Data.Base64DecodingOptions.ignoreUnknownCharacters)!
-        print("CERTIFICATE :: Delivering App Certificate")
-        completion(Result.success(certData))
+        dataTask.resume()
     }
     
     /// Requests a license to play based on the given SPC data
@@ -59,9 +94,6 @@ class FairplaySessionManager {
         offline _: Bool,
         completion licenseRequestComplete: @escaping (Result<Data, Error>) -> Void
     ) {
-        // TODO: Need to calculate license Domain from input playbackDomain
-        //  ie, stream.mux.com -> license.mux.com or custom.domain.com -> TODO: ????
-        //let licenseDomain = "license.gcp-us-west1-vos1.staging.mux.com"
         let url = makeLicenseURL(
             playbackId: playbackID,
             drmToken: drmToken,
