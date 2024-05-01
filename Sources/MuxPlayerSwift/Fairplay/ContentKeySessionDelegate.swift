@@ -78,9 +78,9 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
     
     // MARK: Logic
     
-    private func lookUpDRMOptions(bySKDKeyUri uri: URL) -> (String, PlaybackOptions.DRMPlaybackOptions)? {
-        // pull the playbackID out of the uri to the key
-        let urlComponents = URLComponents(url: uri, resolvingAgainstBaseURL: false)
+    func parsePlaybackId(fromSkdLocation uri: URL) -> String? {
+       // pull the playbackID out of the uri to the key
+       let urlComponents = URLComponents(url: uri, resolvingAgainstBaseURL: false)
         guard let urlComponents = urlComponents else {
             // not likely
             print("!! Error: Cannot Parse URI")
@@ -92,9 +92,20 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
             return nil
         }
         print("|| PlaybackID from \(uri) is \(playbackID)")
+        return playbackID
+    }
+    
+    func lookUpDRMOptions(bySKDKeyUri uri: URL) -> (String, PlaybackOptions.DRMPlaybackOptions)? {
+        let playbackID = parsePlaybackId(fromSkdLocation: uri)
+        guard let playbackID = playbackID else {
+            print("Loggable warning: didn't get a playback ID in key uri, can't get license")
+            return nil
+        }
         
         let playbackOptions = PlayerSDK.shared.fairplaySessionManager
             .findRegisteredPlaybackOptions(for: playbackID)
+        
+
         if let playbackOptions = playbackOptions,
            case .drm(let drmOptions) = playbackOptions.playbackPolicy
         {
