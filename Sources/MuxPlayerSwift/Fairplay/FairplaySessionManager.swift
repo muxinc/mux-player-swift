@@ -63,7 +63,7 @@ class FairplaySessionManager {
         //  ie, stream.mux.com -> license.mux.com or custom.domain.com -> TODO: ????
         let licenseDomain = "license.gcp-us-west1-vos1.staging.mux.com"
         
-        var request = URLRequest(url: licenseURL(playbackId: playbackID, drmToken: drmToken, licenseDomain: licenseDomain))
+        var request = URLRequest(url: makeLicenseURL(playbackId: playbackID, drmToken: drmToken, licenseDomain: licenseDomain))
         
         // POST body is the SPC bytes
         request.httpMethod = "POST"
@@ -139,8 +139,14 @@ class FairplaySessionManager {
     
     // MARK: helpers
     
-    private func licenseURL(playbackId: String, drmToken: String, licenseDomain: String) -> URL {
+    private func makeLicenseURL(playbackId: String, drmToken: String, licenseDomain: String) -> URL {
         let baseStr = "https://\(licenseDomain)/license/fairplay/\(playbackId)?token=\(drmToken)"
+        let url = URL(string: baseStr)
+        return url!
+    }
+    
+    private func makeAppCertificateURL(playbackId: String, drmToken: String, licenseDomain: String) -> URL {
+        let baseStr = "https://\(licenseDomain)/appcert/fairplay/\(playbackId)?token=\(drmToken)"
         let url = URL(string: baseStr)
         return url!
     }
