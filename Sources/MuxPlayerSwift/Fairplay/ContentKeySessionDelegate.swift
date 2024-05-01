@@ -96,7 +96,7 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
     }
     
     func lookUpDRMOptions(by playbackID: String) -> PlaybackOptions.DRMPlaybackOptions? {
-        let playbackOptions = PlayerSDK.shared.fairplaySessionManager
+        let playbackOptions = PlayerSDK.shared.fairPlaySessionManager
             .findRegisteredPlaybackOptions(for: playbackID)
         
         if let playbackOptions = playbackOptions,
@@ -127,7 +127,7 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
             return
         }
         
-        let playbackOptions = PlayerSDK.shared.fairplaySessionManager
+        let playbackOptions = PlayerSDK.shared.fairPlaySessionManager
             .findRegisteredPlaybackOptions(for: playbackID)
         guard let playbackOptions = playbackOptions,
               case .drm(let drmOptions) = playbackOptions.playbackPolicy else {
@@ -142,7 +142,7 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
         //  the drmtoday example does this by joining a dispatch group, but is this best?
         let group = DispatchGroup()
         group.enter()
-        PlayerSDK.shared.fairplaySessionManager.requestCertificate(
+        PlayerSDK.shared.fairPlaySessionManager.requestCertificate(
             fromDomain: rootDomain,
             playbackID: playbackID,
             drmToken: drmOptions.drmToken,
@@ -197,7 +197,7 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
         var ckcData: Data? = nil
         let group = DispatchGroup()
         group.enter()
-        PlayerSDK.shared.fairplaySessionManager.requestLicense(
+        PlayerSDK.shared.fairPlaySessionManager.requestLicense(
             spcData: spcData,
             playbackID: playbackID,
             drmToken: drmToken,

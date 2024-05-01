@@ -18,12 +18,12 @@ class PlayerSDK {
 
     let keyValueObservation: KeyValueObservation
     
-    let fairplaySessionManager: FairPlaySessionManager
+    let fairPlaySessionManager: FairPlaySessionManager
 
     init() {
         self.monitor = Monitor()
         self.keyValueObservation = KeyValueObservation()
-        self.fairplaySessionManager = FairPlaySessionManager()
+        self.fairPlaySessionManager = FairPlaySessionManager()
     }
 
     class KeyValueObservation {
@@ -63,7 +63,7 @@ extension PlayerSDK {
             options: [.old, .new]
         ) { player, change in
             if let oldAsset = change.oldValue??.asset as? AVURLAsset {
-                PlayerSDK.shared.fairplaySessionManager.removeContentKeyRecipient(oldAsset)
+                PlayerSDK.shared.fairPlaySessionManager.removeContentKeyRecipient(oldAsset)
             }
         }
     }
