@@ -110,10 +110,15 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
         }
     }
     
-    func makeLicenseUrl(playbackOptions: PlaybackOptions) -> String {
+    func makeCertificateURL(licenseDomain: String) -> URL {
+        
+    }
+    
+    func makeLicenseDomain(playbackOptions: PlaybackOptions) -> String {
         let customDomainWithDefault = playbackOptions.customDomain ?? "mux.com"
         let licenseDomain = "license.\(customDomainWithDefault)"
         
+        // TODO: this check should not reach production or playing from staging will probably break
         if("staging.mux.com" == customDomainWithDefault) {
             return "license.gcp-us-west1-vos1.staging.mux.com"
         } else {
@@ -146,7 +151,7 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
             return
         }
         
-        let muxLicenseDomain = makeLicenseUrl(playbackOptions: playbackOptions)
+        let muxLicenseDomain = makeLicenseDomain(playbackOptions: playbackOptions)
         
         // get app cert
         var applicationCertificate: Data?
