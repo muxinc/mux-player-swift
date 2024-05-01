@@ -95,21 +95,6 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
         return playbackID
     }
     
-    func lookUpDRMOptions(by playbackID: String) -> PlaybackOptions.DRMPlaybackOptions? {
-        let playbackOptions = PlayerSDK.shared.fairPlaySessionManager
-            .findRegisteredPlaybackOptions(for: playbackID)
-        
-        if let playbackOptions = playbackOptions,
-           case .drm(let drmOptions) = playbackOptions.playbackPolicy
-        {
-            print("Found DRMPlaybackOptions for \(playbackID)")
-            return drmOptions
-        } else {
-            print("Found NO playback options for \(playbackID)")
-            return nil
-        }
-    }
-
     func handleContentKeyRequest(_ session: AVContentKeySession, request: AVContentKeyRequest) {
         print("<><>handleContentKeyRequest: Called")
         // for hls, "the identifier must be an NSURL that matches a key URI in the Media Playlist." from the docs

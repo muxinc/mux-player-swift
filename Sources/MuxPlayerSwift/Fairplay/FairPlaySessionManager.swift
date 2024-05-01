@@ -8,7 +8,50 @@
 import Foundation
 import AVFoundation
 
-class FairPlaySessionManager {
+protocol FairPlaySessionManager {
+    
+    // MARK: Track DRM-protected assets
+    
+    func addContentKeyRecipient(_ recipient: AVContentKeyRecipient)
+    func removeContentKeyRecipient(_ recipient: AVContentKeyRecipient)
+    
+    // MARK: Requesting licenses and certs
+    
+    /// Requests the App Certificate for a playback id
+    func requestCertificate(
+        fromDomain rootDomain: String,
+        playbackID: String,
+        drmToken: String,
+        completion requestCompletion: @escaping (Result<Data, Error>) -> Void
+    )
+    /// Requests a license to play based on the given SPC data
+    /// - parameter offline - Not currently used, may not ever be used in short-term, maybe delete?
+    func requestLicense(
+        spcData: Data,
+        playbackID: String,
+        drmToken: String,
+        rootDomain: String,
+        offline _: Bool,
+        completion requestCompletion: @escaping (Result<Data, Error>) -> Void
+    )
+    
+    // MARK: registering assets
+    
+    /// Registers a ``PlaybackOptions`` for DRM playback, associated with the given playbackID
+    func registerPlaybackOptions(_ opts: PlaybackOptions, for playbackID: String)
+    /// Gets a DRM token previously registered via ``registerPlaybackOptions``
+    func findRegisteredPlaybackOptions(for playbackID: String) -> PlaybackOptions?
+    /// Unregisters a ``PlaybackOptions`` for DRM playback, given the assiciated playback ID
+    func unregisterPlaybackOptions(for playbackID: String)
+    
+    // MARK: helpers
+    
+    func makeLicenseDomain(_ rootDomain: String) -> String
+    func makeLicenseURL(playbackId: String, drmToken: String, licenseDomain: String) -> URL
+    func makeAppCertificateURL(playbackId: String, drmToken: String, licenseDomain: String) -> URL
+}
+
+class FairPlaySessionManagerImpl: FairPlaySessionManager {
     
     private var playbackOptionsByPlaybackID: [String: PlaybackOptions] = [:]
     // note - null on simulators or other environments where fairplay isn't supported
@@ -168,7 +211,7 @@ class FairPlaySessionManager {
     
     // MARK: helpers
     
-    private func makeLicenseDomain(_ rootDomain: String) -> String {
+    func makeLicenseDomain(_ rootDomain: String) -> String {
         let customDomainWithDefault = rootDomain ?? "mux.com"
         let licenseDomain = "license.\(customDomainWithDefault)"
         
@@ -180,13 +223,13 @@ class FairPlaySessionManager {
         }
     }
     
-    private func makeLicenseURL(playbackId: String, drmToken: String, licenseDomain: String) -> URL {
+    func makeLicenseURL(playbackId: String, drmToken: String, licenseDomain: String) -> URL {
         let baseStr = "https://\(licenseDomain)/license/fairplay/\(playbackId)?token=\(drmToken)"
         let url = URL(string: baseStr)
         return url!
     }
     
-    private func makeAppCertificateURL(playbackId: String, drmToken: String, licenseDomain: String) -> URL {
+    func makeAppCertificateURL(playbackId: String, drmToken: String, licenseDomain: String) -> URL {
         let baseStr = "https://\(licenseDomain)/appcert/fairplay/\(playbackId)?token=\(drmToken)"
         let url = URL(string: baseStr)
         return url!
