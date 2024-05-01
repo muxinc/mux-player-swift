@@ -83,7 +83,6 @@ class FairPlaySessionManager {
     }
     
     /// Requests a license to play based on the given SPC data
-    /// - parameter playbackDomain - Domain for the playback URL, (eg, stream.mux.com or a custom domain)
     /// - parameter offline - Not currently used, may not ever be used in short-term, maybe delete?
     func requestLicense(
         spcData: Data,
