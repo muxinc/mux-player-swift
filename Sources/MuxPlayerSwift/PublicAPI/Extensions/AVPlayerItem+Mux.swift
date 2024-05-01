@@ -96,8 +96,8 @@ fileprivate func makePlaybackURL(
     return playbackURL
 }
 
-/// Create a new `AVAsset` that has been preparted for playback
-/// Currently, being "prepared for playback" means only that the DRM token was added to the asset's options if present
+/// Create a new `AVAsset` that has been prepared for playback
+/// If DRM is required, the Asset will be registered with the ``FairPlaySessionManager``
 fileprivate func makeAVAsset(playbackID: String, playbackOptions: PlaybackOptions) -> AVAsset {
     let url = makePlaybackURL(playbackID: playbackID, playbackOptions: playbackOptions)
     
