@@ -110,10 +110,6 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
         }
     }
     
-    func makeCertificateURL(licenseDomain: String) -> URL {
-        
-    }
-    
     func makeLicenseDomain(playbackOptions: PlaybackOptions) -> String {
         let customDomainWithDefault = playbackOptions.customDomain ?? "mux.com"
         let licenseDomain = "license.\(customDomainWithDefault)"
@@ -159,6 +155,7 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
         let group = DispatchGroup()
         group.enter()
         PlayerSDK.shared.fairplaySessionManager.requestCertificate(
+            fromDomain: licenseDomain,
             playbackID: playbackID, // todo - get from sdk caller
             drmToken: drmOptions.drmToken, // todo - get from sdk caller
             completion: { result in

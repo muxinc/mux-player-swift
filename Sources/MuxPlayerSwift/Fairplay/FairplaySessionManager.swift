@@ -28,7 +28,12 @@ class FairplaySessionManager {
     // MARK: Requesting licenses and certs
     
     /// Requests the App Certificate for a playback id
-    func requestCertificate(playbackID: String, drmToken: String, completion: (Result<Data, Error>) -> Void) {
+    func requestCertificate(
+        fromDomain licenseDomain: String,
+        playbackID: String,
+        drmToken: String,
+        completion: (Result<Data, Error>) -> Void
+    ) {
         // todo - request app certficate from the backend
         let tempCert = ProcessInfo.processInfo.environment["APP_CERT_BASE64"]
         //print("CERTIFICATE :: temp app cert is \(tempCert)")
