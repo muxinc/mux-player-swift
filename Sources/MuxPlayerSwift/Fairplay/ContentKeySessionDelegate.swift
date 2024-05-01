@@ -109,19 +109,7 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
             return nil
         }
     }
-    
-    func makeLicenseDomain(playbackOptions: PlaybackOptions) -> String {
-        let customDomainWithDefault = playbackOptions.customDomain ?? "mux.com"
-        let licenseDomain = "license.\(customDomainWithDefault)"
-        
-        // TODO: this check should not reach production or playing from staging will probably break
-        if("staging.mux.com" == customDomainWithDefault) {
-            return "license.gcp-us-west1-vos1.staging.mux.com"
-        } else {
-            return licenseDomain
-        }
-    }
-    
+
     func handleContentKeyRequest(_ session: AVContentKeySession, request: AVContentKeyRequest) {
         print("<><>handleContentKeyRequest: Called")
         // for hls, "the identifier must be an NSURL that matches a key URI in the Media Playlist." from the docs
@@ -147,7 +135,7 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
             return
         }
         
-        let muxLicenseDomain = makeLicenseDomain(playbackOptions: playbackOptions)
+        let rootDomain = playbackOptions.customDomain ?? "mux.com"
         
         // get app cert
         var applicationCertificate: Data?
@@ -155,7 +143,7 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
         let group = DispatchGroup()
         group.enter()
         PlayerSDK.shared.fairplaySessionManager.requestCertificate(
-            fromDomain: licenseDomain,
+            fromDomain: rootDomain,
             playbackID: playbackID, // todo - get from sdk caller
             drmToken: drmOptions.drmToken, // todo - get from sdk caller
             completion: { result in
@@ -187,13 +175,25 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
                 request.processContentKeyResponseError(error!)
                 return
             }
+            
             // step: exchange SPC for CKC using KeyRequest w/completion handler (request wants to know if failed)
-            // todo - drmToken from Asset
-            handleSpcObtainedFromCDM(spcData: spcData, playbackID: playbackID, drmToken: drmOptions.drmToken, domain: muxLicenseDomain, request: request)
+            handleSpcObtainedFromCDM(
+                spcData: spcData,
+                playbackID: playbackID,
+                drmToken: drmOptions.drmToken,
+                rootDomain: rootDomain,
+                request: request
+            )
         }
     }
     
-    private func handleSpcObtainedFromCDM(spcData: Data, playbackID: String, drmToken: String, domain: String, request: AVContentKeyRequest)  {
+    private func handleSpcObtainedFromCDM(
+        spcData: Data,
+        playbackID: String,
+        drmToken: String,
+        rootDomain: String, // without any "license." or "stream." prepended, eg mux.com, custom.1234.co.uk
+        request: AVContentKeyRequest
+    ) {
         // Send SPC to Key Server and obtain CKC
         
         // todo - DRM Today example does this by joining a DispatchGroup. Is this really preferable??
@@ -204,7 +204,7 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
             spcData: spcData,
             playbackID: playbackID,
             drmToken: drmToken,
-            playbackDomain: domain,
+            rootDomain: rootDomain,
             offline: false
         ) { result in
             if let data = try? result.get() {
@@ -224,7 +224,8 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
         // Send CKC to CDM/wherever else so we can finally play our content
         let keyResponse = AVContentKeyResponse(fairPlayStreamingKeyResponseData: ckcData)
         request.processContentKeyResponse(keyResponse)
-        // no further interaction is required from us to play.
+        
+        // Done! no further interaction is required from us to play.
     }
 }
 

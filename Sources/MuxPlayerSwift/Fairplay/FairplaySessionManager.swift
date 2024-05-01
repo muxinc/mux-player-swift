@@ -55,15 +55,19 @@ class FairplaySessionManager {
         spcData: Data,
         playbackID: String,
         drmToken: String,
-        playbackDomain: String,
+        rootDomain: String,
         offline _: Bool,
         completion licenseRequestComplete: @escaping (Result<Data, Error>) -> Void
     ) {
         // TODO: Need to calculate license Domain from input playbackDomain
         //  ie, stream.mux.com -> license.mux.com or custom.domain.com -> TODO: ????
-        let licenseDomain = "license.gcp-us-west1-vos1.staging.mux.com"
-        
-        var request = URLRequest(url: makeLicenseURL(playbackId: playbackID, drmToken: drmToken, licenseDomain: licenseDomain))
+        //let licenseDomain = "license.gcp-us-west1-vos1.staging.mux.com"
+        let url = makeLicenseURL(
+            playbackId: playbackID,
+            drmToken: drmToken,
+            licenseDomain: makeLicenseDomain(rootDomain)
+        )
+        var request = URLRequest(url: url)
         
         // POST body is the SPC bytes
         request.httpMethod = "POST"
@@ -139,6 +143,18 @@ class FairplaySessionManager {
     
     // MARK: helpers
     
+    private func makeLicenseDomain(_ rootDomain: String) -> String {
+        let customDomainWithDefault = rootDomain ?? "mux.com"
+        let licenseDomain = "license.\(customDomainWithDefault)"
+        
+        // TODO: this check should not reach production or playing from staging will probably break
+        if("staging.mux.com" == customDomainWithDefault) {
+            return "license.gcp-us-west1-vos1.staging.mux.com"
+        } else {
+            return licenseDomain
+        }
+    }
+    
     private func makeLicenseURL(playbackId: String, drmToken: String, licenseDomain: String) -> URL {
         let baseStr = "https://\(licenseDomain)/license/fairplay/\(playbackId)?token=\(drmToken)"
         let url = URL(string: baseStr)
@@ -149,14 +165,6 @@ class FairplaySessionManager {
         let baseStr = "https://\(licenseDomain)/appcert/fairplay/\(playbackId)?token=\(drmToken)"
         let url = URL(string: baseStr)
         return url!
-    }
-    
-    /// URL-encodes base-64 data, encoding these characters: `:?=&+`
-    ///  This function (probably) isn't appropriate for general URL-encoding.
-    ///  it's just for base64, just for license/cert requests
-    private func urlEncodeBase64(_ value: String?) -> String {
-        let queryKeyValueString = CharacterSet(charactersIn: ":?=&+").inverted
-        return value?.addingPercentEncoding(withAllowedCharacters: queryKeyValueString) ?? ""
     }
     
     // MARK: initializers
