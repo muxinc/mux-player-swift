@@ -142,12 +142,9 @@ class FairplaySessionManager {
                 return
             }
             
-            let responseBody = data
-            print("License response body: ", responseBody)
-            
             let ckcData = data
-            print("")
             requestCompletion(Result.success(ckcData))
+            print("")
         }
         task.resume()
     }

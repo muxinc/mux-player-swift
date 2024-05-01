@@ -144,8 +144,8 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
         group.enter()
         PlayerSDK.shared.fairplaySessionManager.requestCertificate(
             fromDomain: rootDomain,
-            playbackID: playbackID, // todo - get from sdk caller
-            drmToken: drmOptions.drmToken, // todo - get from sdk caller
+            playbackID: playbackID,
+            drmToken: drmOptions.drmToken,
             completion: { result in
                 if let cert = try? result.get() {
                     applicationCertificate = cert
@@ -154,13 +154,12 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
             }
         )
         group.wait()
-        print("CERTIFICATE :: Giving App Cert to CDM: \(applicationCertificate?.base64EncodedString())")
         guard let applicationCertificate = applicationCertificate else {
             print("failed to get application certificate")
             return
         }
         
-        // step: exchange app cert for SPC using KeyRequest w/completion handler (request wants to know if failed)
+        // exchange app cert for SPC using KeyRequest to give to CDM
         request.makeStreamingContentKeyRequestData(forApp: applicationCertificate,
                                                    contentIdentifier: assetIDData,
                                                    options: [AVContentKeyRequestProtocolVersionsKey: [1]]) { [weak self] spcData, error in
@@ -176,7 +175,7 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
                 return
             }
             
-            // step: exchange SPC for CKC using KeyRequest w/completion handler (request wants to know if failed)
+            // exchange SPC for CKC
             handleSpcObtainedFromCDM(
                 spcData: spcData,
                 playbackID: playbackID,
@@ -194,8 +193,6 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
         rootDomain: String, // without any "license." or "stream." prepended, eg mux.com, custom.1234.co.uk
         request: AVContentKeyRequest
     ) {
-        // Send SPC to Key Server and obtain CKC
-        
         // todo - DRM Today example does this by joining a DispatchGroup. Is this really preferable??
         var ckcData: Data? = nil
         let group = DispatchGroup()
@@ -214,17 +211,16 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
         }
         group.wait()
         
-        // TODO - On error, CKC request returns a body so we can't rely on this
         guard let ckcData = ckcData else {
             print("no CKC Data in CKC response")
+            request.processContentKeyResponseError(TempError())
             return
         }
         
-        print("<><> Providing CKC to System!")
+        print("Submitting CKC to system")
         // Send CKC to CDM/wherever else so we can finally play our content
         let keyResponse = AVContentKeyResponse(fairPlayStreamingKeyResponseData: ckcData)
         request.processContentKeyResponse(keyResponse)
-        
         // Done! no further interaction is required from us to play.
     }
 }
