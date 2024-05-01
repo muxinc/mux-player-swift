@@ -135,7 +135,8 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
             return
         }
         
-        let licenseDomain = "license.\(playbackOptions.customDomain)"
+        let customDomainWithDefault = playbackOptions.customDomain ?? "mux.com"
+        let licenseDomain = "license.\(customDomainWithDefault)"
         
         // get app cert
         var applicationCertificate: Data?
