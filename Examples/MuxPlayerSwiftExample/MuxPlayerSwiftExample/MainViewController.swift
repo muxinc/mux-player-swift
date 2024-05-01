@@ -20,7 +20,8 @@ class MainViewController: UIViewController {
         playbackID: DRMExample.DRM_EXAMPLES[videoIdx].playbackID,
         playbackOptions: PlaybackOptions(
             playbackToken: DRMExample.DRM_EXAMPLES[videoIdx].playbackToken,
-            drmToken: DRMExample.DRM_EXAMPLES[videoIdx].drmToken
+            drmToken: DRMExample.DRM_EXAMPLES[videoIdx].drmToken,
+            customDomain: "staging.mux.com"
         )
     )
 

@@ -16,7 +16,7 @@ fileprivate func makePlaybackURL(
     if let customDomain = playbackOptions.customDomain {
         components.host = "stream.\(customDomain)"
     } else {
-        components.host = "stream.staging.mux.com"
+        components.host = "stream.mux.com"
     }
 
     components.path = "/\(playbackID).m3u8"
