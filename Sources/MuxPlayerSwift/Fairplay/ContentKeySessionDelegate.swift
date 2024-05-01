@@ -95,29 +95,22 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
         return playbackID
     }
     
-    func lookUpDRMOptions(bySKDKeyUri uri: URL) -> (String, PlaybackOptions.DRMPlaybackOptions)? {
-        let playbackID = parsePlaybackId(fromSkdLocation: uri)
-        guard let playbackID = playbackID else {
-            print("Loggable warning: didn't get a playback ID in key uri, can't get license")
-            return nil
-        }
-        
+    func lookUpDRMOptions(by playbackID: String) -> PlaybackOptions.DRMPlaybackOptions? {
         let playbackOptions = PlayerSDK.shared.fairplaySessionManager
             .findRegisteredPlaybackOptions(for: playbackID)
         
-
         if let playbackOptions = playbackOptions,
            case .drm(let drmOptions) = playbackOptions.playbackPolicy
         {
             print("Found DRMPlaybackOptions for \(playbackID)")
-            return (playbackID, drmOptions)
+            return drmOptions
         } else {
             print("Found NO playback options for \(playbackID)")
             return nil
         }
     }
     
-    private func handleContentKeyRequest(_ session: AVContentKeySession, request: AVContentKeyRequest) {
+    func handleContentKeyRequest(_ session: AVContentKeySession, request: AVContentKeyRequest) {
         print("<><>handleContentKeyRequest: Called")
         // for hls, "the identifier must be an NSURL that matches a key URI in the Media Playlist." from the docs
         guard let keyURLStr = request.identifier as? String,
@@ -128,10 +121,21 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
             return
         }
         
-        guard let (playbackID, drmOptions) = lookUpDRMOptions(bySKDKeyUri: keyURL) else {
+        let playbackID = parsePlaybackId(fromSkdLocation: keyURL)
+        guard let playbackID = playbackID else {
+            print("No playbackID found from server , aborting")
+            return
+        }
+        
+        let playbackOptions = PlayerSDK.shared.fairplaySessionManager
+            .findRegisteredPlaybackOptions(for: playbackID)
+        guard let playbackOptions = playbackOptions,
+              case .drm(let drmOptions) = playbackOptions.playbackPolicy else {
             print("DRM Tokens must be registered when the AVPlayerItem is created, using FairplaySessionManager")
             return
         }
+        
+        let licenseDomain = "license.\(playbackOptions.customDomain)"
         
         // get app cert
         var applicationCertificate: Data?
@@ -172,7 +176,7 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
             }
             // step: exchange SPC for CKC using KeyRequest w/completion handler (request wants to know if failed)
             // todo - drmToken from Asset
-            handleSpcObtainedFromCDM(spcData: spcData, playbackID: playbackID, drmToken: drmOptions.drmToken, domain: "TODO - Not Hooked Up!", request: request)
+            handleSpcObtainedFromCDM(spcData: spcData, playbackID: playbackID, drmToken: drmOptions.drmToken, domain: licenseDomain, request: request)
         }
     }
     
