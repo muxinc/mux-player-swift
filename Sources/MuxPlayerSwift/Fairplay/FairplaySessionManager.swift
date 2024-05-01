@@ -29,7 +29,7 @@ class FairplaySessionManager {
     
     /// Requests the App Certificate for a playback id
     func requestCertificate(
-        fromDomain licenseDomain: String,
+        fromDomain domain: String,
         playbackID: String,
         drmToken: String,
         completion: (Result<Data, Error>) -> Void
