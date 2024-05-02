@@ -44,10 +44,10 @@ class ReverseProxyServer {
     }
 
     func setupRequestHandlers() {
-            setupManifestRequestHandler()
-            setupCMAFSegmentHandler()
-            setupTSSegmentHandler()
-        }
+        setupManifestRequestHandler()
+        setupCMAFSegmentHandler()
+        setupTSSegmentHandler()
+    }
 
     func stop() {
         guard webServer.isRunning else {
