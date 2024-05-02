@@ -47,7 +47,7 @@ protocol FairPlaySessionManager {
 
 // MARK: helpers for interacting with the license server
 
-extension FairPlaySessionManagerImpl {
+extension DefaultFPSManager {
     /// Generates a domain name appropriate for the Mux license proxy associted with the given
     /// "root domain". For example `mux.com` returns `license.mux.com` and
     /// `customdomain.xyz.com` returns `license.customdomain.xyz.com`
@@ -66,7 +66,7 @@ extension FairPlaySessionManagerImpl {
     /// Generates an authenticated URL to Mux's license proxy, for a 'license' (a CKC for fairplay),
     /// for the given playabckID and DRM Token, at the given domain
     /// - SeeAlso ``makeLicenseDomain``
-    func makeLicenseURL(playbackID: String, drmToken: String, licenseDomain: String) -> URL {
+    static func makeLicenseURL(playbackID: String, drmToken: String, licenseDomain: String) -> URL {
         let baseStr = "https://\(licenseDomain)/license/fairplay/\(playbackID)?token=\(drmToken)"
         let url = URL(string: baseStr)
         return url!
@@ -75,14 +75,14 @@ extension FairPlaySessionManagerImpl {
     /// Generates an authenticated URL to Mux's license proxy, for an application certificate, for the
     /// given plabackID and DRM token, at the given domain
     /// - SeeAlso ``makeLicenseDomain``
-    func makeAppCertificateURL(playbackId: String, drmToken: String, licenseDomain: String) -> URL {
+    static func makeAppCertificateURL(playbackId: String, drmToken: String, licenseDomain: String) -> URL {
         let baseStr = "https://\(licenseDomain)/appcert/fairplay/\(playbackId)?token=\(drmToken)"
         let url = URL(string: baseStr)
         return url!
     }
 }
 
-class FairPlaySessionManagerImpl: FairPlaySessionManager {
+class DefaultFPSManager: FairPlaySessionManager {
     
     private var playbackOptionsByPlaybackID: [String: PlaybackOptions] = [:]
     // note - null on simulators or other environments where fairplay isn't supported
@@ -108,10 +108,10 @@ class FairPlaySessionManagerImpl: FairPlaySessionManager {
         drmToken: String,
         completion requestCompletion: @escaping (Result<Data, Error>) -> Void
     ) {
-        let url = makeAppCertificateURL(
+        let url = DefaultFPSManager.makeAppCertificateURL(
             playbackId: playbackID,
             drmToken: drmToken,
-            licenseDomain: FairPlaySessionManagerImpl.makeLicenseDomain(rootDomain)
+            licenseDomain: DefaultFPSManager.makeLicenseDomain(rootDomain)
         )
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
@@ -166,10 +166,10 @@ class FairPlaySessionManagerImpl: FairPlaySessionManager {
         offline _: Bool,
         completion requestCompletion: @escaping (Result<Data, Error>) -> Void
     ) {
-        let url = makeLicenseURL(
+        let url = DefaultFPSManager.makeLicenseURL(
             playbackID: playbackID,
             drmToken: drmToken,
-            licenseDomain: FairPlaySessionManagerImpl.makeLicenseDomain(rootDomain)
+            licenseDomain: DefaultFPSManager.makeLicenseDomain(rootDomain)
         )
         var request = URLRequest(url: url)
         

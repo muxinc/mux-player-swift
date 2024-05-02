@@ -18,7 +18,7 @@ class FairPlaySessionManagerTests : XCTestCase {
     // Also tests PlaybackOptions.rootDomain
     func testMakeLicenseDomain() throws {
         let optionsWithoutCustomDomain = PlaybackOptions()
-        let defaultLicenseDomain = FairPlaySessionManagerImpl.makeLicenseDomain(optionsWithoutCustomDomain.rootDomain())
+        let defaultLicenseDomain = DefaultFPSManager.makeLicenseDomain(optionsWithoutCustomDomain.rootDomain())
         XCTAssert(
             defaultLicenseDomain == "license.mux.com",
             "Default license server is license.mux.com"
@@ -26,7 +26,7 @@ class FairPlaySessionManagerTests : XCTestCase {
         
         var optionsCustomDomain = PlaybackOptions()
         optionsCustomDomain.customDomain = "fake.custom.domain.xyz"
-        let customLicenseDomain = FairPlaySessionManagerImpl.makeLicenseDomain(optionsCustomDomain.rootDomain())
+        let customLicenseDomain = DefaultFPSManager.makeLicenseDomain(optionsCustomDomain.rootDomain())
         XCTAssert(
             customLicenseDomain == "license.fake.custom.domain.xyz",
             "Custom license server is license.fake.custom.domain.xyz"
