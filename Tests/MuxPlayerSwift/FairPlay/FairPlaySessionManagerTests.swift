@@ -11,10 +11,26 @@ import XCTest
 
 class FairPlaySessionManagerTests : XCTestCase {
     
-    private var mockURLSession: URLSession = URLSession.shared
+    // mocks
+    private var mockURLSession: URLSession!
+    
+    // object under test
+    private var sessionManager: FairPlaySessionManager!
     
     override func setUp() {
         super.setUp()
+        
+        let mockURLSessionConfig = URLSessionConfiguration.default
+        mockURLSessionConfig.protocolClasses = [MockURLProtocol.self]
+        self.mockURLSession = URLSession.init(configuration: mockURLSessionConfig)
+        
+        self.sessionManager = DefaultFPSSManager(
+            // .clearKey is used because .fairPlay requires a physical device
+            contentKeySession: MockAVContentKeySession(keySystem: .clearKey),
+            sessionDelegate: DummyAVContentKeySessionDelegate(),
+            sessionDelegateQueue: DispatchQueue(label: "com.mux.player.test.fairplay"),
+            urlSession: mockURLSession
+        )
     }
     
     // Also tests PlaybackOptions.rootDomain
