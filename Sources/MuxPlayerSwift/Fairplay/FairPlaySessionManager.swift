@@ -32,7 +32,6 @@ protocol FairPlaySessionManager {
     
     // MARK: registering drm-protected assets
     
-    
     /// Adds a ``AVContentKeyRecipient`` (probably an ``AVURLAsset``)  that must be played
     /// with DRM protection. This call is necessary for DRM playback to succeed
     func addContentKeyRecipient(_ recipient: AVContentKeyRecipient)
@@ -68,7 +67,7 @@ class FairPlaySessionManagerImpl: FairPlaySessionManager {
     private let contentKeySession: AVContentKeySession?
     private let sessionDelegate: AVContentKeySessionDelegate?
     
-    private let urlSession = URLSession.shared
+    private let urlSession: URLSession
     
     func addContentKeyRecipient(_ recipient: AVContentKeyRecipient) {
         contentKeySession?.addContentKeyRecipient(recipient)
@@ -259,19 +258,22 @@ class FairPlaySessionManagerImpl: FairPlaySessionManager {
         self.init(
             contentKeySession: session,
             sessionDelegate: delegate,
-            sessionDelegateQueue: DispatchQueue(label: "com.mux.player.fairplay")
+            sessionDelegateQueue: DispatchQueue(label: "com.mux.player.fairplay"),
+            urlSession: URLSession.shared
         )
     }
     
     init(
         contentKeySession: AVContentKeySession?,
         sessionDelegate: AVContentKeySessionDelegate?,
-        sessionDelegateQueue: DispatchQueue
+        sessionDelegateQueue: DispatchQueue,
+        urlSession: URLSession
     ) {
         contentKeySession?.setDelegate(sessionDelegate, queue: sessionDelegateQueue)
         
         self.contentKeySession = contentKeySession
         self.sessionDelegate = sessionDelegate
+        self.urlSession = urlSession
     }
 }
 
