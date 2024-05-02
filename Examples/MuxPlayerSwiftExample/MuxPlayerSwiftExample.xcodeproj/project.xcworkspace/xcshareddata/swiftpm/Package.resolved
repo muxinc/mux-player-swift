@@ -1,4 +1,5 @@
 {
+  "originHash" : "dc98da4f24976725085eec4af9a1756cdf986007b8fbabe8e86ce304ee2c6169",
   "pins" : [
     {
       "identity" : "gcdwebserver",
@@ -14,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/muxinc/mux-stats-sdk-avplayer",
       "state" : {
-        "revision" : "0502d923df4100ffd433320b932952883136665c",
-        "version" : "3.4.2"
+        "revision" : "18881b50fc2ed755859b523955fac0dbe292af6b",
+        "version" : "3.6.0"
       }
     },
     {
@@ -23,10 +24,10 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/muxinc/stats-sdk-objc.git",
       "state" : {
-        "revision" : "982feb93c4601684b5e3eef9ad1a036e3ec117c7",
-        "version" : "4.6.0"
+        "revision" : "50d131b5b85f48ce496843eecdf812a5307d0721",
+        "version" : "4.7.0"
       }
     }
   ],
-  "version" : 2
+  "version" : 3
 }

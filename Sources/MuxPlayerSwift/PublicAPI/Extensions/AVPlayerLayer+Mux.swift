@@ -58,9 +58,10 @@ extension AVPlayerLayer {
             playbackID: playbackID
         )
 
-        PlayerSDK.shared.monitor.setupMonitoring(
+        PlayerSDK.shared.registerPlayerLayer(
             playerLayer: self,
-            options: monitoringOptions
+            monitoringOptions: monitoringOptions,
+            requiresReverseProxying: playbackOptions.enableSmartCache
         )
     }
 
@@ -90,9 +91,10 @@ extension AVPlayerLayer {
 
         self.player = player
 
-        PlayerSDK.shared.monitor.setupMonitoring(
+        PlayerSDK.shared.registerPlayerLayer(
             playerLayer: self,
-            options: monitoringOptions
+            monitoringOptions: monitoringOptions,
+            requiresReverseProxying: playbackOptions.enableSmartCache
         )
     }
 
@@ -148,6 +150,7 @@ extension AVPlayerLayer {
                 playbackID: playbackID,
                 playbackOptions: playbackOptions
             ),
+            enableSmartCache: playbackOptions.enableSmartCache,
             monitoringOptions: MonitoringOptions(
                 playbackID: playbackID
             )
@@ -204,12 +207,14 @@ extension AVPlayerLayer {
                 playbackID: playbackID,
                 playbackOptions: playbackOptions
             ),
+            enableSmartCache: playbackOptions.enableSmartCache,
             monitoringOptions: monitoringOptions
         )
     }
 
     internal func prepare(
         playerItem: AVPlayerItem,
+        enableSmartCache: Bool = false,
         monitoringOptions: MonitoringOptions
     ) {
         if let player {
@@ -222,9 +227,10 @@ extension AVPlayerLayer {
             )
         }
 
-        PlayerSDK.shared.monitor.setupMonitoring(
+        PlayerSDK.shared.registerPlayerLayer(
             playerLayer: self,
-            options: monitoringOptions
+            monitoringOptions: monitoringOptions,
+            requiresReverseProxying: enableSmartCache
         )
     }
 }
