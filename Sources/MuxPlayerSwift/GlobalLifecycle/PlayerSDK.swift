@@ -23,7 +23,7 @@ class PlayerSDK {
     init() {
         self.monitor = Monitor()
         self.keyValueObservation = KeyValueObservation()
-        self.fairPlaySessionManager = DefaultFPSManager()
+        self.fairPlaySessionManager = DefaultFPSSManager()
     }
 
     class KeyValueObservation {

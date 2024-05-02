@@ -11,6 +11,8 @@ import XCTest
 
 class FairPlaySessionManagerTests : XCTestCase {
     
+    private var mockURLSession: URLSession = URLSession.shared
+    
     override func setUp() {
         super.setUp()
     }
@@ -18,7 +20,7 @@ class FairPlaySessionManagerTests : XCTestCase {
     // Also tests PlaybackOptions.rootDomain
     func testMakeLicenseDomain() throws {
         let optionsWithoutCustomDomain = PlaybackOptions()
-        let defaultLicenseDomain = DefaultFPSManager.makeLicenseDomain(optionsWithoutCustomDomain.rootDomain())
+        let defaultLicenseDomain = DefaultFPSSManager.makeLicenseDomain(optionsWithoutCustomDomain.rootDomain())
         XCTAssert(
             defaultLicenseDomain == "license.mux.com",
             "Default license server is license.mux.com"
@@ -26,7 +28,7 @@ class FairPlaySessionManagerTests : XCTestCase {
         
         var optionsCustomDomain = PlaybackOptions()
         optionsCustomDomain.customDomain = "fake.custom.domain.xyz"
-        let customLicenseDomain = DefaultFPSManager.makeLicenseDomain(optionsCustomDomain.rootDomain())
+        let customLicenseDomain = DefaultFPSSManager.makeLicenseDomain(optionsCustomDomain.rootDomain())
         XCTAssert(
             customLicenseDomain == "license.fake.custom.domain.xyz",
             "Custom license server is license.fake.custom.domain.xyz"
@@ -38,7 +40,7 @@ class FairPlaySessionManagerTests : XCTestCase {
         let fakeDrmToken = "fake_drm_token"
         let fakeLicenseDomain = "license.fake.domain.xyz"
         
-        let licenseURL = DefaultFPSManager.makeLicenseURL(
+        let licenseURL = DefaultFPSSManager.makeLicenseURL(
             playbackID: fakePlaybackId,
             drmToken: fakeDrmToken,
             licenseDomain: fakeLicenseDomain
@@ -55,7 +57,7 @@ class FairPlaySessionManagerTests : XCTestCase {
         let fakeDrmToken = "fake_drm_token"
         let fakeLicenseDomain = "license.fake.domain.xyz"
         
-        let licenseURL = DefaultFPSManager.makeAppCertificateURL(
+        let licenseURL = DefaultFPSSManager.makeAppCertificateURL(
             playbackID: fakePlaybackId,
             drmToken: fakeDrmToken,
             licenseDomain: fakeLicenseDomain

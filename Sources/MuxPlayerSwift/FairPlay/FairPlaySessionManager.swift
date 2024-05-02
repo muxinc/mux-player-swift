@@ -47,7 +47,7 @@ protocol FairPlaySessionManager {
 
 // MARK: helpers for interacting with the license server
 
-extension DefaultFPSManager {
+extension DefaultFPSSManager {
     /// Generates a domain name appropriate for the Mux license proxy associted with the given
     /// "root domain". For example `mux.com` returns `license.mux.com` and
     /// `customdomain.xyz.com` returns `license.customdomain.xyz.com`
@@ -82,7 +82,7 @@ extension DefaultFPSManager {
     }
 }
 
-class DefaultFPSManager: FairPlaySessionManager {
+class DefaultFPSSManager: FairPlaySessionManager {
     
     private var playbackOptionsByPlaybackID: [String: PlaybackOptions] = [:]
     // note - null on simulators or other environments where fairplay isn't supported
@@ -108,10 +108,10 @@ class DefaultFPSManager: FairPlaySessionManager {
         drmToken: String,
         completion requestCompletion: @escaping (Result<Data, Error>) -> Void
     ) {
-        let url = DefaultFPSManager.makeAppCertificateURL(
+        let url = DefaultFPSSManager.makeAppCertificateURL(
             playbackID: playbackID,
             drmToken: drmToken,
-            licenseDomain: DefaultFPSManager.makeLicenseDomain(rootDomain)
+            licenseDomain: DefaultFPSSManager.makeLicenseDomain(rootDomain)
         )
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
@@ -166,10 +166,10 @@ class DefaultFPSManager: FairPlaySessionManager {
         offline _: Bool,
         completion requestCompletion: @escaping (Result<Data, Error>) -> Void
     ) {
-        let url = DefaultFPSManager.makeLicenseURL(
+        let url = DefaultFPSSManager.makeLicenseURL(
             playbackID: playbackID,
             drmToken: drmToken,
-            licenseDomain: DefaultFPSManager.makeLicenseDomain(rootDomain)
+            licenseDomain: DefaultFPSSManager.makeLicenseDomain(rootDomain)
         )
         var request = URLRequest(url: url)
         
