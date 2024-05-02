@@ -20,6 +20,7 @@
 		19DD16AF2BEC010400F4DF4F /* SinglePlayerExampleController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19DD16AE2BEC010400F4DF4F /* SinglePlayerExampleController.swift */; };
 		19DD16B12BEC028C00F4DF4F /* SmartCacheExampleViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19DD16B02BEC028C00F4DF4F /* SmartCacheExampleViewController.swift */; };
 		19DD16B32BEC048300F4DF4F /* SinglePlayerLayerExampleViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19DD16B22BEC048300F4DF4F /* SinglePlayerLayerExampleViewController.swift */; };
+		19F6A1CE2C2F23EC00EE408A /* DRMExampleViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19F6A1CD2C2F23EC00EE408A /* DRMExampleViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -56,6 +57,7 @@
 		19DD16AE2BEC010400F4DF4F /* SinglePlayerExampleController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SinglePlayerExampleController.swift; sourceTree = "<group>"; };
 		19DD16B02BEC028C00F4DF4F /* SmartCacheExampleViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartCacheExampleViewController.swift; sourceTree = "<group>"; };
 		19DD16B22BEC048300F4DF4F /* SinglePlayerLayerExampleViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SinglePlayerLayerExampleViewController.swift; sourceTree = "<group>"; };
+		19F6A1CD2C2F23EC00EE408A /* DRMExampleViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DRMExampleViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -112,6 +114,7 @@
 				19DD16AE2BEC010400F4DF4F /* SinglePlayerExampleController.swift */,
 				19DD16B02BEC028C00F4DF4F /* SmartCacheExampleViewController.swift */,
 				19DD16B22BEC048300F4DF4F /* SinglePlayerLayerExampleViewController.swift */,
+				19F6A1CD2C2F23EC00EE408A /* DRMExampleViewController.swift */,
 				193228C02ACF6AC700966FE1 /* Main.storyboard */,
 				193228C32ACF6AC800966FE1 /* Assets.xcassets */,
 				193228C52ACF6AC800966FE1 /* LaunchScreen.storyboard */,
@@ -275,6 +278,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				19F6A1CE2C2F23EC00EE408A /* DRMExampleViewController.swift in Sources */,
 				19DD16B32BEC048300F4DF4F /* SinglePlayerLayerExampleViewController.swift in Sources */,
 				193228BB2ACF6AC700966FE1 /* AppDelegate.swift in Sources */,
 				19DD16B12BEC028C00F4DF4F /* SmartCacheExampleViewController.swift in Sources */,
