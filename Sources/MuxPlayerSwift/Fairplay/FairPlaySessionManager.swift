@@ -10,11 +10,6 @@ import AVFoundation
 
 protocol FairPlaySessionManager {
     
-    // MARK: Track DRM-protected assets
-    
-    func addContentKeyRecipient(_ recipient: AVContentKeyRecipient)
-    func removeContentKeyRecipient(_ recipient: AVContentKeyRecipient)
-    
     // MARK: Requesting licenses and certs
     
     /// Requests the App Certificate for a playback id
@@ -35,8 +30,14 @@ protocol FairPlaySessionManager {
         completion requestCompletion: @escaping (Result<Data, Error>) -> Void
     )
     
-    // MARK: registering assets
+    // MARK: registering drm-protected assets
     
+    
+    /// Adds a ``AVContentKeyRecipient`` (probably an ``AVURLAsset``)  that must be played
+    /// with DRM protection. This call is necessary for DRM playback to succeed
+    func addContentKeyRecipient(_ recipient: AVContentKeyRecipient)
+    /// Removes a ``AVContentKeyRecipient`` previously added by ``addContentKeyRecipient``
+    func removeContentKeyRecipient(_ recipient: AVContentKeyRecipient)
     /// Registers a ``PlaybackOptions`` for DRM playback, associated with the given playbackID
     func registerPlaybackOptions(_ opts: PlaybackOptions, for playbackID: String)
     /// Gets a DRM token previously registered via ``registerPlaybackOptions``
@@ -46,8 +47,17 @@ protocol FairPlaySessionManager {
     
     // MARK: helpers
     
+    /// Generates a domain name appropriate for the Mux license proxy associted with the given
+    /// "root domain". For example `mux.com` returns `license.mux.com` and
+    /// `customdomain.xyz.com` returns `license.customdomain.xyz.com`
     func makeLicenseDomain(_ rootDomain: String) -> String
-    func makeLicenseURL(playbackId: String, drmToken: String, licenseDomain: String) -> URL
+    /// Generates an authenticated URL to Mux's license proxy, for a 'license' (a CKC for fairplay),
+    /// for the given playabckID and DRM Token, at the given domain
+    /// - SeeAlso ``makeLicenseDomain``
+    func makeLicenseURL(playbackID: String, drmToken: String, licenseDomain: String) -> URL
+    /// Generates an authenticated URL to Mux's license proxy, for an application certificate, for the
+    /// given plabackID and DRM token, at the given domain
+    /// - SeeAlso ``makeLicenseDomain``
     func makeAppCertificateURL(playbackId: String, drmToken: String, licenseDomain: String) -> URL
 }
 
@@ -136,7 +146,7 @@ class FairPlaySessionManagerImpl: FairPlaySessionManager {
         completion requestCompletion: @escaping (Result<Data, Error>) -> Void
     ) {
         let url = makeLicenseURL(
-            playbackId: playbackID,
+            playbackID: playbackID,
             drmToken: drmToken,
             licenseDomain: makeLicenseDomain(rootDomain)
         )
@@ -223,8 +233,8 @@ class FairPlaySessionManagerImpl: FairPlaySessionManager {
         }
     }
     
-    func makeLicenseURL(playbackId: String, drmToken: String, licenseDomain: String) -> URL {
-        let baseStr = "https://\(licenseDomain)/license/fairplay/\(playbackId)?token=\(drmToken)"
+    func makeLicenseURL(playbackID: String, drmToken: String, licenseDomain: String) -> URL {
+        let baseStr = "https://\(licenseDomain)/license/fairplay/\(playbackID)?token=\(drmToken)"
         let url = URL(string: baseStr)
         return url!
     }
