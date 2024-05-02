@@ -47,37 +47,39 @@ protocol FairPlaySessionManager {
 
 // MARK: helpers for interacting with the license server
 
-/// Generates a domain name appropriate for the Mux license proxy associted with the given
-/// "root domain". For example `mux.com` returns `license.mux.com` and
-/// `customdomain.xyz.com` returns `license.customdomain.xyz.com`
-func makeLicenseDomain(_ rootDomain: String) -> String {
-    let customDomainWithDefault = rootDomain
-    let licenseDomain = "license.\(customDomainWithDefault)"
-    
-    // TODO: this check should not reach production or playing from staging will probably break
-    if("staging.mux.com" == customDomainWithDefault) {
-        return "license.gcp-us-west1-vos1.staging.mux.com"
-    } else {
-        return licenseDomain
+extension FairPlaySessionManagerImpl {
+    /// Generates a domain name appropriate for the Mux license proxy associted with the given
+    /// "root domain". For example `mux.com` returns `license.mux.com` and
+    /// `customdomain.xyz.com` returns `license.customdomain.xyz.com`
+    static func makeLicenseDomain(_ rootDomain: String) -> String {
+        let customDomainWithDefault = rootDomain
+        let licenseDomain = "license.\(customDomainWithDefault)"
+        
+        // TODO: this check should not reach production or playing from staging will probably break
+        if("staging.mux.com" == customDomainWithDefault) {
+            return "license.gcp-us-west1-vos1.staging.mux.com"
+        } else {
+            return licenseDomain
+        }
     }
-}
-
-/// Generates an authenticated URL to Mux's license proxy, for a 'license' (a CKC for fairplay),
-/// for the given playabckID and DRM Token, at the given domain
-/// - SeeAlso ``makeLicenseDomain``
-func makeLicenseURL(playbackID: String, drmToken: String, licenseDomain: String) -> URL {
-    let baseStr = "https://\(licenseDomain)/license/fairplay/\(playbackID)?token=\(drmToken)"
-    let url = URL(string: baseStr)
-    return url!
-}
-
-/// Generates an authenticated URL to Mux's license proxy, for an application certificate, for the
-/// given plabackID and DRM token, at the given domain
-/// - SeeAlso ``makeLicenseDomain``
-func makeAppCertificateURL(playbackId: String, drmToken: String, licenseDomain: String) -> URL {
-    let baseStr = "https://\(licenseDomain)/appcert/fairplay/\(playbackId)?token=\(drmToken)"
-    let url = URL(string: baseStr)
-    return url!
+    
+    /// Generates an authenticated URL to Mux's license proxy, for a 'license' (a CKC for fairplay),
+    /// for the given playabckID and DRM Token, at the given domain
+    /// - SeeAlso ``makeLicenseDomain``
+    func makeLicenseURL(playbackID: String, drmToken: String, licenseDomain: String) -> URL {
+        let baseStr = "https://\(licenseDomain)/license/fairplay/\(playbackID)?token=\(drmToken)"
+        let url = URL(string: baseStr)
+        return url!
+    }
+    
+    /// Generates an authenticated URL to Mux's license proxy, for an application certificate, for the
+    /// given plabackID and DRM token, at the given domain
+    /// - SeeAlso ``makeLicenseDomain``
+    func makeAppCertificateURL(playbackId: String, drmToken: String, licenseDomain: String) -> URL {
+        let baseStr = "https://\(licenseDomain)/appcert/fairplay/\(playbackId)?token=\(drmToken)"
+        let url = URL(string: baseStr)
+        return url!
+    }
 }
 
 class FairPlaySessionManagerImpl: FairPlaySessionManager {
@@ -109,7 +111,7 @@ class FairPlaySessionManagerImpl: FairPlaySessionManager {
         let url = makeAppCertificateURL(
             playbackId: playbackID,
             drmToken: drmToken,
-            licenseDomain: makeLicenseDomain(rootDomain)
+            licenseDomain: FairPlaySessionManagerImpl.makeLicenseDomain(rootDomain)
         )
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
@@ -167,7 +169,7 @@ class FairPlaySessionManagerImpl: FairPlaySessionManager {
         let url = makeLicenseURL(
             playbackID: playbackID,
             drmToken: drmToken,
-            licenseDomain: makeLicenseDomain(rootDomain)
+            licenseDomain: FairPlaySessionManagerImpl.makeLicenseDomain(rootDomain)
         )
         var request = URLRequest(url: url)
         

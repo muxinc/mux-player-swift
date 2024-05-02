@@ -7,6 +7,7 @@
 
 import Foundation
 import XCTest
+@testable import MuxPlayerSwift
 
 class FairPlaySessionManagerTests : XCTestCase {
     
@@ -14,7 +15,21 @@ class FairPlaySessionManagerTests : XCTestCase {
         super.setUp()
     }
     
+    // Also tests PlaybackOptions.rootDomain
     func testMakeLicenseDomain() throws {
+        let optionsWithoutCustomDomain = PlaybackOptions()
+        let defaultLicenseDomain = FairPlaySessionManagerImpl.makeLicenseDomain(optionsWithoutCustomDomain.rootDomain())
+        XCTAssert(
+            defaultLicenseDomain == "license.mux.com",
+            "Default license server is license.mux.com"
+        )
         
+        var optionsCustomDomain = PlaybackOptions()
+        optionsCustomDomain.customDomain = "fake.custom.domain.xyz"
+        let customLicenseDomain = FairPlaySessionManagerImpl.makeLicenseDomain(optionsCustomDomain.rootDomain())
+        XCTAssert(
+            customLicenseDomain == "license.fake.custom.domain.xyz",
+            "Custom license server is license.fake.custom.domain.xyz"
+        )
     }
 }
