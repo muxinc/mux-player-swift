@@ -1,6 +1,6 @@
 //
 //  FairPlaySessionManagerTests.swift
-//  
+//
 //
 //  Created by Emily Dixon on 5/2/24.
 //
@@ -12,5 +12,9 @@ class FairPlaySessionManagerTests : XCTestCase {
     
     override func setUp() {
         super.setUp()
+    }
+    
+    func testMakeLicenseDomain() throws {
+        
     }
 }

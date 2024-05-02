@@ -51,7 +51,7 @@ protocol FairPlaySessionManager {
 /// "root domain". For example `mux.com` returns `license.mux.com` and
 /// `customdomain.xyz.com` returns `license.customdomain.xyz.com`
 func makeLicenseDomain(_ rootDomain: String) -> String {
-    let customDomainWithDefault = rootDomain ?? "mux.com"
+    let customDomainWithDefault = rootDomain
     let licenseDomain = "license.\(customDomainWithDefault)"
     
     // TODO: this check should not reach production or playing from staging will probably break
@@ -124,13 +124,13 @@ class FairPlaySessionManagerImpl: FairPlaySessionManager {
                 print("Cert response headers: ", httpResponse.allHeaderFields)
                 if let errorBody = data {
                     let errorUtf = String(data: errorBody, encoding: .utf8)
-                    print("Cert Error: \(errorUtf)")
+                    print("Cert Error: \(errorUtf ?? "nil")")
                 }
                 
             }
             // error case: I/O finished with non-successful response
             guard responseCode == 200 else {
-                print("Cert request failed: \(responseCode)")
+                print("Cert request failed: \(String(describing: responseCode))")
                 requestCompletion(Result.failure(TempError()))
                 return
             }
@@ -178,8 +178,8 @@ class FairPlaySessionManagerImpl: FairPlaySessionManager {
         // QUERY PARAMS
         request.setValue("application/octet-stream", forHTTPHeaderField: "Content-Type")
         request.setValue(String(format: "%lu", request.httpBody?.count ?? 0), forHTTPHeaderField: "Content-Length")
-        print("Sending License/CKC Request to: \(request.url?.absoluteString)")
-        print("\t with header fields: \(request.allHTTPHeaderFields)")
+        print("Sending License/CKC Request to: \(request.url?.absoluteString ?? "nil")")
+        print("\t with header fields: \(String(describing: request.allHTTPHeaderFields))")
         
         let task = urlSession.dataTask(with: request) { [requestCompletion] data, response, error in
             print("<><> GOT LICENSE RESPONSE")
@@ -192,7 +192,7 @@ class FairPlaySessionManagerImpl: FairPlaySessionManager {
             }
             // error case: I/O finished with non-successful response
             guard responseCode == 200 else {
-                print("CKC request failed: \(responseCode)")
+                print("CKC request failed: \(String(describing: responseCode))")
                 requestCompletion(Result.failure(TempError()))
                 return
             }
