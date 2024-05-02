@@ -75,8 +75,8 @@ extension DefaultFPSManager {
     /// Generates an authenticated URL to Mux's license proxy, for an application certificate, for the
     /// given plabackID and DRM token, at the given domain
     /// - SeeAlso ``makeLicenseDomain``
-    static func makeAppCertificateURL(playbackId: String, drmToken: String, licenseDomain: String) -> URL {
-        let baseStr = "https://\(licenseDomain)/appcert/fairplay/\(playbackId)?token=\(drmToken)"
+    static func makeAppCertificateURL(playbackID: String, drmToken: String, licenseDomain: String) -> URL {
+        let baseStr = "https://\(licenseDomain)/appcert/fairplay/\(playbackID)?token=\(drmToken)"
         let url = URL(string: baseStr)
         return url!
     }
@@ -109,7 +109,7 @@ class DefaultFPSManager: FairPlaySessionManager {
         completion requestCompletion: @escaping (Result<Data, Error>) -> Void
     ) {
         let url = DefaultFPSManager.makeAppCertificateURL(
-            playbackId: playbackID,
+            playbackID: playbackID,
             drmToken: drmToken,
             licenseDomain: DefaultFPSManager.makeLicenseDomain(rootDomain)
         )

@@ -32,4 +32,38 @@ class FairPlaySessionManagerTests : XCTestCase {
             "Custom license server is license.fake.custom.domain.xyz"
         )
     }
+    
+    func testMakeLicenseURL() throws {
+        let fakePlaybackId = "fake_playback_id"
+        let fakeDrmToken = "fake_drm_token"
+        let fakeLicenseDomain = "license.fake.domain.xyz"
+        
+        let licenseURL = DefaultFPSManager.makeLicenseURL(
+            playbackID: fakePlaybackId,
+            drmToken: fakeDrmToken,
+            licenseDomain: fakeLicenseDomain
+        )
+        let expected = "https://\(fakeLicenseDomain)/license/fairplay/\(fakePlaybackId)?token=\(fakeDrmToken)"
+        
+        XCTAssertEqual(
+            expected, licenseURL.absoluteString
+        )
+    }
+    
+    func testMakeAppCertificateUrl() throws {
+        let fakePlaybackId = "fake_playback_id"
+        let fakeDrmToken = "fake_drm_token"
+        let fakeLicenseDomain = "license.fake.domain.xyz"
+        
+        let licenseURL = DefaultFPSManager.makeAppCertificateURL(
+            playbackID: fakePlaybackId,
+            drmToken: fakeDrmToken,
+            licenseDomain: fakeLicenseDomain
+        )
+        let expected = "https://\(fakeLicenseDomain)/appcert/fairplay/\(fakePlaybackId)?token=\(fakeDrmToken)"
+        
+        XCTAssertEqual(
+            expected, licenseURL.absoluteString
+        )
+    }
 }
