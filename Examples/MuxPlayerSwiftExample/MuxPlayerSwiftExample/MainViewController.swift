@@ -12,11 +12,20 @@ import MuxPlayerSwift
 
 class MainViewController: UIViewController {
 
+//    lazy var playerViewController = AVPlayerViewController(
+//        playbackID: playbackID
+//    )
+    let videoIdx = 0
     lazy var playerViewController = AVPlayerViewController(
-        playbackID: playbackID
+        playbackID: DRMExample.DRM_EXAMPLES[videoIdx].playbackID,
+        playbackOptions: PlaybackOptions(
+            playbackToken: DRMExample.DRM_EXAMPLES[videoIdx].playbackToken,
+            drmToken: DRMExample.DRM_EXAMPLES[videoIdx].drmToken,
+            customDomain: "staging.mux.com"
+        )
     )
 
-    var playbackID: String = "qxb01i6T202018GFS02vp9RIe01icTcDCjVzQpmaB00CUisJ4"
+//    var playbackID: String = "qxb01i6T202018GFS02vp9RIe01icTcDCjVzQpmaB00CUisJ4"
 
     override var childForStatusBarStyle: UIViewController? {
         playerViewController
@@ -26,7 +35,7 @@ class MainViewController: UIViewController {
         super.viewDidLoad()
 
         view.backgroundColor = .black
-
+        
         playerViewController.willMove(toParent: self)
         addChild(playerViewController)
         view.addSubview(playerViewController.view)
@@ -43,17 +52,30 @@ class MainViewController: UIViewController {
                 equalTo: view.centerYAnchor
             ),
             playerViewController.view.leadingAnchor.constraint(
-                equalTo: view.leadingAnchor
+                equalTo: view.safeAreaLayoutGuide.leadingAnchor
             ),
             playerViewController.view.trailingAnchor.constraint(
-                equalTo: view.trailingAnchor
+                equalTo: view.safeAreaLayoutGuide.trailingAnchor
             ),
             playerViewController.view.layoutMarginsGuide.topAnchor.constraint(
-                equalTo: view.topAnchor
+                equalTo: view.safeAreaLayoutGuide.topAnchor
             ),
             playerViewController.view.layoutMarginsGuide.bottomAnchor
-                .constraint(equalTo: view.bottomAnchor),
+                .constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
         ])
+        
+        let player = playerViewController.player
+        let item = playerViewController.player?.currentItem
+        
+        playerViewController.player?.currentItem?.observe(\AVPlayerItem.status, options: [.new]) { object, change in
+            print("Player Item Status: \(change.newValue)")
+            if case .failed = change.newValue {
+                print("!!AVPlayer Error!!")
+                let error = object.error
+                print(error!.localizedDescription)
+            }
+        }
+        
     }
 
     override func viewDidAppear(_ animated: Bool) {

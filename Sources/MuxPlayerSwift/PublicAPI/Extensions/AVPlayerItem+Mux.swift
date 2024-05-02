@@ -74,6 +74,19 @@ fileprivate func makePlaybackURL(
 
         components.queryItems = queryItems
 
+    } else if case PlaybackOptions.PlaybackPolicy.drm(let drmPlaybackOptions) = playbackOptions.playbackPolicy {
+        
+        var queryItems: [URLQueryItem] = []
+
+        queryItems.append(
+            URLQueryItem(
+                name: "token",
+                value: drmPlaybackOptions.playbackToken
+            )
+        )
+
+        components.queryItems = queryItems
+
     }
 
     guard let playbackURL = components.url else {
@@ -81,6 +94,21 @@ fileprivate func makePlaybackURL(
     }
 
     return playbackURL
+}
+
+/// Create a new `AVAsset` that has been prepared for playback
+/// If DRM is required, the Asset will be registered with the ``FairPlaySessionManager``
+fileprivate func makeAVAsset(playbackID: String, playbackOptions: PlaybackOptions) -> AVAsset {
+    let url = makePlaybackURL(playbackID: playbackID, playbackOptions: playbackOptions)
+    
+    let asset = AVURLAsset(url: url)
+    if case .drm(_) = playbackOptions.playbackPolicy {
+        PlayerSDK.shared.fairPlaySessionManager.registerPlaybackOptions(playbackOptions, for: playbackID)
+        // asset must be attached as early as possible to avoid crashes when attaching later
+        PlayerSDK.shared.fairPlaySessionManager.addContentKeyRecipient(asset)
+    }
+    
+    return asset
 }
 
 internal extension AVPlayerItem {
@@ -115,11 +143,11 @@ internal extension AVPlayerItem {
         playbackID: String,
         playbackOptions: PlaybackOptions
     ) {
-        let playbackURL = makePlaybackURL(
+        let asset = makeAVAsset(
             playbackID: playbackID,
             playbackOptions: playbackOptions
         )
 
-        self.init(url: playbackURL)
+        self.init(asset: asset)
     }
 }
