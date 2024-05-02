@@ -120,7 +120,7 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
             return
         }
         
-        let rootDomain = playbackOptions.customDomain ?? "mux.com"
+        let rootDomain = playbackOptions.rootDomain()
         
         // get app cert
         var applicationCertificate: Data?
