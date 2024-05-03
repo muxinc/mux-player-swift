@@ -295,11 +295,6 @@ class DefaultFPSSManager: FairPlaySessionManager {
     }
 }
 
-
-// TODO: Final implementation needs something more verbose
-class TempError: Error {
-}
-
 enum FairPlaySessionError : Error {
     case because(cause: any Error)
     case httpFailed(responseStatusCode: Int)

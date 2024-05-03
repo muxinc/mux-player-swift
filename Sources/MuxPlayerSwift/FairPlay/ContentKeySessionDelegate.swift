@@ -198,7 +198,7 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
         
         guard let ckcData = ckcData else {
             print("no CKC Data in CKC response")
-            request.processContentKeyResponseError(TempError())
+            request.processContentKeyResponseError(FairPlaySessionError.unexpected(message: "No CKC Data returned from CDM"))
             return
         }
         
