@@ -133,7 +133,9 @@ class DefaultFPSSManager: FairPlaySessionManager {
             // error case: I/O failed
             if let error = error {
                 print("Cert Request Failed: \(error.localizedDescription)")
-                requestCompletion(Result.failure(error)) // todo - real Error type
+                requestCompletion(Result.failure(
+                    FairPlaySessionError.because(cause: error)
+                )) // todo - real Error type
                 return
             }
             // error case: I/O finished with non-successful response
@@ -150,7 +152,9 @@ class DefaultFPSSManager: FairPlaySessionManager {
             }
             guard let data = data else {
                 print("Cert data unexpectedly nil from server")
-                requestCompletion(Result.failure(TempError())) // todo - real Error type
+                requestCompletion(Result.failure(
+                    FairPlaySessionError.unexpected(message: "No cert data with 200 OK respone")
+                ))
                 return
             }
             
