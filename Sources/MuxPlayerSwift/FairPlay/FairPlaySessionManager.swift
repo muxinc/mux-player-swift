@@ -130,16 +130,22 @@ class DefaultFPSSManager: FairPlaySessionManager {
                 }
                 
             }
-            // error case: I/O finished with non-successful response
-            guard responseCode == 200 else {
-                print("Cert request failed: \(String(describing: responseCode))")
-                requestCompletion(Result.failure(TempError()))
-                return
-            }
             // error case: I/O failed
             if let error = error {
                 print("Cert Request Failed: \(error.localizedDescription)")
                 requestCompletion(Result.failure(error)) // todo - real Error type
+                return
+            }
+            // error case: I/O finished with non-successful response
+            guard responseCode == 200 else {
+                print("Cert request failed: \(String(describing: responseCode))")
+                requestCompletion(
+                    Result.failure(
+                        FairPlaySessionError.httpFailed(
+                            responseStatusCode: responseCode ?? 0
+                        )
+                    )
+                )
                 return
             }
             guard let data = data else {
@@ -278,4 +284,11 @@ class DefaultFPSSManager: FairPlaySessionManager {
 
 // TODO: Final implementation needs something more verbose
 class TempError: Error {
+}
+
+enum FairPlaySessionError : Error {
+    case because(cause: Error)
+    case httpFailed(responseStatusCode: Int)
+    case noData(message: String)
+    case unexpected(message: String)
 }
