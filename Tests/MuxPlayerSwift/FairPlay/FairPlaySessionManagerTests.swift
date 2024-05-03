@@ -88,6 +88,8 @@ class FairPlaySessionManagerTests : XCTestCase {
         )
     }
     
+    // TODO: Test Request Bodies too!
+    
     func testRequestCertificateSuccess() throws {
         let fakeRootDomain = "custom.domain.com"
         let fakePlaybackId = "fake_playback_id"

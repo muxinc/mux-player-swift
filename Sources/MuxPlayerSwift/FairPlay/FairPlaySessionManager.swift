@@ -206,13 +206,19 @@ class DefaultFPSSManager: FairPlaySessionManager {
             // error case: I/O finished with non-successful response
             guard responseCode == 200 else {
                 print("CKC request failed: \(String(describing: responseCode))")
-                requestCompletion(Result.failure(TempError()))
+                requestCompletion(Result.failure(
+                    FairPlaySessionError.httpFailed(
+                        responseStatusCode: responseCode ?? 0
+                    )
+                ))
                 return
             }
             // error case: I/O failed
             if let error = error {
                 print("URL Session Task Failed: \(error.localizedDescription)")
-                requestCompletion(Result.failure(error)) // todo - real Error type
+                requestCompletion(Result.failure(
+                    FairPlaySessionError.because(cause: error)
+                ))
                 return
             }
             // strange edge case: 200 with no response body
@@ -220,7 +226,9 @@ class DefaultFPSSManager: FairPlaySessionManager {
             //  with our drm vendor and probably shouldn't be reachable, but lets not crash
             guard let data = data else {
                 print("No CKC data despite server returning success")
-                requestCompletion(Result.failure(TempError())) // todo - real Error type
+                requestCompletion(Result.failure(
+                    FairPlaySessionError.unexpected(message: "No license data with 200 response")
+                )) // todo - real Error type
                 return
             }
             
@@ -294,6 +302,5 @@ class TempError: Error {
 enum FairPlaySessionError : Error {
     case because(cause: any Error)
     case httpFailed(responseStatusCode: Int)
-    case noData(message: String)
     case unexpected(message: String)
 }
