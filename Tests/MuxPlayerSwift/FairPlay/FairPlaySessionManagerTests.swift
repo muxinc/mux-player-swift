@@ -453,11 +453,11 @@ class FairPlaySessionManagerTests : XCTestCase {
         ) { result in
             do {
                 try result.get()
+                XCTFail("failure should have been reported")
             } catch {
                 reqError = error
-                requestFails.fulfill()
             }
-            XCTFail("failure should have been reported")
+            requestFails.fulfill()
         }
         wait(for: [requestFails])
         

@@ -224,17 +224,18 @@ class DefaultFPSSManager: FairPlaySessionManager {
             // strange edge case: 200 with no response body
             //  this happened because of a client-side encoding difference causing an error
             //  with our drm vendor and probably shouldn't be reachable, but lets not crash
-            guard let data = data else {
+            guard let data = data,
+                  data.count > 0
+            else {
                 print("No CKC data despite server returning success")
                 requestCompletion(Result.failure(
                     FairPlaySessionError.unexpected(message: "No license data with 200 response")
-                )) // todo - real Error type
+                ))
                 return
             }
             
             let ckcData = data
             requestCompletion(Result.success(ckcData))
-            print("")
         }
         task.resume()
     }
