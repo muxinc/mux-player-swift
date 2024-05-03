@@ -124,4 +124,63 @@ class FairPlaySessionManagerTests : XCTestCase {
         wait(for: [requestSuccess])
         XCTAssertEqual(foundAppCert, fakeAppCert)
     }
+    
+    func testRequestCertificateHttpError() throws {
+        let fakeRootDomain = "custom.domain.com"
+        let fakePlaybackId = "fake_playback_id"
+        let fakeDrmToken = "fake_drm_token"
+        let fakeHTTPStatus = 500 // all codes are handled the same way, by failing
+        // real app certs are opaque binary to us, the fake one can be whatever
+        let fakeAppCert = "fake-application-cert-binary-data".data(using: .utf8)
+        
+        let requestFails = XCTestExpectation(description: "request certificate successfully")
+        MockURLProtocol.requestHandler = { request in
+            let response = HTTPURLResponse(
+                url: request.url!,
+                statusCode: fakeHTTPStatus,
+                httpVersion: "HTTP/1.1",
+                headerFields: nil
+            )!
+            
+            // failed requests proxied from our drm vendor have response bodies with
+            //   base64 text, which we should treat as opaque (not parse or decode),
+            //   since can't do anything with them and Cast logs them on the backend
+            let errorBody = "failed request source text"
+            let errorData = errorBody.data(using: .utf8) // crashes if processed probably
+            return (
+                response,
+                errorData
+            )
+        }
+        
+        var reqError: Error?
+        sessionManager.requestCertificate(
+            fromDomain: fakeRootDomain,
+            playbackID: fakePlaybackId,
+            drmToken: fakeDrmToken
+        ) { result in
+            do {
+                let result = try result.get()
+                XCTFail("failure should have been reported")
+            } catch {
+                reqError = error
+            }
+            requestFails.fulfill()
+            
+        }
+        wait(for: [requestFails])
+        
+        guard let reqError = reqError,
+              let fpsError = reqError as? FairPlaySessionError
+        else {
+            XCTFail("Request error was wrong type")
+            return
+        }
+        
+        if case .httpFailed(let code) = fpsError {
+            XCTAssertEqual(code, fakeHTTPStatus)
+        } else {
+            XCTFail("HTTP failure not reported with .httpFailed()")
+        }
+    }
 }

@@ -135,7 +135,7 @@ class DefaultFPSSManager: FairPlaySessionManager {
                 print("Cert Request Failed: \(error.localizedDescription)")
                 requestCompletion(Result.failure(
                     FairPlaySessionError.because(cause: error)
-                )) // todo - real Error type
+                ))
                 return
             }
             // error case: I/O finished with non-successful response
