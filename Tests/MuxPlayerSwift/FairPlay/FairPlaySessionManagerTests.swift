@@ -265,9 +265,7 @@ class FairPlaySessionManagerTests : XCTestCase {
         }
         wait(for: [requestFails])
         
-        guard let reqError = reqError,
-              let fpsError = reqError as? FairPlaySessionError
-        else {
+        guard let fpsError = reqError as? FairPlaySessionError else {
             XCTFail("Request error was wrong type")
             return
         }
@@ -305,9 +303,7 @@ class FairPlaySessionManagerTests : XCTestCase {
         }
         wait(for: [requestFails])
         
-        guard let reqError = reqError,
-              let fpsError = reqError as? FairPlaySessionError
-        else {
+        guard let fpsError = reqError as? FairPlaySessionError else {
             XCTFail("Request error was wrong type")
             return
         }
@@ -355,9 +351,7 @@ class FairPlaySessionManagerTests : XCTestCase {
         }
         wait(for: [requestFails])
         
-        guard let reqError = reqError,
-              let fpsError = reqError as? FairPlaySessionError
-        else {
+        guard let fpsError = reqError as? FairPlaySessionError else {
             XCTFail("Request error was wrong type")
             return
         }
@@ -455,9 +449,7 @@ class FairPlaySessionManagerTests : XCTestCase {
         }
         wait(for: [requestFails])
         
-        guard let reqError = reqError,
-              let fpsError = reqError as? FairPlaySessionError
-        else {
+        guard let fpsError = reqError as? FairPlaySessionError else {
             XCTFail("Request error was wrong type")
             return
         }
@@ -498,9 +490,7 @@ class FairPlaySessionManagerTests : XCTestCase {
         }
         wait(for: [requestFails])
         
-        guard let reqError = reqError,
-              let fpsError = reqError as? FairPlaySessionError
-        else {
+        guard let fpsError = reqError as? FairPlaySessionError else {
             XCTFail("Request error was wrong type")
             return
         }
@@ -551,9 +541,7 @@ class FairPlaySessionManagerTests : XCTestCase {
         }
         wait(for: [requestFails])
         
-        guard let reqError = reqError,
-              let fpsError = reqError as? FairPlaySessionError
-        else {
+        guard let fpsError = reqError as? FairPlaySessionError else {
             XCTFail("Request error was wrong type")
             return
         }
