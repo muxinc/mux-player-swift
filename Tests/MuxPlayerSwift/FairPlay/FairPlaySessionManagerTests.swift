@@ -363,7 +363,7 @@ class FairPlaySessionManagerTests : XCTestCase {
         }
         
         guard case .unexpected(_) = fpsError else {
-            XCTFail("I/O Failure should report a cause")
+            XCTFail("An Unexpected error should be returned")
             return
         }
     }
@@ -559,7 +559,7 @@ class FairPlaySessionManagerTests : XCTestCase {
         }
         
         guard case .unexpected(_) = fpsError else {
-            XCTFail("I/O Failure should report a cause")
+            XCTFail("unexpected failure should be returned")
             return
         }
     }
