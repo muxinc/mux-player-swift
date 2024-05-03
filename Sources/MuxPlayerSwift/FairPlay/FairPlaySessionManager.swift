@@ -8,8 +8,10 @@
 import Foundation
 import AVFoundation
 
-protocol FairPlaySessionManager {
-    
+// MARK: - FairPlaySessionManager
+
+protocol FairPlaySessionManager: AnyObject {
+
     // MARK: Requesting licenses and certs
     
     /// Requests the App Certificate for a playback id
@@ -45,16 +47,60 @@ protocol FairPlaySessionManager {
     func unregisterPlaybackOptions(for playbackID: String)
 }
 
+// MARK: - Content Key Provider
+
+// Define protocol for calls made to AVContentKeySession
+protocol ContentKeyProvider {
+    func setDelegate(
+        _ delegate: (any AVContentKeySessionDelegate)?,
+        queue delegateQueue: dispatch_queue_t?
+    )
+
+    func addContentKeyRecipient(_ recipient: any AVContentKeyRecipient)
+
+    func removeContentKeyRecipient(_ recipient: any AVContentKeyRecipient)
+}
+
+// AVContentKeySession already has built-in definitions for
+// these methods so this declaration can be empty
+extension AVContentKeySession: ContentKeyProvider { }
+
+// TODO: make this functional, if necessary
+class ClearContentKeyProvider {
+    var delegate: (any AVContentKeySessionDelegate)?
+    var delegateQueue: dispatch_queue_t?
+}
+
+extension ClearContentKeyProvider: ContentKeyProvider {
+    func setDelegate(
+        _ delegate: (any AVContentKeySessionDelegate)?,
+        queue delegateQueue: dispatch_queue_t?
+    ) {
+        self.delegate = delegate
+        self.delegateQueue = delegateQueue
+    }
+
+    func addContentKeyRecipient(_ recipient: any AVContentKeyRecipient) {
+        // no-op
+    }
+
+    func removeContentKeyRecipient(_ recipient: any AVContentKeyRecipient) {
+        // no-op
+    }
+}
+
+// MARK: - DefaultFPSSManager
+
 // MARK: helpers for interacting with the license server
 
-extension DefaultFPSSManager {
-    /// Generates a domain name appropriate for the Mux license proxy associted with the given
-    /// "root domain". For example `mux.com` returns `license.mux.com` and
-    /// `customdomain.xyz.com` returns `license.customdomain.xyz.com`
-    static func makeLicenseDomain(_ rootDomain: String) -> String {
+extension String {
+    // Generates a domain name appropriate for the Mux license proxy associted with the given
+    // "root domain". For example `mux.com` returns `license.mux.com` and
+    // `customdomain.xyz.com` returns `license.customdomain.xyz.com`
+    static func makeLicenseDomain(rootDomain: String) -> Self {
         let customDomainWithDefault = rootDomain
         let licenseDomain = "license.\(customDomainWithDefault)"
-        
+
         // TODO: this check should not reach production or playing from staging will probably break
         if("staging.mux.com" == customDomainWithDefault) {
             return "license.gcp-us-west1-vos1.staging.mux.com"
@@ -62,33 +108,51 @@ extension DefaultFPSSManager {
             return licenseDomain
         }
     }
-    
-    /// Generates an authenticated URL to Mux's license proxy, for a 'license' (a CKC for fairplay),
-    /// for the given playabckID and DRM Token, at the given domain
-    /// - SeeAlso ``makeLicenseDomain``
-    static func makeLicenseURL(playbackID: String, drmToken: String, licenseDomain: String) -> URL {
-        let baseStr = "https://\(licenseDomain)/license/fairplay/\(playbackID)?token=\(drmToken)"
-        let url = URL(string: baseStr)
-        return url!
+}
+
+extension URL {
+    // Generates an authenticated URL to Mux's license proxy, for a 'license' (a CKC for fairplay),
+    // for the given playabckID and DRM Token, at the given domain
+    // - SeeAlso ``init(playbackID:,drmToken:,applicationCertificateLicenseDomain:)``
+    init(
+        playbackID: String,
+        drmToken: String,
+        licenseDomain: String
+    ) {
+        let absoluteString = "https://\(licenseDomain)/license/fairplay/\(playbackID)?token=\(drmToken)"
+        self.init(string: absoluteString)!
     }
-    
-    /// Generates an authenticated URL to Mux's license proxy, for an application certificate, for the
-    /// given plabackID and DRM token, at the given domain
-    /// - SeeAlso ``makeLicenseDomain``
-    static func makeAppCertificateURL(playbackID: String, drmToken: String, licenseDomain: String) -> URL {
-        let baseStr = "https://\(licenseDomain)/appcert/fairplay/\(playbackID)?token=\(drmToken)"
-        let url = URL(string: baseStr)
-        return url!
+
+    // Generates an authenticated URL to Mux's license proxy, for an application certificate, for the
+    // given plabackID and DRM token, at the given domain
+    // - SeeAlso ``init(playbackID:,drmToken:,licenseDomain: String)``
+    init(
+        playbackID: String,
+        drmToken: String,
+        applicationCertificateLicenseDomain: String
+    ) {
+        let absoluteString = "https://\(applicationCertificateLicenseDomain)/appcert/fairplay/\(playbackID)?token=\(drmToken)"
+        self.init(string: absoluteString)!
     }
 }
 
-class DefaultFPSSManager: FairPlaySessionManager {
-    
+class DefaultFPSSManager<ContentKeySession: ContentKeyProvider>: FairPlaySessionManager {
+
     private var playbackOptionsByPlaybackID: [String: PlaybackOptions] = [:]
     // note - null on simulators or other environments where fairplay isn't supported
-    private let contentKeySession: AVContentKeySession?
-    private let sessionDelegate: AVContentKeySessionDelegate?
-    
+    private let contentKeySession: ContentKeySession?
+
+    var sessionDelegate: AVContentKeySessionDelegate? {
+        didSet {
+            contentKeySession?.setDelegate(
+                sessionDelegate,
+                queue: DispatchQueue(
+                    label: "com.mux.player.fairplay"
+                )
+            )
+        }
+    }
+
     private let urlSession: URLSession
     
     func addContentKeyRecipient(_ recipient: AVContentKeyRecipient) {
@@ -108,10 +172,12 @@ class DefaultFPSSManager: FairPlaySessionManager {
         drmToken: String,
         completion requestCompletion: @escaping (Result<Data, Error>) -> Void
     ) {
-        let url = DefaultFPSSManager.makeAppCertificateURL(
+        let url = URL(
             playbackID: playbackID,
             drmToken: drmToken,
-            licenseDomain: DefaultFPSSManager.makeLicenseDomain(rootDomain)
+            applicationCertificateLicenseDomain: String.makeLicenseDomain(
+                rootDomain: rootDomain
+            )
         )
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
@@ -128,7 +194,7 @@ class DefaultFPSSManager: FairPlaySessionManager {
                     let errorUtf = String(data: errorBody, encoding: .utf8)
                     print("Cert Error: \(errorUtf ?? "nil")")
                 }
-                
+
             }
             // error case: I/O failed
             if let error = error {
@@ -178,10 +244,12 @@ class DefaultFPSSManager: FairPlaySessionManager {
         offline _: Bool,
         completion requestCompletion: @escaping (Result<Data, Error>) -> Void
     ) {
-        let url = DefaultFPSSManager.makeLicenseURL(
+        let url = URL(
             playbackID: playbackID,
             drmToken: drmToken,
-            licenseDomain: DefaultFPSSManager.makeLicenseDomain(rootDomain)
+            licenseDomain: String.makeLicenseDomain(
+                rootDomain: rootDomain
+            )
         )
         var request = URLRequest(url: url)
         
@@ -196,7 +264,7 @@ class DefaultFPSSManager: FairPlaySessionManager {
         print("\t with header fields: \(String(describing: request.allHTTPHeaderFields))")
         
         let task = urlSession.dataTask(with: request) { [requestCompletion] data, response, error in
-           // error case: I/O failed
+            // error case: I/O failed
             if let error = error {
                 print("URL Session Task Failed: \(error.localizedDescription)")
                 requestCompletion(Result.failure(
@@ -263,37 +331,45 @@ class DefaultFPSSManager: FairPlaySessionManager {
     
     
     // MARK: initializers
-    
-    convenience init() {
-#if targetEnvironment(simulator)
-        let session: AVContentKeySession? = nil
-        let delegate: AVContentKeySessionDelegate? = nil
-#else
-        let session = AVContentKeySession(keySystem: .fairPlayStreaming)
-        let delegate = ContentKeySessionDelegate()
-#endif
-        
-        self.init(
-            contentKeySession: session,
-            sessionDelegate: delegate,
-            sessionDelegateQueue: DispatchQueue(label: "com.mux.player.fairplay"),
-            urlSession: URLSession.shared
-        )
-    }
-    
+
     init(
-        contentKeySession: AVContentKeySession?,
-        sessionDelegate: AVContentKeySessionDelegate?,
-        sessionDelegateQueue: DispatchQueue,
+        contentKeySession: ContentKeySession,
         urlSession: URLSession
     ) {
-        contentKeySession?.setDelegate(sessionDelegate, queue: sessionDelegateQueue)
-        
         self.contentKeySession = contentKeySession
-        self.sessionDelegate = sessionDelegate
         self.urlSession = urlSession
     }
 }
+
+internal extension DefaultFPSSManager where ContentKeySession == ClearContentKeyProvider {
+    convenience init() {
+        self.init(
+            contentKeySession: ClearContentKeyProvider(),
+            urlSession: URLSession.shared
+        )
+        let delegate = ContentKeySessionDelegate(
+            sessionManager: self
+        )
+        self.sessionDelegate = delegate
+    }
+}
+
+internal extension DefaultFPSSManager where ContentKeySession == AVContentKeySession {
+    convenience init() {
+        self.init(
+            contentKeySession: AVContentKeySession(
+                keySystem: .fairPlayStreaming
+            ),
+            urlSession: URLSession.shared
+        )
+        let delegate = ContentKeySessionDelegate(
+            sessionManager: self
+        )
+        self.sessionDelegate = delegate
+    }
+}
+
+// MARK: - FairPlaySessionError
 
 enum FairPlaySessionError : Error {
     case because(cause: any Error)

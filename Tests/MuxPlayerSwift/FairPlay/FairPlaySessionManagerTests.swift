@@ -14,32 +14,35 @@ class FairPlaySessionManagerTests : XCTestCase {
     
     // mocks
     private var mockURLSession: URLSession!
-    private var mockAVContentKeySession: DummyAVContentKeySession!
+
     
     // object under test
     private var sessionManager: FairPlaySessionManager!
     
     override func setUp() {
         super.setUp()
-        
         let mockURLSessionConfig = URLSessionConfiguration.default
         mockURLSessionConfig.protocolClasses = [MockURLProtocol.self]
         self.mockURLSession = URLSession.init(configuration: mockURLSessionConfig)
-        
-        self.mockAVContentKeySession =  DummyAVContentKeySession(keySystem: .clearKey)
-        self.sessionManager = DefaultFPSSManager(
+        let session = TestContentKeySession()
+        let defaultFairPlaySessionManager = DefaultFPSSManager(
             // .clearKey is used because .fairPlay requires a physical device
-            contentKeySession: mockAVContentKeySession,
-            sessionDelegate: DummyAVContentKeySessionDelegate(),
-            sessionDelegateQueue: DispatchQueue(label: "com.mux.player.test.fairplay"),
+            contentKeySession: session,
             urlSession: mockURLSession
         )
+        self.sessionManager = defaultFairPlaySessionManager
+        defaultFairPlaySessionManager.sessionDelegate = ContentKeySessionDelegate(
+            sessionManager: defaultFairPlaySessionManager
+        )
+
     }
     
     // Also tests PlaybackOptions.rootDomain
     func testMakeLicenseDomain() throws {
         let optionsWithoutCustomDomain = PlaybackOptions()
-        let defaultLicenseDomain = DefaultFPSSManager.makeLicenseDomain(optionsWithoutCustomDomain.rootDomain())
+        let defaultLicenseDomain = String.makeLicenseDomain(
+            rootDomain: optionsWithoutCustomDomain.rootDomain()
+        )
         XCTAssert(
             defaultLicenseDomain == "license.mux.com",
             "Default license server is license.mux.com"
@@ -47,7 +50,9 @@ class FairPlaySessionManagerTests : XCTestCase {
         
         var optionsCustomDomain = PlaybackOptions()
         optionsCustomDomain.customDomain = "fake.custom.domain.xyz"
-        let customLicenseDomain = DefaultFPSSManager.makeLicenseDomain(optionsCustomDomain.rootDomain())
+        let customLicenseDomain = String.makeLicenseDomain(
+            rootDomain: optionsCustomDomain.rootDomain()
+        )
         XCTAssert(
             customLicenseDomain == "license.fake.custom.domain.xyz",
             "Custom license server is license.fake.custom.domain.xyz"
@@ -59,7 +64,7 @@ class FairPlaySessionManagerTests : XCTestCase {
         let fakeDrmToken = "fake_drm_token"
         let fakeLicenseDomain = "license.fake.domain.xyz"
         
-        let licenseURL = DefaultFPSSManager.makeLicenseURL(
+        let licenseURL = URL(
             playbackID: fakePlaybackId,
             drmToken: fakeDrmToken,
             licenseDomain: fakeLicenseDomain
@@ -76,10 +81,10 @@ class FairPlaySessionManagerTests : XCTestCase {
         let fakeDrmToken = "fake_drm_token"
         let fakeLicenseDomain = "license.fake.domain.xyz"
         
-        let licenseURL = DefaultFPSSManager.makeAppCertificateURL(
+        let licenseURL = URL(
             playbackID: fakePlaybackId,
             drmToken: fakeDrmToken,
-            licenseDomain: fakeLicenseDomain
+            applicationCertificateLicenseDomain: fakeLicenseDomain
         )
         let expected = "https://\(fakeLicenseDomain)/appcert/fairplay/\(fakePlaybackId)?token=\(fakeDrmToken)"
         

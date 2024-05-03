@@ -23,7 +23,12 @@ class PlayerSDK {
     init() {
         self.monitor = Monitor()
         self.keyValueObservation = KeyValueObservation()
-        self.fairPlaySessionManager = DefaultFPSSManager()
+
+        #if targetEnvironment(simulator)
+        self.fairPlaySessionManager = DefaultFPSSManager<ClearContentKeyProvider>()
+        #else
+        self.fairPlaySessionManager = DefaultFPSSManager<AVContentKeySession>()
+        #endif
     }
 
     class KeyValueObservation {
