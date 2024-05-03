@@ -383,7 +383,6 @@ class FairPlaySessionManagerTests : XCTestCase {
         let fakeRootDomain = "custom.domain.com"
         let fakePlaybackId = "fake_playback_id"
         let fakeDrmToken = "fake_drm_token"
-        let fakeError = FakeError(tag: "some io fail")
         let fakeSpcData = "fake-spc-data".data(using: .utf8)!
 
         let requestFails = XCTestExpectation(description: "request certificate successfully")
@@ -400,8 +399,8 @@ class FairPlaySessionManagerTests : XCTestCase {
             offline: false
         ) { result in
             do {
-                try result.get()
-                XCTFail("failure should have been reported")
+                let data = try result.get()
+                XCTFail("failure should have been reported, but got \(String(describing: data))")
             } catch {
                 reqError = error
             }
@@ -454,11 +453,11 @@ class FairPlaySessionManagerTests : XCTestCase {
         ) { result in
             do {
                 try result.get()
-                XCTFail("failure should have been reported")
             } catch {
                 reqError = error
                 requestFails.fulfill()
             }
+            XCTFail("failure should have been reported")
         }
         wait(for: [requestFails])
         

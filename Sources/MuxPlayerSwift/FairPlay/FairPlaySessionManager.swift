@@ -150,6 +150,7 @@ class DefaultFPSSManager: FairPlaySessionManager {
                 )
                 return
             }
+            // this edge case (200 with invalid data) is possible from our DRM vendor
             guard let data = data,
                   data.count > 0 else {
                 print("Cert data unexpectedly nil from server")
@@ -195,13 +196,20 @@ class DefaultFPSSManager: FairPlaySessionManager {
         print("\t with header fields: \(String(describing: request.allHTTPHeaderFields))")
         
         let task = urlSession.dataTask(with: request) { [requestCompletion] data, response, error in
-            print("<><> GOT LICENSE RESPONSE")
+           // error case: I/O failed
+            if let error = error {
+                print("URL Session Task Failed: \(error.localizedDescription)")
+                requestCompletion(Result.failure(
+                    FairPlaySessionError.because(cause: error)
+                ))
+                return
+            }
+            
             var responseCode: Int? = nil
             if let httpResponse = response as? HTTPURLResponse {
                 responseCode = httpResponse.statusCode
                 print("License response code: \(httpResponse.statusCode)")
                 print("License response headers: ", httpResponse.allHeaderFields)
-                
             }
             // error case: I/O finished with non-successful response
             guard responseCode == 200 else {
@@ -210,14 +218,6 @@ class DefaultFPSSManager: FairPlaySessionManager {
                     FairPlaySessionError.httpFailed(
                         responseStatusCode: responseCode ?? 0
                     )
-                ))
-                return
-            }
-            // error case: I/O failed
-            if let error = error {
-                print("URL Session Task Failed: \(error.localizedDescription)")
-                requestCompletion(Result.failure(
-                    FairPlaySessionError.because(cause: error)
                 ))
                 return
             }
