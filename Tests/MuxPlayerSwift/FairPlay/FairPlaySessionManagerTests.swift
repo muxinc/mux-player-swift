@@ -131,7 +131,6 @@ class FairPlaySessionManagerTests : XCTestCase {
         let fakeDrmToken = "fake_drm_token"
         let fakeHTTPStatus = 500 // all codes are handled the same way, by failing
         // real app certs are opaque binary to us, the fake one can be whatever
-        let fakeAppCert = "fake-application-cert-binary-data".data(using: .utf8)
         
         let requestFails = XCTestExpectation(description: "request certificate successfully")
         MockURLProtocol.requestHandler = { request in
@@ -183,4 +182,46 @@ class FairPlaySessionManagerTests : XCTestCase {
             XCTFail("HTTP failure not reported with .httpFailed()")
         }
     }
+    
+    func testRequestCertificateIOError() throws {
+        let fakeRootDomain = "custom.domain.com"
+        let fakePlaybackId = "fake_playback_id"
+        let fakeDrmToken = "fake_drm_token"
+        let fakeError = FakeError(tag: "some io fail")
+        // real app certs are opaque binary to us, the fake one can be whatever
+        
+        let requestFails = XCTestExpectation(description: "request certificate successfully")
+        MockURLProtocol.requestHandler = { request in
+            throw FakeError()
+        }
+        
+        var reqError: Error?
+        sessionManager.requestCertificate(
+            fromDomain: fakeRootDomain,
+            playbackID: fakePlaybackId,
+            drmToken: fakeDrmToken
+        ) { result in
+            do {
+                try result.get()
+                XCTFail("failure should have been reported")
+            } catch {
+                reqError = error
+            }
+            requestFails.fulfill()
+        }
+        wait(for: [requestFails])
+        
+        guard let reqError = reqError,
+              let fpsError = reqError as? FairPlaySessionError
+        else {
+            XCTFail("Request error was wrong type")
+            return
+        }
+        
+        if case .because(let cause as FakeError) = fpsError {
+            XCTAssertEqual(fakeError, cause)
+        } else {
+            XCTFail("I/O Failure should report a cause")
+        }
+    }   
 }

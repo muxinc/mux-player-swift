@@ -291,7 +291,7 @@ class TempError: Error {
 }
 
 enum FairPlaySessionError : Error {
-    case because(cause: Error)
+    case because(cause: any Error)
     case httpFailed(responseStatusCode: Int)
     case noData(message: String)
     case unexpected(message: String)
