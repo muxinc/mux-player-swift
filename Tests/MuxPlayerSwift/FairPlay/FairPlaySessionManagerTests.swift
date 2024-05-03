@@ -88,8 +88,87 @@ class FairPlaySessionManagerTests : XCTestCase {
         )
     }
     
-    // TODO: Test Request Bodies too!
+    func testAppCertificateRequestBody() throws {
+        let fakeRootDomain = "custom.domain.com"
+        let fakePlaybackId = "fake_playback_id"
+        let fakeDrmToken = "fake_drm_token"
+        // real app certs are opaque binary to us, the fake one can be whatever
+        let fakeAppCert = "fake-application-cert-binary-data".data(using: .utf8)
+        
+        var urlRequest: URLRequest!
+        MockURLProtocol.requestHandler = { request in
+            urlRequest = request
+            // response is not part of this test
+            return (HTTPURLResponse(), nil)
+        }
+        
+        let requestEnds = XCTestExpectation(description: "request ends")
+        sessionManager.requestCertificate(
+            fromDomain: fakeRootDomain,
+            playbackID: fakePlaybackId,
+            drmToken: fakeDrmToken
+        ) { result in
+            // we recorded the request so we should be ok
+            requestEnds.fulfill()
+        }
+        wait(for: [requestEnds])
+        
+        let urlComponents = URLComponents(string: urlRequest.url!.absoluteString)!
+        XCTAssertNotNil(urlComponents.queryItems)
+        XCTAssert(urlComponents.queryItems!.count > 0)
+        
+        let tokenParam = urlComponents.queryItems!.first { it in it.name == "token"}
+        let playbackID = urlRequest.url!.lastPathComponent
+
+        XCTAssertNotNil(tokenParam)
+        XCTAssertEqual(tokenParam?.name, "token")
+        XCTAssertEqual(tokenParam?.value, fakeDrmToken)
+        
+        XCTAssertEqual(playbackID, fakePlaybackId)
+
+        XCTAssertEqual(urlRequest.httpMethod, "GET")
+        // note: url tested using testMakeAppCertificateURL
+    }
     
+    func testLicenseRequestBody() throws {
+        let fakeRootDomain = "custom.domain.com"
+        let fakePlaybackId = "fake_playback_id"
+        let fakeDrmToken = "fake_drm_token"
+        // real app certs are opaque binary to us, the fake one can be whatever
+        let fakeSpcData = "fake-SPC-binary-data".data(using: .utf8)!
+        
+        var urlRequest: URLRequest!
+        MockURLProtocol.requestHandler = { request in
+            urlRequest = request
+            // response is not part of this test
+            return (HTTPURLResponse(), nil)
+        }
+        
+        let requestEnds = XCTestExpectation(description: "request ends")
+        sessionManager.requestLicense(
+            spcData: fakeSpcData,
+            playbackID: fakePlaybackId,
+            drmToken: fakeDrmToken,
+            rootDomain: fakeRootDomain,
+            offline: false
+        ) { result in
+            // we recorded the request so we should be ok
+            requestEnds.fulfill()
+        }
+        wait(for: [requestEnds])
+        
+        let urlComponents = URLComponents(string: urlRequest.url!.absoluteString)!
+        XCTAssertNotNil(urlComponents.queryItems)
+        XCTAssert(urlComponents.queryItems!.count > 0)
+        
+        let tokenParam = urlComponents.queryItems!.first { it in it.name == "token"}
+        
+        XCTAssertNotNil(tokenParam)
+        XCTAssertEqual(tokenParam?.name, "token")
+        XCTAssertEqual(tokenParam?.value, fakeDrmToken)
+
+        XCTAssertEqual(urlRequest.httpMethod, "POST")
+    }
     func testRequestCertificateSuccess() throws {
         let fakeRootDomain = "custom.domain.com"
         let fakePlaybackId = "fake_playback_id"
