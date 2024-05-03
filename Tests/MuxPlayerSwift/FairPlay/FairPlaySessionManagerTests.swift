@@ -92,8 +92,6 @@ class FairPlaySessionManagerTests : XCTestCase {
         let fakeRootDomain = "custom.domain.com"
         let fakePlaybackId = "fake_playback_id"
         let fakeDrmToken = "fake_drm_token"
-        // real app certs are opaque binary to us, the fake one can be whatever
-        let fakeAppCert = "fake-application-cert-binary-data".data(using: .utf8)
         
         var urlRequest: URLRequest!
         MockURLProtocol.requestHandler = { request in
@@ -140,8 +138,15 @@ class FairPlaySessionManagerTests : XCTestCase {
         var urlRequest: URLRequest!
         MockURLProtocol.requestHandler = { request in
             urlRequest = request
+            
             // response is not part of this test
-            return (HTTPURLResponse(), nil)
+            let response = HTTPURLResponse(
+                url: request.url!,
+                statusCode: 200,
+                httpVersion: "HTTP/1.1",
+                headerFields: nil
+            )!
+            return (response, "fake ckc data".data(using: .utf8))
         }
         
         let requestEnds = XCTestExpectation(description: "request ends")
@@ -162,12 +167,22 @@ class FairPlaySessionManagerTests : XCTestCase {
         XCTAssert(urlComponents.queryItems!.count > 0)
         
         let tokenParam = urlComponents.queryItems!.first { it in it.name == "token"}
-        
+        let playbackID = urlRequest.url!.lastPathComponent
+
         XCTAssertNotNil(tokenParam)
         XCTAssertEqual(tokenParam?.name, "token")
         XCTAssertEqual(tokenParam?.value, fakeDrmToken)
 
+        XCTAssertEqual(playbackID, fakePlaybackId)
+        
+        // unfortunately we can't test the body for some reason, it's always nil even
+        //  when intercepting with URLProtocol
+        //XCTAssertEqual(urlRequest.httpBody, fakeSpcData)
+        
         XCTAssertEqual(urlRequest.httpMethod, "POST")
+        
+        
+        // TODO: headers! content length and content type
     }
     func testRequestCertificateSuccess() throws {
         let fakeRootDomain = "custom.domain.com"
@@ -240,7 +255,7 @@ class FairPlaySessionManagerTests : XCTestCase {
             drmToken: fakeDrmToken
         ) { result in
             do {
-                let result = try result.get()
+                _ = try result.get()
                 XCTFail("failure should have been reported")
             } catch {
                 reqError = error
@@ -268,8 +283,6 @@ class FairPlaySessionManagerTests : XCTestCase {
         let fakeRootDomain = "custom.domain.com"
         let fakePlaybackId = "fake_playback_id"
         let fakeDrmToken = "fake_drm_token"
-        let fakeError = FakeError(tag: "some io fail")
-        // real app certs are opaque binary to us, the fake one can be whatever
         
         let requestFails = XCTestExpectation(description: "request certificate successfully")
         MockURLProtocol.requestHandler = { request in
@@ -283,7 +296,7 @@ class FairPlaySessionManagerTests : XCTestCase {
             drmToken: fakeDrmToken
         ) { result in
             do {
-                try result.get()
+                _ = try result.get()
                 XCTFail("failure should have been reported")
             } catch {
                 reqError = error
@@ -299,7 +312,7 @@ class FairPlaySessionManagerTests : XCTestCase {
             return
         }
         
-        guard case .because(let cause) = fpsError else {
+        guard case .because(_) = fpsError else {
             XCTFail("I/O Failure should report a cause")
             return
         }
@@ -333,7 +346,7 @@ class FairPlaySessionManagerTests : XCTestCase {
             drmToken: fakeDrmToken
         ) { result in
             do {
-                try result.get()
+                _ = try result.get()
                 XCTFail("failure should have been reported")
             } catch {
                 reqError = error
@@ -402,8 +415,6 @@ class FairPlaySessionManagerTests : XCTestCase {
         let fakeHTTPStatus = 500 // all codes are handled the same way, by failing
         // real app certs are opaque binary to us, the fake one can be whatever
         let fakeSpcData = "fake-spc-data".data(using: .utf8)!
-        // to be returned by call under test
-        let fakeLicense = "fake-license-binary-data".data(using: .utf8)
         
         let requestFails = XCTestExpectation(description: "request certificate successfully")
         MockURLProtocol.requestHandler = { request in
@@ -434,7 +445,7 @@ class FairPlaySessionManagerTests : XCTestCase {
             offline: false
         ) { result in
             do {
-                let result = try result.get()
+                _ = try result.get()
                 XCTFail("failure should have been reported")
             } catch {
                 reqError = error
@@ -494,7 +505,7 @@ class FairPlaySessionManagerTests : XCTestCase {
             return
         }
         
-        guard case .because(let cause) = fpsError else {
+        guard case .because(_) = fpsError else {
             XCTFail("I/O Failure should report a cause")
             return
         }
@@ -531,7 +542,7 @@ class FairPlaySessionManagerTests : XCTestCase {
             offline: false
         ) { result in
             do {
-                try result.get()
+                _ = try result.get()
                 XCTFail("failure should have been reported")
             } catch {
                 reqError = error
