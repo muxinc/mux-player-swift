@@ -114,7 +114,7 @@ class FairPlaySessionManagerTests : XCTestCase {
             drmToken: fakeDrmToken
         ) { result in
             guard let result = try? result.get() else {
-                XCTFail("Incorrect status code")
+                XCTFail("Should not report failure for the given request")
                 return
             }
             
@@ -218,10 +218,48 @@ class FairPlaySessionManagerTests : XCTestCase {
             return
         }
         
-        if case .because(let cause as FakeError) = fpsError {
-            XCTAssertEqual(fakeError, cause)
-        } else {
+        guard case .because(let cause) = fpsError else {
             XCTFail("I/O Failure should report a cause")
+            return
         }
-    }   
+        
+        // If we make it here, we succeeded
+    }
+    
+    func testRequestCertificateBlankWithSusStatusCode() throws {
+        let fakeRootDomain = "custom.domain.com"
+        let fakePlaybackId = "fake_playback_id"
+        let fakeDrmToken = "fake_drm_token"
+        // In this case, there's a successful response but no body
+        
+        let requestSucceededSuspiciously = XCTestExpectation(description: "request certificate successfully")
+        MockURLProtocol.requestHandler = { request in
+            let response = HTTPURLResponse(
+                url: request.url!,
+                statusCode: 200,
+                httpVersion: "HTTP/1.1",
+                headerFields: nil
+            )!
+            
+            return (response, nil)
+        }
+        
+        var foundAppCert: Data?
+        sessionManager.requestCertificate(
+            fromDomain: fakeRootDomain,
+            playbackID: fakePlaybackId,
+            drmToken: fakeDrmToken
+        ) { result in
+            guard let result = try? result.get() else {
+                XCTFail("should not report failure for this case")
+                return
+            }
+            
+            foundAppCert = result
+            requestSucceededSuspiciously.fulfill()
+        }
+        wait(for: [requestSucceededSuspiciously])
+        
+        XCTAssertNil(foundAppCert)
+    }
 }
