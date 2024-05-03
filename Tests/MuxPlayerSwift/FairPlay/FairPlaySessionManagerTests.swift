@@ -232,7 +232,7 @@ class FairPlaySessionManagerTests : XCTestCase {
         let fakeDrmToken = "fake_drm_token"
         // In this case, there's a successful response but no body
         
-        let requestSucceededSuspiciously = XCTestExpectation(description: "request certificate successfully")
+        let requestFails = XCTestExpectation(description: "request certificate suspicious 200/OK should be treated as failure")
         MockURLProtocol.requestHandler = { request in
             let response = HTTPURLResponse(
                 url: request.url!,
@@ -244,22 +244,33 @@ class FairPlaySessionManagerTests : XCTestCase {
             return (response, nil)
         }
         
-        var foundAppCert: Data?
+        // Expected behavior: URLTask does something odd, requestCertificate returns error
+        var reqError: Error?
         sessionManager.requestCertificate(
             fromDomain: fakeRootDomain,
             playbackID: fakePlaybackId,
             drmToken: fakeDrmToken
         ) { result in
-            guard let result = try? result.get() else {
-                XCTFail("should not report failure for this case")
-                return
+            do {
+                try result.get()
+                XCTFail("failure should have been reported")
+            } catch {
+                reqError = error
+                requestFails.fulfill()
             }
-            
-            foundAppCert = result
-            requestSucceededSuspiciously.fulfill()
         }
-        wait(for: [requestSucceededSuspiciously])
+        wait(for: [requestFails])
         
-        XCTAssertNil(foundAppCert)
+        guard let reqError = reqError,
+              let fpsError = reqError as? FairPlaySessionError
+        else {
+            XCTFail("Request error was wrong type")
+            return
+        }
+        
+        guard case .unexpected(_) = fpsError else {
+            XCTFail("I/O Failure should report a cause")
+            return
+        }
     }
 }

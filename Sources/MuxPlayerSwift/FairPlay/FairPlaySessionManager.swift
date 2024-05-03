@@ -150,7 +150,8 @@ class DefaultFPSSManager: FairPlaySessionManager {
                 )
                 return
             }
-            guard let data = data else {
+            guard let data = data,
+                  data.count > 0 else {
                 print("Cert data unexpectedly nil from server")
                 requestCompletion(Result.failure(
                     FairPlaySessionError.unexpected(message: "No cert data with 200 OK respone")
