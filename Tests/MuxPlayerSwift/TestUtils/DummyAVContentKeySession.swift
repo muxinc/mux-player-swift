@@ -9,6 +9,7 @@ import Foundation
 import AVKit
 
 /// Dummy AVContentKeySession that does nothing
+///  Warning! Only methods touched during tests are mocked. Be careful of false negatives!
 class DummyAVContentKeySession: AVContentKeySession {
     
     
