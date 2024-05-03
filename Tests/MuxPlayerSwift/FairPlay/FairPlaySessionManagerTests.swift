@@ -181,8 +181,15 @@ class FairPlaySessionManagerTests : XCTestCase {
         
         XCTAssertEqual(urlRequest.httpMethod, "POST")
         
-        
-        // TODO: headers! content length and content type
+        let headers = urlRequest.allHTTPHeaderFields
+        guard let headers = headers, headers.count > 0 else {
+            XCTFail("Request for License/CKC must have length and content type")
+            return
+        }
+        let contentLengthHeader = headers["Content-Length"]
+        let contentTypeHeader = headers["Content-Type"]
+        XCTAssertEqual(Int(contentLengthHeader!)!, fakeSpcData.count)
+        XCTAssertEqual(contentTypeHeader, "application/octet-stream")
     }
     func testRequestCertificateSuccess() throws {
         let fakeRootDomain = "custom.domain.com"
