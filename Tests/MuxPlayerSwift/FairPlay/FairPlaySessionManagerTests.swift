@@ -279,7 +279,6 @@ class FairPlaySessionManagerTests : XCTestCase {
         let fakePlaybackId = "fake_playback_id"
         let fakeDrmToken = "fake_drm_token"
         let fakeSpcData = "fake-spc-data".data(using: .utf8)!
-        
         // to be returned by call under test
         let fakeLicense = "fake-license-binary-data".data(using: .utf8)
         
@@ -315,12 +314,15 @@ class FairPlaySessionManagerTests : XCTestCase {
         XCTAssertEqual(foundAppCert, fakeLicense)
     }
     
-    func testRequestHttpError() throws {
+    func testLicenseRequestHttpError() throws {
         let fakeRootDomain = "custom.domain.com"
         let fakePlaybackId = "fake_playback_id"
         let fakeDrmToken = "fake_drm_token"
         let fakeHTTPStatus = 500 // all codes are handled the same way, by failing
         // real app certs are opaque binary to us, the fake one can be whatever
+        let fakeSpcData = "fake-spc-data".data(using: .utf8)!
+        // to be returned by call under test
+        let fakeLicense = "fake-license-binary-data".data(using: .utf8)
         
         let requestFails = XCTestExpectation(description: "request certificate successfully")
         MockURLProtocol.requestHandler = { request in
@@ -343,10 +345,12 @@ class FairPlaySessionManagerTests : XCTestCase {
         }
         
         var reqError: Error?
-        sessionManager.requestCertificate(
-            fromDomain: fakeRootDomain,
+        sessionManager.requestLicense(
+            spcData: fakeSpcData,
             playbackID: fakePlaybackId,
-            drmToken: fakeDrmToken
+            drmToken: fakeDrmToken,
+            rootDomain: fakeRootDomain,
+            offline: false
         ) { result in
             do {
                 let result = try result.get()
@@ -373,23 +377,25 @@ class FairPlaySessionManagerTests : XCTestCase {
         }
     }
     
-    func testRequestCertificateIOError() throws {
+    func testRequestLicenseIOError() throws {
         let fakeRootDomain = "custom.domain.com"
         let fakePlaybackId = "fake_playback_id"
         let fakeDrmToken = "fake_drm_token"
         let fakeError = FakeError(tag: "some io fail")
-        // real app certs are opaque binary to us, the fake one can be whatever
-        
+        let fakeSpcData = "fake-spc-data".data(using: .utf8)!
+
         let requestFails = XCTestExpectation(description: "request certificate successfully")
         MockURLProtocol.requestHandler = { request in
             throw FakeError()
         }
         
         var reqError: Error?
-        sessionManager.requestCertificate(
-            fromDomain: fakeRootDomain,
+        sessionManager.requestLicense(
+            spcData: fakeSpcData,
             playbackID: fakePlaybackId,
-            drmToken: fakeDrmToken
+            drmToken: fakeDrmToken,
+            rootDomain: fakeRootDomain,
+            offline: false
         ) { result in
             do {
                 try result.get()
@@ -416,12 +422,13 @@ class FairPlaySessionManagerTests : XCTestCase {
         // If we make it here, we succeeded
     }
     
-    func testRequestCertificateBlankWithSusStatusCode() throws {
+    func testRequestLicenseBlankWithSusStatusCode() throws {
         let fakeRootDomain = "custom.domain.com"
         let fakePlaybackId = "fake_playback_id"
         let fakeDrmToken = "fake_drm_token"
         // In this case, there's a successful response but no body
-        
+        let fakeSpcData = "fake-spc-data".data(using: .utf8)!
+
         let requestFails = XCTestExpectation(description: "request certificate suspicious 200/OK should be treated as failure")
         MockURLProtocol.requestHandler = { request in
             let response = HTTPURLResponse(
@@ -436,10 +443,12 @@ class FairPlaySessionManagerTests : XCTestCase {
         
         // Expected behavior: URLTask does something odd, requestCertificate returns error
         var reqError: Error?
-        sessionManager.requestCertificate(
-            fromDomain: fakeRootDomain,
+        sessionManager.requestLicense(
+            spcData: fakeSpcData,
             playbackID: fakePlaybackId,
-            drmToken: fakeDrmToken
+            drmToken: fakeDrmToken,
+            rootDomain: fakeRootDomain,
+            offline: false
         ) { result in
             do {
                 try result.get()
