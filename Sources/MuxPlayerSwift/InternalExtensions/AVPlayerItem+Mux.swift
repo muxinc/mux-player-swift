@@ -116,16 +116,16 @@ internal extension AVURLAsset {
 
 internal extension AVPlayerItem {
 
-    /// Initializes a player item with a playback URL that
-    /// references your Mux Video at the supplied playback ID.
-    /// The playback ID must be public.
-    ///
-    /// This initializer uses https://stream.mux.com as the
-    /// base URL. Use a different initializer if using a custom
-    /// playback URL.
-    ///
-    /// - Parameter playbackID: playback ID of the Mux Asset
-    /// you'd like to play
+    // Initializes a player item with a playback URL that
+    // references your Mux Video at the supplied playback ID.
+    // The playback ID must be public.
+    //
+    // This initializer uses https://stream.mux.com as the
+    // base URL. Use a different initializer if using a custom
+    // playback URL.
+    //
+    // - Parameter playbackID: playback ID of the Mux Asset
+    // you'd like to play
     convenience init(playbackID: String) {
         let playbackOptions = PlaybackOptions()
         let playbackURL = URL.make(
@@ -142,13 +142,13 @@ internal extension AVPlayerItem {
         )
     }
 
-    /// Initializes a player item with a playback URL that
-    /// references your Mux Video at the supplied playback ID.
-    /// The playback ID must be public.
-    ///
-    /// - Parameters:
-    ///   - playbackID: playback ID of the Mux Asset
-    ///   you'd like to play
+    // Initializes a player item with a playback URL that
+    // references your Mux Video at the supplied playback ID.
+    // The playback ID must be public.
+    //
+    // - Parameters:
+    //   - playbackID: playback ID of the Mux Asset
+    //   you'd like to play
     convenience init(
         playbackID: String,
         playbackOptions: PlaybackOptions
