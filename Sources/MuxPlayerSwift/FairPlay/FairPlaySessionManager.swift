@@ -94,8 +94,6 @@ extension ClearContentKeyProvider: ContentKeyProvider {
     }
 }
 
-// MARK: - DefaultFairPlayStreamingSessionManager
-
 // MARK: helpers for interacting with the license server
 
 extension String {
@@ -141,7 +139,11 @@ extension URL {
     }
 }
 
-class DefaultFairPlayStreamingSessionManager<ContentKeySession: ContentKeyProvider>: FairPlayStreamingSessionManager {
+// MARK: - DefaultFairPlayStreamingSessionManager
+
+class DefaultFairPlayStreamingSessionManager<
+    ContentKeySession: ContentKeyProvider
+>: FairPlayStreamingSessionManager {
 
     private var playbackOptionsByPlaybackID: [String: PlaybackOptions] = [:]
     // note - null on simulators or other environments where fairplay isn't supported
@@ -316,13 +318,18 @@ class DefaultFairPlayStreamingSessionManager<ContentKeySession: ContentKeyProvid
     // MARK: registering assets
     
     /// Registers a ``PlaybackOptions`` for DRM playback, associated with the given playbackID
-    func registerPlaybackOptions(_ opts: PlaybackOptions, for playbackID: String) {
+    func registerPlaybackOptions(
+        _ options: PlaybackOptions,
+        for playbackID: String
+    ) {
         print("Registering playbackID \(playbackID)")
-        playbackOptionsByPlaybackID[playbackID] = opts
+        playbackOptionsByPlaybackID[playbackID] = options
     }
     
     /// Gets a DRM token previously registered via ``registerPlaybackOptions``
-    func findRegisteredPlaybackOptions(for playbackID: String) -> PlaybackOptions? {
+    func findRegisteredPlaybackOptions(
+        for playbackID: String
+    ) -> PlaybackOptions? {
         print("Finding playbackID \(playbackID)")
         return playbackOptionsByPlaybackID[playbackID]
     }
