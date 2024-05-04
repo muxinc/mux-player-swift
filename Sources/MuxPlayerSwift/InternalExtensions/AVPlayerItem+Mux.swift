@@ -97,22 +97,6 @@ internal extension URL {
     }
 }
 
-// Create a new `AVAsset` that has been prepared for playback
-internal extension AVURLAsset {
-    convenience init(
-        playbackID: String,
-        playbackOptions: PlaybackOptions
-    ) {
-        let url = URL.make(
-            playbackID: playbackID,
-            playbackOptions: playbackOptions
-        )
-
-        self.init(
-            url: url
-        )
-    }
-}
 
 internal extension AVPlayerItem {
 
@@ -127,18 +111,9 @@ internal extension AVPlayerItem {
     // - Parameter playbackID: playback ID of the Mux Asset
     // you'd like to play
     convenience init(playbackID: String) {
-        let playbackOptions = PlaybackOptions()
-        let playbackURL = URL.make(
+        self.init(
             playbackID: playbackID,
-            playbackOptions: playbackOptions
-        )
-
-        self.init(url: playbackURL)
-
-        PlayerSDK.shared.registerPlayerItem(
-            self,
-            playbackID: playbackID,
-            playbackOptions: playbackOptions
+            playbackOptions: PlaybackOptions()
         )
     }
 
@@ -153,11 +128,18 @@ internal extension AVPlayerItem {
         playbackID: String,
         playbackOptions: PlaybackOptions
     ) {
-        self.init(
-            asset: AVURLAsset(
+
+        // Create a new `AVAsset` that has been prepared
+        // for playback
+        let asset = AVURLAsset(
+            url: URL.make(
                 playbackID: playbackID,
                 playbackOptions: playbackOptions
             )
+        )
+
+        self.init(
+            asset: asset
         )
 
         PlayerSDK.shared.registerPlayerItem(
