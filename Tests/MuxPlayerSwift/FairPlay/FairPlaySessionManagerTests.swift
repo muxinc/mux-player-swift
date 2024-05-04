@@ -565,6 +565,8 @@ class FairPlaySessionManagerTests : XCTestCase {
     }
 
     func testPlaybackOptionsRegistered() throws {
+
+        #if DEBUG
         let mockURLSessionConfig = URLSessionConfiguration.default
         mockURLSessionConfig.protocolClasses = [MockURLProtocol.self]
         self.mockURLSession = URLSession.init(configuration: mockURLSessionConfig)
@@ -612,11 +614,10 @@ class FairPlaySessionManagerTests : XCTestCase {
             }
         }
 
-        #if DEBUG
+
         PlayerSDK.shared = PlayerSDK(
             fairPlayStreamingSessionManager: defaultFairPlaySessionManager
         )
-        #endif
 
         let i = AVPlayerItem(
             playbackID: "abc",
@@ -630,5 +631,11 @@ class FairPlaySessionManagerTests : XCTestCase {
             defaultFairPlaySessionManager.playbackOptionsByPlaybackID.count,
             1
         )
+        #else
+        XCTExpectFailure(
+            "This test can only be run under a debug build configuration"
+        )
+        XCTAssert(false)
+        #endif
     }
 }
