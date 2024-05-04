@@ -25,9 +25,15 @@ class PlayerSDK {
         self.keyValueObservation = KeyValueObservation()
 
         #if targetEnvironment(simulator)
-        self.fairPlaySessionManager = DefaultFairPlayStreamingSessionManager<ClearContentKeyProvider>()
+        self.fairPlaySessionManager = DefaultFairPlayStreamingSessionManager(
+            contentKeySession: AVContentKeySession(keySystem: .clearKey),
+            urlSession: .shared
+        )
         #else
-        self.fairPlaySessionManager = DefaultFairPlayStreamingSessionManager<AVContentKeySession>()
+        self.fairPlaySessionManager = DefaultFairPlayStreamingSessionManager(
+            contentKeySession: AVContentKeySession(keySystem: .fairPlayStreaming),
+            urlSession: .shared
+        )
         #endif
     }
 

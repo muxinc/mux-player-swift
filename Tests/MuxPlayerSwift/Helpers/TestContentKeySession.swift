@@ -14,6 +14,8 @@ class TestContentKeySession: ContentKeyProvider {
 
     var delegate: (any AVContentKeySessionDelegate)?
 
+    var contentKeyRecipients: [any AVContentKeyRecipient] = []
+
     func setDelegate(
         _ delegate: (any AVContentKeySessionDelegate)?,
         queue delegateQueue: dispatch_queue_t?
@@ -22,11 +24,11 @@ class TestContentKeySession: ContentKeyProvider {
     }
     
     func addContentKeyRecipient(_ recipient: any AVContentKeyRecipient) {
-
+        contentKeyRecipients.append(recipient)
     }
     
     func removeContentKeyRecipient(_ recipient: any AVContentKeyRecipient) {
-        
+        // no-op
     }
     
 	init() {

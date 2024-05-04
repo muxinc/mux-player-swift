@@ -70,30 +70,6 @@ protocol ContentKeyProvider {
 // these methods so this declaration can be empty
 extension AVContentKeySession: ContentKeyProvider { }
 
-// TODO: make this functional, if necessary
-class ClearContentKeyProvider {
-    var delegate: (any AVContentKeySessionDelegate)?
-    var delegateQueue: dispatch_queue_t?
-}
-
-extension ClearContentKeyProvider: ContentKeyProvider {
-    func setDelegate(
-        _ delegate: (any AVContentKeySessionDelegate)?,
-        queue delegateQueue: dispatch_queue_t?
-    ) {
-        self.delegate = delegate
-        self.delegateQueue = delegateQueue
-    }
-
-    func addContentKeyRecipient(_ recipient: any AVContentKeyRecipient) {
-        // no-op
-    }
-
-    func removeContentKeyRecipient(_ recipient: any AVContentKeyRecipient) {
-        // no-op
-    }
-}
-
 // MARK: helpers for interacting with the license server
 
 extension String {
@@ -348,34 +324,6 @@ class DefaultFairPlayStreamingSessionManager<
     ) {
         self.contentKeySession = contentKeySession
         self.urlSession = urlSession
-    }
-}
-
-internal extension DefaultFairPlayStreamingSessionManager where ContentKeySession == ClearContentKeyProvider {
-    convenience init() {
-        self.init(
-            contentKeySession: ClearContentKeyProvider(),
-            urlSession: URLSession.shared
-        )
-        let delegate = ContentKeySessionDelegate(
-            sessionManager: self
-        )
-        self.sessionDelegate = delegate
-    }
-}
-
-internal extension DefaultFairPlayStreamingSessionManager where ContentKeySession == AVContentKeySession {
-    convenience init() {
-        self.init(
-            contentKeySession: AVContentKeySession(
-                keySystem: .fairPlayStreaming
-            ),
-            urlSession: URLSession.shared
-        )
-        let delegate = ContentKeySessionDelegate(
-            sessionManager: self
-        )
-        self.sessionDelegate = delegate
     }
 }
 
