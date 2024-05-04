@@ -10,6 +10,9 @@ import AVFoundation
 
 // MARK: - FairPlayStreamingSessionManager
 
+// Use AnyObject to restrict conformances only to reference
+// types because the SDKs AVContentKeySessionDelegate holds
+// a weak reference to the SDKs witness of this.
 protocol FairPlayStreamingSessionCredentialClient: AnyObject {
     // MARK: Requesting licenses and certs
 
@@ -32,6 +35,8 @@ protocol FairPlayStreamingSessionCredentialClient: AnyObject {
     )
 }
 
+// MARK: - PlaybackOptionsRegistry
+
 protocol PlaybackOptionsRegistry {
     /// Registers a ``PlaybackOptions`` for DRM playback, associated with the given playbackID
     func registerPlaybackOptions(_ opts: PlaybackOptions, for playbackID: String)
@@ -41,7 +46,9 @@ protocol PlaybackOptionsRegistry {
     func unregisterPlaybackOptions(for playbackID: String)
 }
 
-// MARK: registering drm-protected assets
+// MARK: - ContentKeyRecipientRegistry
+
+// Intended for registering drm-protected AVURLAssets
 protocol ContentKeyRecipientRegistry {
     /// Adds a ``AVContentKeyRecipient`` (probably an ``AVURLAsset``)  that must be played
     /// with DRM protection. This call is necessary for DRM playback to succeed
@@ -49,6 +56,8 @@ protocol ContentKeyRecipientRegistry {
     /// Removes a ``AVContentKeyRecipient`` previously added by ``addContentKeyRecipient``
     func removeContentKeyRecipient(_ recipient: AVContentKeyRecipient)
 }
+
+// MARK: - FairPlayStreamingSessionManager
 
 typealias FairPlayStreamingSessionManager = FairPlayStreamingSessionCredentialClient & PlaybackOptionsRegistry & ContentKeyRecipientRegistry
 
