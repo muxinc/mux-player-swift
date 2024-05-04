@@ -563,4 +563,72 @@ class FairPlaySessionManagerTests : XCTestCase {
             return
         }
     }
+
+    func testPlaybackOptionsRegistered() throws {
+        let mockURLSessionConfig = URLSessionConfiguration.default
+        mockURLSessionConfig.protocolClasses = [MockURLProtocol.self]
+        self.mockURLSession = URLSession.init(configuration: mockURLSessionConfig)
+        // .clearKey is used because .fairPlay requires a physical device
+        let session = AVContentKeySession(
+            keySystem: .clearKey
+        )
+        let defaultFairPlaySessionManager = DefaultFairPlayStreamingSessionManager(
+            contentKeySession: session,
+            urlSession: mockURLSession
+        )
+        self.sessionManager = defaultFairPlaySessionManager
+        let sessionDelegate = ContentKeySessionDelegate(
+            sessionManager: defaultFairPlaySessionManager
+        )
+        defaultFairPlaySessionManager.sessionDelegate = sessionDelegate
+
+        let fakeLicense = "fake-license-binary-data".data(using: .utf8)
+        let fakeAppCert = "fake-application-cert-binary-data".data(using: .utf8)
+        MockURLProtocol.requestHandler = { request in
+
+            guard let url = request.url else {
+                fatalError()
+            }
+
+            if (url.absoluteString.contains("appcert")) {
+                let response = HTTPURLResponse(
+                    url: request.url!,
+                    statusCode: 200,
+                    httpVersion: "HTTP/1.1",
+                    headerFields: nil
+                )!
+
+                return (response, fakeAppCert)
+            } else {
+                let response = HTTPURLResponse(
+                    url: request.url!,
+                    statusCode: 200,
+                    httpVersion: "HTTP/1.1",
+                    headerFields: nil
+                )!
+
+
+                return (response, fakeLicense)
+            }
+        }
+
+        #if DEBUG
+        PlayerSDK.shared = PlayerSDK(
+            fairPlayStreamingSessionManager: defaultFairPlaySessionManager
+        )
+        #endif
+
+        let i = AVPlayerItem(
+            playbackID: "abc",
+            playbackOptions: PlaybackOptions(
+                playbackToken: "def",
+                drmToken: "ghi"
+            )
+        )
+
+        XCTAssertEqual(
+            defaultFairPlaySessionManager.playbackOptionsByPlaybackID.count,
+            1
+        )
+    }
 }
