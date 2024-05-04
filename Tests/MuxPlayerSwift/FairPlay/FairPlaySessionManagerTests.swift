@@ -17,7 +17,7 @@ class FairPlaySessionManagerTests : XCTestCase {
 
     
     // object under test
-    private var sessionManager: FairPlaySessionManager!
+    private var sessionManager: FairPlayStreamingSessionManager!
     
     override func setUp() {
         super.setUp()
@@ -25,7 +25,7 @@ class FairPlaySessionManagerTests : XCTestCase {
         mockURLSessionConfig.protocolClasses = [MockURLProtocol.self]
         self.mockURLSession = URLSession.init(configuration: mockURLSessionConfig)
         let session = TestContentKeySession()
-        let defaultFairPlaySessionManager = DefaultFPSSManager(
+        let defaultFairPlaySessionManager = DefaultFairPlayStreamingSessionManager(
             // .clearKey is used because .fairPlay requires a physical device
             contentKeySession: session,
             urlSession: mockURLSession

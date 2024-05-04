@@ -18,16 +18,16 @@ class PlayerSDK {
 
     let keyValueObservation: KeyValueObservation
     
-    let fairPlaySessionManager: FairPlaySessionManager
+    let fairPlaySessionManager: FairPlayStreamingSessionManager
 
     init() {
         self.monitor = Monitor()
         self.keyValueObservation = KeyValueObservation()
 
         #if targetEnvironment(simulator)
-        self.fairPlaySessionManager = DefaultFPSSManager<ClearContentKeyProvider>()
+        self.fairPlaySessionManager = DefaultFairPlayStreamingSessionManager<ClearContentKeyProvider>()
         #else
-        self.fairPlaySessionManager = DefaultFPSSManager<AVContentKeySession>()
+        self.fairPlaySessionManager = DefaultFairPlayStreamingSessionManager<AVContentKeySession>()
         #endif
     }
 

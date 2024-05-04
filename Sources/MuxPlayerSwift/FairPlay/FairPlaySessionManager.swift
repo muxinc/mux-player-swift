@@ -8,21 +8,20 @@
 import Foundation
 import AVFoundation
 
-// MARK: - FairPlaySessionManager
+// MARK: - FairPlayStreamingSessionManager
 
-protocol FairPlaySessionManager: AnyObject {
-
+protocol FairPlayStreamingSessionCredentialClient: AnyObject {
     // MARK: Requesting licenses and certs
-    
-    /// Requests the App Certificate for a playback id
+
+    // Requests the App Certificate for a playback id
     func requestCertificate(
         fromDomain rootDomain: String,
         playbackID: String,
         drmToken: String,
         completion requestCompletion: @escaping (Result<Data, Error>) -> Void
     )
-    /// Requests a license to play based on the given SPC data
-    /// - parameter offline - Not currently used, may not ever be used in short-term, maybe delete?
+    // Requests a license to play based on the given SPC data
+    // - parameter offline - Not currently used, may not ever be used in short-term, maybe delete?
     func requestLicense(
         spcData: Data,
         playbackID: String,
@@ -31,14 +30,9 @@ protocol FairPlaySessionManager: AnyObject {
         offline _: Bool,
         completion requestCompletion: @escaping (Result<Data, Error>) -> Void
     )
-    
-    // MARK: registering drm-protected assets
-    
-    /// Adds a ``AVContentKeyRecipient`` (probably an ``AVURLAsset``)  that must be played
-    /// with DRM protection. This call is necessary for DRM playback to succeed
-    func addContentKeyRecipient(_ recipient: AVContentKeyRecipient)
-    /// Removes a ``AVContentKeyRecipient`` previously added by ``addContentKeyRecipient``
-    func removeContentKeyRecipient(_ recipient: AVContentKeyRecipient)
+}
+
+protocol PlaybackOptionsRegistry {
     /// Registers a ``PlaybackOptions`` for DRM playback, associated with the given playbackID
     func registerPlaybackOptions(_ opts: PlaybackOptions, for playbackID: String)
     /// Gets a DRM token previously registered via ``registerPlaybackOptions``
@@ -46,6 +40,17 @@ protocol FairPlaySessionManager: AnyObject {
     /// Unregisters a ``PlaybackOptions`` for DRM playback, given the assiciated playback ID
     func unregisterPlaybackOptions(for playbackID: String)
 }
+
+// MARK: registering drm-protected assets
+protocol ContentKeyRecipientRegistry {
+    /// Adds a ``AVContentKeyRecipient`` (probably an ``AVURLAsset``)  that must be played
+    /// with DRM protection. This call is necessary for DRM playback to succeed
+    func addContentKeyRecipient(_ recipient: AVContentKeyRecipient)
+    /// Removes a ``AVContentKeyRecipient`` previously added by ``addContentKeyRecipient``
+    func removeContentKeyRecipient(_ recipient: AVContentKeyRecipient)
+}
+
+typealias FairPlayStreamingSessionManager = FairPlayStreamingSessionCredentialClient & PlaybackOptionsRegistry & ContentKeyRecipientRegistry
 
 // MARK: - Content Key Provider
 
@@ -89,7 +94,7 @@ extension ClearContentKeyProvider: ContentKeyProvider {
     }
 }
 
-// MARK: - DefaultFPSSManager
+// MARK: - DefaultFairPlayStreamingSessionManager
 
 // MARK: helpers for interacting with the license server
 
@@ -136,7 +141,7 @@ extension URL {
     }
 }
 
-class DefaultFPSSManager<ContentKeySession: ContentKeyProvider>: FairPlaySessionManager {
+class DefaultFairPlayStreamingSessionManager<ContentKeySession: ContentKeyProvider>: FairPlayStreamingSessionManager {
 
     private var playbackOptionsByPlaybackID: [String: PlaybackOptions] = [:]
     // note - null on simulators or other environments where fairplay isn't supported
@@ -327,9 +332,7 @@ class DefaultFPSSManager<ContentKeySession: ContentKeyProvider>: FairPlaySession
         print("UN-Registering playbackID \(playbackID)")
         playbackOptionsByPlaybackID.removeValue(forKey: playbackID)
     }
-    
-    
-    
+
     // MARK: initializers
 
     init(
@@ -341,7 +344,7 @@ class DefaultFPSSManager<ContentKeySession: ContentKeyProvider>: FairPlaySession
     }
 }
 
-internal extension DefaultFPSSManager where ContentKeySession == ClearContentKeyProvider {
+internal extension DefaultFairPlayStreamingSessionManager where ContentKeySession == ClearContentKeyProvider {
     convenience init() {
         self.init(
             contentKeySession: ClearContentKeyProvider(),
@@ -354,7 +357,7 @@ internal extension DefaultFPSSManager where ContentKeySession == ClearContentKey
     }
 }
 
-internal extension DefaultFPSSManager where ContentKeySession == AVContentKeySession {
+internal extension DefaultFairPlayStreamingSessionManager where ContentKeySession == AVContentKeySession {
     convenience init() {
         self.init(
             contentKeySession: AVContentKeySession(

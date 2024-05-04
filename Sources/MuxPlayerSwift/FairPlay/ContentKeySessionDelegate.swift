@@ -8,7 +8,7 @@
 import Foundation
 import AVFoundation
 
-class ContentKeySessionDelegate<SessionManager: FairPlaySessionManager> : NSObject, AVContentKeySessionDelegate {
+class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionManager> : NSObject, AVContentKeySessionDelegate {
 
     weak var sessionManager: SessionManager?
 
