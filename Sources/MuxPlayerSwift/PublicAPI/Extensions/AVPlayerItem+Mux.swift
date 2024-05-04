@@ -96,19 +96,21 @@ fileprivate func makePlaybackURL(
     return playbackURL
 }
 
-/// Create a new `AVAsset` that has been prepared for playback
-/// If DRM is required, the Asset will be registered with the ``FairPlaySessionManager``
-fileprivate func makeAVAsset(playbackID: String, playbackOptions: PlaybackOptions) -> AVAsset {
-    let url = makePlaybackURL(playbackID: playbackID, playbackOptions: playbackOptions)
-    
-    let asset = AVURLAsset(url: url)
-    if case .drm(_) = playbackOptions.playbackPolicy {
-        PlayerSDK.shared.fairPlaySessionManager.registerPlaybackOptions(playbackOptions, for: playbackID)
-        // asset must be attached as early as possible to avoid crashes when attaching later
-        PlayerSDK.shared.fairPlaySessionManager.addContentKeyRecipient(asset)
+// Create a new `AVAsset` that has been prepared for playback
+internal extension AVURLAsset {
+    convenience init(
+        playbackID: String,
+        playbackOptions: PlaybackOptions
+    ) {
+        let url = makePlaybackURL(
+            playbackID: playbackID,
+            playbackOptions: playbackOptions
+        )
+
+        self.init(
+            url: url
+        )
     }
-    
-    return asset
 }
 
 internal extension AVPlayerItem {
@@ -124,12 +126,19 @@ internal extension AVPlayerItem {
     /// - Parameter playbackID: playback ID of the Mux Asset
     /// you'd like to play
     convenience init(playbackID: String) {
+        let playbackOptions = PlaybackOptions()
         let playbackURL = makePlaybackURL(
             playbackID: playbackID,
-            playbackOptions: PlaybackOptions()
+            playbackOptions: playbackOptions
         )
 
         self.init(url: playbackURL)
+
+        PlayerSDK.shared.registerPlayerItem(
+            self,
+            playbackID: playbackID,
+            playbackOptions: playbackOptions
+        )
     }
 
     /// Initializes a player item with a playback URL that
@@ -143,11 +152,17 @@ internal extension AVPlayerItem {
         playbackID: String,
         playbackOptions: PlaybackOptions
     ) {
-        let asset = makeAVAsset(
+        self.init(
+            asset: AVURLAsset(
+                playbackID: playbackID,
+                playbackOptions: playbackOptions
+            )
+        )
+
+        PlayerSDK.shared.registerPlayerItem(
+            self,
             playbackID: playbackID,
             playbackOptions: playbackOptions
         )
-
-        self.init(asset: asset)
     }
 }

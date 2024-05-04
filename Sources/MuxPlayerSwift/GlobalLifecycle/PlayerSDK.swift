@@ -20,21 +20,49 @@ class PlayerSDK {
     
     let fairPlaySessionManager: FairPlayStreamingSessionManager
 
-    init() {
-        self.monitor = Monitor()
-        self.keyValueObservation = KeyValueObservation()
-
+    convenience init() {
         #if targetEnvironment(simulator)
-        self.fairPlaySessionManager = DefaultFairPlayStreamingSessionManager(
-            contentKeySession: AVContentKeySession(keySystem: .clearKey),
-            urlSession: .shared
+        self.init(
+            fairPlayStreamingSessionManager: DefaultFairPlayStreamingSessionManager(
+                contentKeySession: AVContentKeySession(keySystem: .clearKey),
+                urlSession: .shared
+            )
         )
         #else
-        self.fairPlaySessionManager = DefaultFairPlayStreamingSessionManager(
-            contentKeySession: AVContentKeySession(keySystem: .fairPlayStreaming),
-            urlSession: .shared
+        self.init(
+            fairPlayStreamingSessionManager: DefaultFairPlayStreamingSessionManager(
+                contentKeySession: AVContentKeySession(keySystem: .fairPlayStreaming),
+                urlSession: .shared
+            )
         )
         #endif
+    }
+
+    init(
+        fairPlayStreamingSessionManager: FairPlayStreamingSessionManager
+    ) {
+        self.monitor = Monitor()
+        self.keyValueObservation = KeyValueObservation()
+        self.fairPlaySessionManager = fairPlayStreamingSessionManager
+    }
+
+    func registerPlayerItem(
+        _ playerItem: AVPlayerItem,
+        playbackID: String,
+        playbackOptions: PlaybackOptions
+    ) {
+        // as? AVURLAsset check should never fail
+        if case .drm = playbackOptions.playbackPolicy,
+           let urlAsset = playerItem.asset as? AVURLAsset {
+            fairPlaySessionManager.registerPlaybackOptions(
+                playbackOptions,
+                for: playbackID
+            )
+            // asset must be attached as early as possible to avoid crashes when attaching later
+            fairPlaySessionManager.addContentKeyRecipient(
+                urlAsset
+            )
+        }
     }
 
     class KeyValueObservation {

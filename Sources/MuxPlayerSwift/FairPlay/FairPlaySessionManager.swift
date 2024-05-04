@@ -121,13 +121,13 @@ class DefaultFairPlayStreamingSessionManager<
     ContentKeySession: ContentKeyProvider
 >: FairPlayStreamingSessionManager {
 
-    private var playbackOptionsByPlaybackID: [String: PlaybackOptions] = [:]
+    var playbackOptionsByPlaybackID: [String: PlaybackOptions] = [:]
     // note - null on simulators or other environments where fairplay isn't supported
-    private let contentKeySession: ContentKeySession?
+    let contentKeySession: ContentKeySession
 
     var sessionDelegate: AVContentKeySessionDelegate? {
         didSet {
-            contentKeySession?.setDelegate(
+            contentKeySession.setDelegate(
                 sessionDelegate,
                 queue: DispatchQueue(
                     label: "com.mux.player.fairplay"
@@ -139,11 +139,11 @@ class DefaultFairPlayStreamingSessionManager<
     private let urlSession: URLSession
     
     func addContentKeyRecipient(_ recipient: AVContentKeyRecipient) {
-        contentKeySession?.addContentKeyRecipient(recipient)
+        contentKeySession.addContentKeyRecipient(recipient)
     }
     
     func removeContentKeyRecipient(_ recipient: AVContentKeyRecipient) {
-        contentKeySession?.removeContentKeyRecipient(recipient)
+        contentKeySession.removeContentKeyRecipient(recipient)
     }
     
     // MARK: Requesting licenses and certs
