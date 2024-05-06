@@ -132,7 +132,7 @@ class FairPlaySessionManagerTests : XCTestCase {
         let fakeRootDomain = "custom.domain.com"
         let fakePlaybackId = "fake_playback_id"
         let fakeDrmToken = "fake_drm_token"
-        // real app certs are opaque binary to us, the fake one can be whatever
+        // real SPC's are opaque binary to us, the fake one can be whatever
         let fakeSpcData = "fake-SPC-binary-data".data(using: .utf8)!
         
         var urlRequest: URLRequest!
@@ -233,7 +233,6 @@ class FairPlaySessionManagerTests : XCTestCase {
         let fakePlaybackId = "fake_playback_id"
         let fakeDrmToken = "fake_drm_token"
         let fakeHTTPStatus = 500 // all codes are handled the same way, by failing
-        // real app certs are opaque binary to us, the fake one can be whatever
         
         let requestFails = XCTestExpectation(description: "request certificate successfully")
         MockURLProtocol.requestHandler = { request in
@@ -414,7 +413,7 @@ class FairPlaySessionManagerTests : XCTestCase {
         let fakePlaybackId = "fake_playback_id"
         let fakeDrmToken = "fake_drm_token"
         let fakeHTTPStatus = 500 // all codes are handled the same way, by failing
-        // real app certs are opaque binary to us, the fake one can be whatever
+        // real SPCs are opaque binary to us, the fake one can be whatever
         let fakeSpcData = "fake-spc-data".data(using: .utf8)!
         
         let requestFails = XCTestExpectation(description: "request certificate successfully")
@@ -428,7 +427,7 @@ class FairPlaySessionManagerTests : XCTestCase {
             
             // failed requests proxied from our drm vendor have response bodies with
             //   base64 text, which we should treat as opaque (not parse or decode),
-            //   since can't do anything with them and Cast logs them on the backend
+            //   since we can't do anything with them and Cast logs them on the backend
             let errorBody = "failed request source text"
             let errorData = errorBody.data(using: .utf8) // crashes if processed probably
             return (
