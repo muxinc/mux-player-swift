@@ -18,12 +18,53 @@ class PlayerSDK {
 
     let keyValueObservation: KeyValueObservation
     
-    let fairPlaySessionManager: FairPlaySessionManager
+    let fairPlaySessionManager: FairPlayStreamingSessionManager
 
-    init() {
+    convenience init() {
+        #if targetEnvironment(simulator)
+        self.init(
+            fairPlayStreamingSessionManager: DefaultFairPlayStreamingSessionManager(
+                contentKeySession: AVContentKeySession(keySystem: .clearKey),
+                urlSession: .shared
+            )
+        )
+        #else
+        let sessionManager = DefaultFairPlayStreamingSessionManager(
+            contentKeySession: AVContentKeySession(keySystem: .fairPlayStreaming),
+            urlSession: .shared
+        )
+        sessionManager.sessionDelegate = ContentKeySessionDelegate(
+            sessionManager: sessionManager
+        )
+        self.init(fairPlayStreamingSessionManager: sessionManager)
+        #endif
+    }
+
+    init(
+        fairPlayStreamingSessionManager: FairPlayStreamingSessionManager
+    ) {
         self.monitor = Monitor()
         self.keyValueObservation = KeyValueObservation()
-        self.fairPlaySessionManager = DefaultFPSSManager()
+        self.fairPlaySessionManager = fairPlayStreamingSessionManager
+    }
+
+    func registerPlayerItem(
+        _ playerItem: AVPlayerItem,
+        playbackID: String,
+        playbackOptions: PlaybackOptions
+    ) {
+        // as? AVURLAsset check should never fail
+        if case .drm = playbackOptions.playbackPolicy,
+           let urlAsset = playerItem.asset as? AVURLAsset {
+            fairPlaySessionManager.registerPlaybackOptions(
+                playbackOptions,
+                for: playbackID
+            )
+            // asset must be attached as early as possible to avoid crashes when attaching later
+            fairPlaySessionManager.addContentKeyRecipient(
+                urlAsset
+            )
+        }
     }
 
     class KeyValueObservation {

@@ -8,16 +8,24 @@
 import Foundation
 import AVFoundation
 
-class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
-    
+class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionManager> : NSObject, AVContentKeySessionDelegate {
+
+    weak var sessionManager: SessionManager?
+
+    init(
+        sessionManager: SessionManager
+    ) {
+        self.sessionManager = sessionManager
+    }
+
     // MARK: AVContentKeySessionDelegate implementation
     
     func contentKeySession(_ session: AVContentKeySession, didProvide keyRequest: AVContentKeyRequest) {
-        handleContentKeyRequest(session, request: keyRequest)
+        handleContentKeyRequest(request: keyRequest)
     }
     
     func contentKeySession(_ session: AVContentKeySession, didProvideRenewingContentKeyRequest keyRequest: AVContentKeyRequest) {
-        handleContentKeyRequest(session, request: keyRequest)
+        handleContentKeyRequest(request: keyRequest)
     }
     
     func contentKeySession(_ session: AVContentKeySession, contentKeyRequestDidSucceed keyRequest: AVContentKeyRequest) {
@@ -95,7 +103,7 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
         return playbackID
     }
     
-    func handleContentKeyRequest(_ session: AVContentKeySession, request: AVContentKeyRequest) {
+    func handleContentKeyRequest(request: AVContentKeyRequest) {
         print("<><>handleContentKeyRequest: Called")
         // for hls, "the identifier must be an NSURL that matches a key URI in the Media Playlist." from the docs
         guard let keyURLStr = request.identifier as? String,
@@ -112,8 +120,14 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
             return
         }
         
-        let playbackOptions = PlayerSDK.shared.fairPlaySessionManager
-            .findRegisteredPlaybackOptions(for: playbackID)
+        guard let sessionManager = self.sessionManager else {
+            print("Missing Session Manager")
+            return
+        }
+
+        let playbackOptions = sessionManager.findRegisteredPlaybackOptions(
+            for: playbackID
+        )
         guard let playbackOptions = playbackOptions,
               case .drm(let drmOptions) = playbackOptions.playbackPolicy else {
             print("DRM Tokens must be registered when the AVPlayerItem is created, using FairplaySessionManager")
@@ -127,7 +141,7 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
         //  the drmtoday example does this by joining a dispatch group, but is this best?
         let group = DispatchGroup()
         group.enter()
-        PlayerSDK.shared.fairPlaySessionManager.requestCertificate(
+        sessionManager.requestCertificate(
             fromDomain: rootDomain,
             playbackID: playbackID,
             drmToken: drmOptions.drmToken,
@@ -178,11 +192,16 @@ class ContentKeySessionDelegate : NSObject, AVContentKeySessionDelegate {
         rootDomain: String, // without any "license." or "stream." prepended, eg mux.com, custom.1234.co.uk
         request: AVContentKeyRequest
     ) {
+        guard let sessionManager = self.sessionManager else {
+            print("Missing Session Manager")
+            return
+        }
+
         // todo - DRM Today example does this by joining a DispatchGroup. Is this really preferable??
         var ckcData: Data? = nil
         let group = DispatchGroup()
         group.enter()
-        PlayerSDK.shared.fairPlaySessionManager.requestLicense(
+        sessionManager.requestLicense(
             spcData: spcData,
             playbackID: playbackID,
             drmToken: drmToken,
