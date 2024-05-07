@@ -131,10 +131,11 @@ extension AVPlayerViewController {
     /// Prepares an already instantiated AVPlayerViewController
     /// for playback.
     ///
-    /// If no AVPlayerViewController doesn't hold an AVPlayer reference,
-    /// this method will create one and set the AVPlayerViewController
-    /// player property. If the AVPlayerViewController already
-    /// holds a player, it will be configured for playback.
+    /// If AVPlayerViewController doesn't already hold an
+    /// AVPlayer reference, this method will create one and
+    /// set the AVPlayerViewController player property. If
+    /// the AVPlayerViewController already holds a player,
+    /// it will be configured for playback.
     /// - Parameters:
     ///   - playbackID: playback ID of the Mux Asset
     ///   you'd like to play
@@ -155,10 +156,11 @@ extension AVPlayerViewController {
     /// Prepares an already instantiated AVPlayerViewController
     /// for playback.
     ///
-    /// If no AVPlayerViewController doesn't hold an AVPlayer reference,
-    /// this method will create one and set the AVPlayerViewController
-    /// player property. If the AVPlayerViewController already
-    /// holds a player, it will be configured for playback.
+    /// If AVPlayerViewController doesn't already hold an
+    /// AVPlayer reference, this method will create one and
+    /// set the AVPlayerViewController player property. If
+    /// the AVPlayerViewController already holds a player,
+    /// it will be configured for playback.
     /// - Parameters:
     ///   - playbackID: playback ID of the Mux Asset
     ///   you'd like to play
@@ -183,10 +185,11 @@ extension AVPlayerViewController {
     /// Prepares an already instantiated AVPlayerViewController
     /// for playback.
     ///
-    /// If no AVPlayerViewController doesn't hold an AVPlayer reference,
-    /// this method will create one and set the AVPlayerViewController
-    /// player property. If the AVPlayerViewController already
-    /// holds a player, it will be configured for playback.
+    /// If AVPlayerViewController doesn't already hold an
+    /// AVPlayer reference, this method will create one and
+    /// set the AVPlayerViewController player property. If
+    /// the AVPlayerViewController already holds a player,
+    /// it will be configured for playback.
     /// - Parameters:
     ///   - playbackID: playback ID of the Mux Asset
     ///   you'd like to play
@@ -208,10 +211,11 @@ extension AVPlayerViewController {
     /// Prepares an already instantiated AVPlayerViewController
     /// for playback.
     ///
-    /// If no AVPlayerViewController doesn't hold an AVPlayer reference,
-    /// this method will create one and set the AVPlayerViewController
-    /// player property. If the AVPlayerViewController already
-    /// holds a player, it will be configured for playback.
+    /// If AVPlayerViewController doesn't already hold an
+    /// AVPlayer reference, this method will create one and
+    /// set the AVPlayerViewController player property. If
+    /// the AVPlayerViewController already holds a player,
+    /// it will be configured for playback.
     /// - Parameters:
     ///   - playbackID: playback ID of the Mux Asset
     ///   you'd like to play
