@@ -124,12 +124,10 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
         }
         
         guard let credentialClient = self.credentialClient  else {
-            print("Missing Session Manager")
             return
         }
         
         guard let optionsRegistry = self.playbackOptionsRegistry  else {
-            print("Missing Session Manager")
             return
         }
 
@@ -139,6 +137,11 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
         guard let playbackOptions = playbackOptions,
               case .drm(let drmOptions) = playbackOptions.playbackPolicy else {
             print("DRM Tokens must be registered when the AVPlayerItem is created, using FairplaySessionManager")
+            request.processContentKeyResponseError(
+                FairPlaySessionError.unexpected(
+                    message: "Token was not registered, only happens during SDK errors"
+                )
+            )
             return
         }
         
