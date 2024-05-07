@@ -224,7 +224,7 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionManager>
 //  this protocol's methods are intended to match AVContentKeyRequest
 protocol KeyRequest {
     
-    associatedtype Request
+    associatedtype InnerRequest
     
     var identifier: Any? { get }
     
@@ -238,7 +238,7 @@ protocol KeyRequest {
 
 // Wraps a real AVContentKeyRequest and straightforwardly delegates to it
 struct DefaultKeyRequest : KeyRequest {
-    typealias Request = AVContentKeyRequest
+    typealias InnerRequest = AVContentKeyRequest
     
     var identifier: Any? {
         get {
@@ -251,7 +251,7 @@ struct DefaultKeyRequest : KeyRequest {
     }
     
     func processContentKeyResponseError(_ error: any Error) {
-        self.processContentKeyResponseError(error)
+        self.request.processContentKeyResponseError(error)
     }
     
     func makeStreamingContentKeyRequestData(
@@ -260,16 +260,17 @@ struct DefaultKeyRequest : KeyRequest {
         options: [String : Any]? = nil,
         completionHandler handler: @escaping (Data?, (any Error)?) -> Void
     ) {
-        self.makeStreamingContentKeyRequestData(forApp: appIdentifier,
-                                                contentIdentifier: contentIdentifier,
-                                                options: options,
-                                                completionHandler: handler
+        self.request.makeStreamingContentKeyRequestData(
+            forApp: appIdentifier,
+            contentIdentifier: contentIdentifier,
+            options: options,
+            completionHandler: handler
         )
     }
     
-    let request: Request
+    let request: InnerRequest
     
-    init(wrapping request: Request) {
+    init(wrapping request: InnerRequest) {
         self.request = request
     }
 }
