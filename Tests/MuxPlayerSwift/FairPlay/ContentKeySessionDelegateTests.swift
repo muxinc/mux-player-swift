@@ -70,11 +70,34 @@ class ContentKeySessionDelegateTests : XCTestCase {
         XCTAssertEqual(fakePlaybackID, foundPlaybackID)
     }
     
-    func testNoPlaybackId() throws {
-        let mockRequest = MockKeyRequest(fakeIdentifier: makeFakeSkdUrl(fakePlaybackID: makeFakeSkdUrlIncorrect()))
+    func testKeyRequestNoPlaybackId() throws {
+        let mockRequest = MockKeyRequest(
+            fakeIdentifier: makeFakeSkdUrl(
+                fakePlaybackID: makeFakeSkdUrlIncorrect()
+            )
+        )
         
         contentKeySessionDelegate.handleContentKeyRequest(request: mockRequest)
         
+        XCTAssertTrue(
+            mockRequest.verifyWasCalled(
+                funcName: "processContentKeyResponseError"
+            )
+        )
+        XCTAssertTrue(
+            mockRequest.verifyNotCalled(funcName: "makeStreamingContentKeyRequestData")
+        )
+    }
+    
+    func testKeyRequestLicenseError() throws {
+        setUpForFailure(error: FakeError(tag: "fake error"))
+        let mockRequest = MockKeyRequest(
+            fakeIdentifier: makeFakeSkdUrl(
+                fakePlaybackID: makeFakeSkdUrlIncorrect()
+            )
+        )
+        
+        contentKeySessionDelegate.handleContentKeyRequest(request: mockRequest)
         XCTAssertTrue(
             mockRequest.verifyWasCalled(
                 funcName: "processContentKeyResponseError"
