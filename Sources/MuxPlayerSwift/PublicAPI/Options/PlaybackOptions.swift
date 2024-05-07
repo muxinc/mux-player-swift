@@ -53,8 +53,6 @@ public enum MinResolutionTier {
 public enum RenditionOrder {
     /// By default no rendition order is specified
     case `default`
-    /// The asset will choose renditions in ascending order
-    case ascending
     /// The asset will choose renditions in descending order
     case descending
 }
@@ -102,8 +100,6 @@ extension RenditionOrder {
         switch self {
         case .default:
             return ""
-        case .ascending:
-            return "asc"
         case .descending:
             return "desc"
         }
