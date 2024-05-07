@@ -244,7 +244,8 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
         
         print("Submitting CKC to system")
         // Send CKC to CDM/wherever else so we can finally play our content
-        let keyResponse = AVContentKeyResponse(fairPlayStreamingKeyResponseData: ckcData)
+//        let keyResponse = AVContentKeyResponse(fairPlayStreamingKeyResponseData: ckcData)
+        let keyResponse = request.makeContentKeyResponse(data: ckcData)
         request.processContentKeyResponse(keyResponse)
         // Done! no further interaction is required from us to play.
     }
@@ -257,6 +258,8 @@ protocol KeyRequest {
     associatedtype InnerRequest
     
     var identifier: Any? { get }
+    
+    func makeContentKeyResponse(data: Data) -> AVContentKeyResponse
     
     func processContentKeyResponse(_ response: AVContentKeyResponse)
     func processContentKeyResponseError(_ error: any Error)
@@ -274,6 +277,10 @@ struct DefaultKeyRequest : KeyRequest {
         get {
             return self.request.identifier
         }
+    }
+    
+    func makeContentKeyResponse(data: Data) -> AVContentKeyResponse {
+        return AVContentKeyResponse(fairPlayStreamingKeyResponseData: data)
     }
     
     func processContentKeyResponse(_ response: AVContentKeyResponse) {

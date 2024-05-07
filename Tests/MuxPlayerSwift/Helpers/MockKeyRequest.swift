@@ -25,6 +25,12 @@ class MockKeyRequest : KeyRequest {
         }
     }
     
+    func makeContentKeyResponse(data: Data) -> AVContentKeyResponse {
+        // can't use the fairplay data in tests
+        return AVContentKeyResponse(authorizationTokenData: "fake-token".data(using: .utf8)!)
+    }
+    
+
     func processContentKeyResponse(_ response: AVContentKeyResponse) {
         fakeRequest.append(("processContentKeyResponse", [response]))
     }

@@ -89,7 +89,7 @@ class ContentKeySessionDelegateTests : XCTestCase {
         )
     }
     
-    func testKeyRequestLicenseError() throws {
+    func testKeyRequestCertError() throws {
         setUpForFailure(error: FakeError(tag: "fake error"))
         let mockRequest = MockKeyRequest(
             fakeIdentifier: makeFakeSkdUrl(fakePlaybackID: "fake-playback")
@@ -124,6 +124,57 @@ class ContentKeySessionDelegateTests : XCTestCase {
         )
         XCTAssertTrue(
             mockRequest.verifyWasCalled(funcName: "makeStreamingContentKeyRequestData")
+        )
+    }
+    
+    func testSPCForCKCFailedLicense() throws {
+        setUpForFailure(error: FakeError(tag: "fake error"))
+        let mockRequest = MockKeyRequest(
+            fakeIdentifier: makeFakeSkdUrl(fakePlaybackID: "fake-playback")
+        )
+        
+        contentKeySessionDelegate.handleSpcObtainedFromCDM(
+            spcData: "fake-spc-data".data(using: .utf8)!,
+            playbackID: "fake-playback",
+            drmToken: "fake-drm-token",
+            rootDomain: "mux.com",
+            request: mockRequest
+        )
+        
+        XCTAssertTrue(
+            mockRequest.verifyWasCalled(
+                funcName: "processContentKeyResponseError"
+            )
+        )
+        XCTAssertTrue(
+            mockRequest.verifyNotCalled(funcName: "processContentKeyResponse")
+        )
+    }
+    
+    func testSPCForCKCHappyPath() throws {
+        let mockRequest = MockKeyRequest(
+            fakeIdentifier: makeFakeSkdUrl(
+                fakePlaybackID: "fake-playback"
+            )
+        )
+        testPlaybackOptionsRegistry.registerPlaybackOptions(
+            PlaybackOptions(playbackToken: "playback-token", drmToken: "drm-token"),
+            for: "fake-playback"
+        )
+        
+        contentKeySessionDelegate.handleSpcObtainedFromCDM(
+            spcData: "fake-spc-data".data(using: .utf8)!,
+            playbackID: "fake-playback",
+            drmToken: "fake-drm-token",
+            rootDomain: "mux.com",
+            request: mockRequest
+        )
+        
+        XCTAssertTrue(
+            mockRequest.verifyNotCalled(funcName: "processContentKeyResponseError")
+        )
+        XCTAssertTrue(
+            mockRequest.verifyWasCalled(funcName: "processContentKeyResponse")
         )
     }
     
