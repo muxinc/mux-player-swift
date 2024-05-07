@@ -13,8 +13,8 @@ import Foundation
 /// sucess or failure as-configured
 class TestFairPlayStreamingSessionCredentialClient: FairPlayStreamingSessionCredentialClient {
     
-    private let fakeCert: Data!
-    private let fakeLicense: Data!
+    private let fakeCert: Data?
+    private let fakeLicense: Data?
     private let failsWith: (any Error)!
     
     func requestCertificate(fromDomain rootDomain: String, playbackID: String, drmToken: String, completion requestCompletion: @escaping (Result<Data, any Error>) -> Void) {
@@ -42,8 +42,8 @@ class TestFairPlayStreamingSessionCredentialClient: FairPlayStreamingSessionCred
     }
     
     private init(
-        fakeCert: Data!,
-        fakeLicense: Data!,
+        fakeCert: Data?,
+        fakeLicense: Data?,
         failsWith: (any Error)?
     ) {
         self.fakeCert = fakeCert
