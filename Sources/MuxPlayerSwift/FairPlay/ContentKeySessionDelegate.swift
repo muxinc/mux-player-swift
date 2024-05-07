@@ -10,24 +10,21 @@ import AVFoundation
 
 class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredentialClient & PlaybackOptionsRegistry> : NSObject, AVContentKeySessionDelegate {
     
-    weak var credentialClient: FairPlayStreamingSessionCredentialClient?
-    weak var playbackOptionsRegistry: PlaybackOptionsRegistry?
+    weak var sessionManager: SessionManager?
 
-    convenience init(
-        sessionManager: SessionManager
-    ) {
-        self.init(
-            credentialClient: sessionManager,
-            optionsRegistry: sessionManager
-        )
+    private var credentialClient: FairPlayStreamingSessionCredentialClient? {
+        get {
+            return sessionManager
+        }
     }
-    
-    init (
-        credentialClient: FairPlayStreamingSessionCredentialClient,
-        optionsRegistry: PlaybackOptionsRegistry
-    ) {
-        self.credentialClient = credentialClient
-        self.playbackOptionsRegistry = optionsRegistry
+    private var playbackOptionsRegistry: PlaybackOptionsRegistry? {
+        get {
+            return sessionManager
+        }
+    }
+
+    init(sessionManager: SessionManager) {
+        self.sessionManager = sessionManager
     }
     
     // MARK: AVContentKeySessionDelegate implementation
