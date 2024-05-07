@@ -43,9 +43,9 @@ class TestFairPlayStreamingSessionManager : FairPlayStreamingSessionManager {
         optionsRegistry.unregisterPlaybackOptions(for: playbackID)
     }
    
-    init(credentialClient: FairPlayStreamingSessionCredentialClient, 
-         optionsRegistry: PlaybackOptionsRegistry,
-         contentKeyRegistry: ContentKeyRecipientRegistry) {
+    init(credentialClient: any FairPlayStreamingSessionCredentialClient,
+         optionsRegistry: any PlaybackOptionsRegistry,
+         contentKeyRegistry: any ContentKeyRecipientRegistry) {
         self.credentialClient = credentialClient
         self.optionsRegistry = optionsRegistry
         self.contentKeyRegistry = contentKeyRegistry
