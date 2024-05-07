@@ -92,9 +92,7 @@ class ContentKeySessionDelegateTests : XCTestCase {
     func testKeyRequestLicenseError() throws {
         setUpForFailure(error: FakeError(tag: "fake error"))
         let mockRequest = MockKeyRequest(
-            fakeIdentifier: makeFakeSkdUrl(
-                fakePlaybackID: makeFakeSkdUrl(fakePlaybackID: "fake-playback")
-            )
+            fakeIdentifier: makeFakeSkdUrl(fakePlaybackID: "fake-playback")
         )
         
         contentKeySessionDelegate.handleContentKeyRequest(request: mockRequest)
