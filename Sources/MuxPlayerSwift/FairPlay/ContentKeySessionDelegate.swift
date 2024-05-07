@@ -12,17 +12,6 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
     
     weak var sessionManager: SessionManager?
 
-    private var credentialClient: FairPlayStreamingSessionCredentialClient? {
-        get {
-            return sessionManager
-        }
-    }
-    private var playbackOptionsRegistry: PlaybackOptionsRegistry? {
-        get {
-            return sessionManager
-        }
-    }
-
     init(sessionManager: SessionManager) {
         self.sessionManager = sessionManager
     }
@@ -124,15 +113,12 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
             return
         }
         
-        guard let credentialClient = self.credentialClient  else {
-            return
-        }
-        
-        guard let optionsRegistry = self.playbackOptionsRegistry  else {
+        guard let sessionManager = self.sessionManager else {
+            print("no session manager")
             return
         }
 
-        let playbackOptions = optionsRegistry.findRegisteredPlaybackOptions(
+        let playbackOptions = sessionManager.findRegisteredPlaybackOptions(
             for: playbackID
         )
         guard let playbackOptions = playbackOptions,
@@ -154,7 +140,7 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
         //  the drmtoday example does this by joining a dispatch group, but is this best?
         let group = DispatchGroup()
         group.enter()
-        credentialClient.requestCertificate(
+        sessionManager.requestCertificate(
             fromDomain: rootDomain,
             playbackID: playbackID,
             drmToken: drmOptions.drmToken,
@@ -211,7 +197,7 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
         rootDomain: String, // without any "license." or "stream." prepended, eg mux.com, custom.1234.co.uk
         request: any KeyRequest
     ) {
-        guard let credendtialClient = self.credentialClient else {
+        guard let sessionManager = self.sessionManager else {
             print("Missing Session Manager")
             return
         }
@@ -220,7 +206,7 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
         var ckcData: Data? = nil
         let group = DispatchGroup()
         group.enter()
-        credendtialClient.requestLicense(
+        sessionManager.requestLicense(
             spcData: spcData,
             playbackID: playbackID,
             drmToken: drmToken,
