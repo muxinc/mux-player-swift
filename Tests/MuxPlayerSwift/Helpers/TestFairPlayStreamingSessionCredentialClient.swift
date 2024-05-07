@@ -15,23 +15,30 @@ class TestFairPlayStreamingSessionCredentialClient: FairPlayStreamingSessionCred
     
     private let fakeCert: Data!
     private let fakeLicense: Data!
-    private let failsWith: (any Error)?
+    private let failsWith: (any Error)!
     
     func requestCertificate(fromDomain rootDomain: String, playbackID: String, drmToken: String, completion requestCompletion: @escaping (Result<Data, any Error>) -> Void) {
-        <#code#>
+        if let fakeCert = fakeCert {
+            requestCompletion(Result.success(fakeCert))
+        } else {
+            requestCompletion(Result.failure(failsWith))
+        }
     }
     
     func requestLicense(spcData: Data, playbackID: String, drmToken: String, rootDomain: String, offline _: Bool, completion requestCompletion: @escaping (Result<Data, any Error>) -> Void) {
-        <#code#>
+        if let fakeLicense = fakeLicense {
+            requestCompletion(Result.success(fakeLicense))
+        } else {
+            requestCompletion(Result.failure(failsWith))
+        }
     }
     
-    convenience init(fakeCert: Data,
-         fakeLicense: Data) {
+    convenience init(fakeCert: Data, fakeLicense: Data) {
         self.init(fakeCert: fakeCert, fakeLicense: fakeLicense, failsWith: nil)
     }
     
     convenience init(failsWith: any Error) {
-        self.init(failsWith: failsWith)
+        self.init(fakeCert: nil, fakeLicense: nil, failsWith: failsWith)
     }
     
     private init(
