@@ -21,11 +21,11 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionManager>
     // MARK: AVContentKeySessionDelegate implementation
     
     func contentKeySession(_ session: AVContentKeySession, didProvide keyRequest: AVContentKeyRequest) {
-        handleContentKeyRequest(request: keyRequest)
+        handleContentKeyRequest(request: DefaultKeyRequest(wrapping: keyRequest))
     }
     
     func contentKeySession(_ session: AVContentKeySession, didProvideRenewingContentKeyRequest keyRequest: AVContentKeyRequest) {
-        handleContentKeyRequest(request: keyRequest)
+        handleContentKeyRequest(request: DefaultKeyRequest(wrapping: keyRequest))
     }
     
     func contentKeySession(_ session: AVContentKeySession, contentKeyRequestDidSucceed keyRequest: AVContentKeyRequest) {
@@ -94,7 +94,7 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionManager>
         return playbackID
     }
     
-    func handleContentKeyRequest(request: AVContentKeyRequest) {
+    func handleContentKeyRequest(request: any KeyRequest) {
         print("<><>handleContentKeyRequest: Called")
         // for hls, "the identifier must be an NSURL that matches a key URI in the Media Playlist." from the docs
         guard let keyURLStr = request.identifier as? String,
@@ -176,12 +176,12 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionManager>
         }
     }
     
-    private func handleSpcObtainedFromCDM(
+    func handleSpcObtainedFromCDM(
         spcData: Data,
         playbackID: String,
         drmToken: String,
         rootDomain: String, // without any "license." or "stream." prepended, eg mux.com, custom.1234.co.uk
-        request: AVContentKeyRequest
+        request: any KeyRequest
     ) {
         guard let sessionManager = self.sessionManager else {
             print("Missing Session Manager")
@@ -226,6 +226,8 @@ protocol KeyRequest {
     
     associatedtype Request
     
+    var identifier: Any? { get }
+    
     func processContentKeyResponse(_ response: AVContentKeyResponse)
     func processContentKeyResponseError(_ error: any Error)
     func makeStreamingContentKeyRequestData(forApp appIdentifier: Data,
@@ -234,8 +236,15 @@ protocol KeyRequest {
                                             completionHandler handler: @escaping (Data?, (any Error)?) -> Void)
 }
 
-struct DefaultKeyRequest {
+// Wraps a real AVContentKeyRequest and straightforwardly delegates to it
+struct DefaultKeyRequest : KeyRequest {
     typealias Request = AVContentKeyRequest
+    
+    var identifier: Any? {
+        get {
+            return self.request.identifier
+        }
+    }
     
     func processContentKeyResponse(_ response: AVContentKeyResponse) {
         self.request.processContentKeyResponse(response)
