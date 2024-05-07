@@ -93,7 +93,7 @@ class ContentKeySessionDelegateTests : XCTestCase {
         setUpForFailure(error: FakeError(tag: "fake error"))
         let mockRequest = MockKeyRequest(
             fakeIdentifier: makeFakeSkdUrl(
-                fakePlaybackID: makeFakeSkdUrlIncorrect()
+                fakePlaybackID: makeFakeSkdUrl(fakePlaybackID: "fake-playback")
             )
         )
         
@@ -105,6 +105,27 @@ class ContentKeySessionDelegateTests : XCTestCase {
         )
         XCTAssertTrue(
             mockRequest.verifyNotCalled(funcName: "makeStreamingContentKeyRequestData")
+        )
+    }
+    
+    func testKeyRequestHappyPath() throws {
+        let mockRequest = MockKeyRequest(
+            fakeIdentifier: makeFakeSkdUrl(
+                fakePlaybackID: "fake-playback"
+            )
+        )
+        testPlaybackOptionsRegistry.registerPlaybackOptions(
+            PlaybackOptions(playbackToken: "playback-token", drmToken: "drm-token"),
+            for: "fake-playback"
+        )
+        
+        contentKeySessionDelegate.handleContentKeyRequest(request: mockRequest)
+        
+        XCTAssertTrue(
+            mockRequest.verifyNotCalled(funcName: "processContentKeyResponseError")
+        )
+        XCTAssertTrue(
+            mockRequest.verifyWasCalled(funcName: "makeStreamingContentKeyRequestData")
         )
     }
 }

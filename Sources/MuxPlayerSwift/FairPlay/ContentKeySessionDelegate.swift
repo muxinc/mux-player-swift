@@ -190,9 +190,9 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
             }
             
             guard let spcData = spcData else {
-                print("No SPC Data in spc response")
-                // `error` will be non-nil by contract
-                request.processContentKeyResponseError(error!)
+                request.processContentKeyResponseError(
+                    error ?? FairPlaySessionError.unexpected(message: "no SPC")
+                )
                 return
             }
             
