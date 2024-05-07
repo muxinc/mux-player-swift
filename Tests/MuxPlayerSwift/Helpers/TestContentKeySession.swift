@@ -35,9 +35,3 @@ class TestContentKeySession: ContentKeyProvider {
 	
 	}
 }
-
-class A {}
-protocol B {}
-protocol D {}
-typealias C = A & B & D 
-

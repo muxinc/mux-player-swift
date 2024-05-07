@@ -49,11 +49,18 @@ class ContentKeySessionDelegateTests : XCTestCase {
         )
     }
     
+    private func makeFakeSkdUrl(fakePlaybackID: String) -> String {
+        return "skd://fake.domain/?playbackId=\(fakePlaybackID)&token=unrelated-to-test"
+    }
+    
+    private func makeFakeSkdUrlIncorrect() -> String {
+        return "skd://fake.domain/?token=unrelated-to-test"
+    }
+
     func testParsePlaybackId() throws {
         let fakePlaybackID = "fake-playback-id"
         let fakeKeyUri = URL(
-            string:
-                "skd://fake.domain/?playbackId=\(fakePlaybackID)&token=unrelated-to-test"
+            string: makeFakeSkdUrl(fakePlaybackID: fakePlaybackID)
         )!
         
         let foundPlaybackID = contentKeySessionDelegate.parsePlaybackId(
@@ -61,5 +68,11 @@ class ContentKeySessionDelegateTests : XCTestCase {
         )
         
         XCTAssertEqual(fakePlaybackID, foundPlaybackID)
+    }
+    
+    func testNoPlaybackId() throws {
+        let fakeRequest = MockKeyRequest(fakeIdentifier: makeFakeSkdUrl(fakePlaybackID: makeFakeSkdUrlIncorrect()))
+        
+        contentKeySessionDelegate.handleContentKeyRequest(request: fakeRequest)
     }
 }

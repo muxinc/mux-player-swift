@@ -120,6 +120,11 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
         let playbackID = parsePlaybackId(fromSkdLocation: keyURL)
         guard let playbackID = playbackID else {
             print("No playbackID found from server , aborting")
+            request.processContentKeyResponseError(
+                FairPlaySessionError.unexpected(
+                    message: "playbackID not present in key uri"
+                )
+            )
             return
         }
         
