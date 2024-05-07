@@ -9,20 +9,10 @@ import Foundation
 import AVFoundation
 @testable import MuxPlayerSwift
 
-// TODO: Still needed?
-class TestFairPlayStreamingSessionManager : FairPlayStreamingSessionManager {
+class TestFairPlayStreamingSessionManager : FairPlayStreamingSessionCredentialClient & PlaybackOptionsRegistry {
     
     let credentialClient: FairPlayStreamingSessionCredentialClient
     let optionsRegistry: PlaybackOptionsRegistry
-    let contentKeyRegistry: ContentKeyRecipientRegistry
-    
-    func addContentKeyRecipient(_ recipient: any AVContentKeyRecipient) {
-        contentKeyRegistry.addContentKeyRecipient(recipient)
-    }
-    
-    func removeContentKeyRecipient(_ recipient: any AVContentKeyRecipient) {
-        contentKeyRegistry.removeContentKeyRecipient(recipient)
-    }
     
     func requestCertificate(fromDomain rootDomain: String, playbackID: String, drmToken: String, completion requestCompletion: @escaping (Result<Data, any Error>) -> Void) {
         credentialClient.requestCertificate(fromDomain: rootDomain, playbackID: playbackID, drmToken: drmToken, completion: requestCompletion)
@@ -45,10 +35,8 @@ class TestFairPlayStreamingSessionManager : FairPlayStreamingSessionManager {
     }
    
     init(credentialClient: any FairPlayStreamingSessionCredentialClient,
-         optionsRegistry: any PlaybackOptionsRegistry,
-         contentKeyRegistry: any ContentKeyRecipientRegistry) {
+         optionsRegistry: any PlaybackOptionsRegistry) {
         self.credentialClient = credentialClient
         self.optionsRegistry = optionsRegistry
-        self.contentKeyRegistry = contentKeyRegistry
     }
 }

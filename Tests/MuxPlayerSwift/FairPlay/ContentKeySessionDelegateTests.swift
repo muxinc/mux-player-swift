@@ -13,6 +13,7 @@ class ContentKeySessionDelegateTests : XCTestCase {
     
     var testPlaybackOptionsRegistry: TestPlaybackOptionsRegistry!
     var testCredentialClient: TestFairPlayStreamingSessionCredentialClient!
+    var testSessionmanager: TestFairPlayStreamingSessionManager!
     
     // object under test
     var contentKeySessionDelegate: ContentKeySessionDelegate<
@@ -28,10 +29,13 @@ class ContentKeySessionDelegateTests : XCTestCase {
             failsWith: error
         )
         testPlaybackOptionsRegistry = TestPlaybackOptionsRegistry()
-        
-        contentKeySessionDelegate = ContentKeySessionDelegate(
+        testSessionmanager = TestFairPlayStreamingSessionManager(
             credentialClient: testCredentialClient,
             optionsRegistry: testPlaybackOptionsRegistry
+        )
+        
+        contentKeySessionDelegate = ContentKeySessionDelegate(
+            sessionManager: testSessionmanager  
         )
     }
     
@@ -42,9 +46,13 @@ class ContentKeySessionDelegateTests : XCTestCase {
         )
         testPlaybackOptionsRegistry = TestPlaybackOptionsRegistry()
         
-        contentKeySessionDelegate = ContentKeySessionDelegate(
+        testSessionmanager = TestFairPlayStreamingSessionManager(
             credentialClient: testCredentialClient,
             optionsRegistry: testPlaybackOptionsRegistry
+        )
+        
+        contentKeySessionDelegate = ContentKeySessionDelegate(
+            sessionManager: testSessionmanager  
         )
     }
     
