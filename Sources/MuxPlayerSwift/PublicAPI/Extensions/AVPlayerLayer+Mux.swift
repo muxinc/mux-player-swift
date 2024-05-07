@@ -105,10 +105,11 @@ extension AVPlayerLayer {
     /// Prepares an already instantiated AVPlayerLayer
     /// for playback.
     ///
-    /// If no AVPlayerLayer doesn't hold an AVPlayer reference,
-    /// this method will create one and set the AVPlayerLayer
-    /// player property. If the AVPlayerLayer already holds
-    /// a player, it will be configured for playback.
+    /// If AVPlayerLayer doesn't already hold an
+    /// AVPlayer reference, this method will create one and
+    /// set the AVPlayerLayer player property. If
+    /// the AVPlayerLayer already holds a player,
+    /// it will be configured for playback.
     ///
     ///   - playbackID: playback ID of the Mux Asset
     ///   you'd like to play
@@ -128,10 +129,11 @@ extension AVPlayerLayer {
     /// Prepares an already instantiated AVPlayerLayer
     /// for playback.
     ///
-    /// If no AVPlayerLayer doesn't hold an AVPlayer reference,
-    /// this method will create one and set the AVPlayerLayer
-    /// player property. If the AVPlayerLayer already holds
-    /// a player, it will be configured for playback.
+    /// If AVPlayerLayer doesn't already hold an
+    /// AVPlayer reference, this method will create one and
+    /// set the AVPlayerLayer player property. If
+    /// the AVPlayerLayer already holds a player,
+    /// it will be configured for playback.
     /// - Parameters:
     ///   - playbackID: playback ID of the Mux Asset
     ///   you'd like to play
@@ -155,10 +157,11 @@ extension AVPlayerLayer {
     /// Prepares an already instantiated AVPlayerLayer
     /// for playback.
     ///
-    /// If no AVPlayerLayer doesn't hold an AVPlayer reference,
-    /// this method will create one and set the AVPlayerLayer
-    /// player property. If the AVPlayerLayer already holds
-    /// a player, it will be configured for playback.
+    /// If AVPlayerLayer doesn't already hold an
+    /// AVPlayer reference, this method will create one and
+    /// set the AVPlayerLayer player property. If
+    /// the AVPlayerLayer already holds a player,
+    /// it will be configured for playback.
     /// - Parameters:
     ///   - playbackID: playback ID of the Mux Asset
     ///   you'd like to play
@@ -179,10 +182,11 @@ extension AVPlayerLayer {
     /// Prepares an already instantiated AVPlayerLayer
     /// for playback.
     ///
-    /// If no AVPlayerLayer doesn't hold an AVPlayer reference,
-    /// this method will create one and set the AVPlayerLayer
-    /// player property. If the AVPlayerLayer already holds
-    /// a player, it will be configured for playback.
+    /// If AVPlayerLayer doesn't already hold an
+    /// AVPlayer reference, this method will create one and
+    /// set the AVPlayerLayer player property. If
+    /// the AVPlayerLayer already holds a player,
+    /// it will be configured for playback.
     /// - Parameters:
     ///   - playbackID: playback ID of the Mux Asset
     ///   you'd like to play
