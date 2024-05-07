@@ -127,4 +127,133 @@ extension AVPlayerViewController {
         PlayerSDK.shared.monitor.tearDownMonitoring(playerViewController: self)
     }
 
+
+    /// Prepares an already instantiated AVPlayerViewController
+    /// for playback.
+    ///
+    /// If AVPlayerViewController doesn't already hold an
+    /// AVPlayer reference, this method will create one and
+    /// set the AVPlayerViewController player property. If
+    /// the AVPlayerViewController already holds a player,
+    /// it will be configured for playback.
+    /// - Parameters:
+    ///   - playbackID: playback ID of the Mux Asset
+    ///   you'd like to play
+    public func prepare(
+        playbackID: String
+    ) {
+        prepare(
+            playerItem: AVPlayerItem(
+                playbackID: playbackID
+            ),
+            monitoringOptions: MonitoringOptions(
+                playbackID: playbackID
+            )
+        )
+    }
+
+
+    /// Prepares an already instantiated AVPlayerViewController
+    /// for playback.
+    ///
+    /// If AVPlayerViewController doesn't already hold an
+    /// AVPlayer reference, this method will create one and
+    /// set the AVPlayerViewController player property. If
+    /// the AVPlayerViewController already holds a player,
+    /// it will be configured for playback.
+    /// - Parameters:
+    ///   - playbackID: playback ID of the Mux Asset
+    ///   you'd like to play
+    ///   - playbackOptions: playback-related options such
+    ///   as custom domain and maximum resolution
+    public func prepare(
+        playbackID: String,
+        playbackOptions: PlaybackOptions
+    ) {
+        prepare(
+            playerItem: AVPlayerItem(
+                playbackID: playbackID,
+                playbackOptions: playbackOptions
+            ),
+            monitoringOptions: MonitoringOptions(
+                playbackID: playbackID
+            )
+        )
+    }
+
+
+    /// Prepares an already instantiated AVPlayerViewController
+    /// for playback.
+    ///
+    /// If AVPlayerViewController doesn't already hold an
+    /// AVPlayer reference, this method will create one and
+    /// set the AVPlayerViewController player property. If
+    /// the AVPlayerViewController already holds a player,
+    /// it will be configured for playback.
+    /// - Parameters:
+    ///   - playbackID: playback ID of the Mux Asset
+    ///   you'd like to play
+    ///   - monitoringOptions: Options to customize monitoring
+    ///   data reported by Mux
+    public func prepare(
+        playbackID: String,
+        monitoringOptions: MonitoringOptions
+    ) {
+        prepare(
+            playerItem: AVPlayerItem(
+                playbackID: playbackID
+            ),
+            monitoringOptions: monitoringOptions
+        )
+    }
+
+
+    /// Prepares an already instantiated AVPlayerViewController
+    /// for playback.
+    ///
+    /// If AVPlayerViewController doesn't already hold an
+    /// AVPlayer reference, this method will create one and
+    /// set the AVPlayerViewController player property. If
+    /// the AVPlayerViewController already holds a player,
+    /// it will be configured for playback.
+    /// - Parameters:
+    ///   - playbackID: playback ID of the Mux Asset
+    ///   you'd like to play
+    ///   - playbackOptions: playback-related options such
+    ///   as custom domain and maximum resolution
+    ///   - monitoringOptions: Options to customize monitoring
+    ///   data reported by Mux
+    public func prepare(
+        playbackID: String,
+        playbackOptions: PlaybackOptions,
+        monitoringOptions: MonitoringOptions
+    ) {
+        prepare(
+            playerItem: AVPlayerItem(
+                playbackID: playbackID,
+                playbackOptions: playbackOptions
+            ),
+            monitoringOptions: monitoringOptions
+        )
+    }
+
+    internal func prepare(
+        playerItem: AVPlayerItem,
+        monitoringOptions: MonitoringOptions
+    ) {
+        if let player {
+            player.replaceCurrentItem(
+                with: playerItem
+            )
+        } else {
+            player = AVPlayer(
+                playerItem: playerItem
+            )
+        }
+
+        PlayerSDK.shared.monitor.setupMonitoring(
+            playerViewController: self,
+            options: monitoringOptions
+        )
+    }
 }
