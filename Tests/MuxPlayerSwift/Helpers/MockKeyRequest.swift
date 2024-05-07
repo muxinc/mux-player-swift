@@ -9,13 +9,15 @@ import Foundation
 import AVFoundation
 @testable import MuxPlayerSwift
 
-/// Mock ``KeyRequest`` which can record the methods called on it for later verification
+/// Mock ``KeyRequest`` with some basic recording & verification
 class MockKeyRequest : KeyRequest {
     // our fake 'request' just records calls and args
-    typealias InnerRequest = [[String: [Any?]]]
+    typealias InnerRequest = [(String, [Any?])]
     
-    private var fakeRequest: InnerRequest = [[:]]
+    private var fakeRequest: InnerRequest = []
     private let fakeIdentifier: Any
+    
+    // MARK: Protocol impl
     
     var identifier: Any? {
         get {
@@ -24,11 +26,11 @@ class MockKeyRequest : KeyRequest {
     }
     
     func processContentKeyResponse(_ response: AVContentKeyResponse) {
-        fakeRequest.append(["processContentKeyResponse": [response]])
+        fakeRequest.append(("processContentKeyResponse", [response]))
     }
     
     func processContentKeyResponseError(_ error: any Error) {
-        fakeRequest.append(["processContentKeyResponseError": [error]])
+        fakeRequest.append(("processContentKeyResponseError", [error]))
     }
     
     func makeStreamingContentKeyRequestData(
@@ -45,7 +47,23 @@ class MockKeyRequest : KeyRequest {
             handler
         ] as [Any?]
         
-        fakeRequest.append([funcName: args])
+        fakeRequest.append((funcName, args))
+    }
+    
+    // MARK: verificaitons
+    
+    /// Verifies that the given method was called the given number of times
+    /// This can be  enough for situations where the arg values don't matter
+    /// or where they'd be pretty obvious.
+    /// To verify args, use ``calls``
+    func verifyWasCalled(funcName: String, times: Int = 1) -> Bool {
+        return fakeRequest.filter{ (f, _) in f == funcName }.count == times
+    }
+    
+    var calls: [(String, [Any?])] {
+        get {
+            return fakeRequest
+        }
     }
     
     init(fakeIdentifier: String = "fake-identifier") {
