@@ -11,7 +11,6 @@ import XCTest
 
 class ContentKeySessionDelegateTests : XCTestCase {
     
-    //    var sessionDelegate: ContentKeySessionDelegate<FairPlayStreamingSessionManager>!
     var testPlaybackOptionsRegistry: TestPlaybackOptionsRegistry!
     var testCredentialClient: TestFairPlayStreamingSessionCredentialClient!
     
