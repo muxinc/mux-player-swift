@@ -2,6 +2,7 @@
 //  PlaybackURLTests.swift
 //
 
+import AVKit
 import AVFoundation
 import XCTest
 @testable import MuxPlayerSwift
@@ -200,6 +201,212 @@ final class PlaybackURLTests: XCTestCase {
         XCTAssertEqual(
             (playerItem.asset as! AVURLAsset).url.absoluteString,
             "https://stream.play.example.com/abc.m3u8?token=WhoooopsNotAnActualToken"
+        )
+    }
+
+    func testExistingPlayerViewControllerPreparationForPlayback() throws {
+        let playerViewController = AVPlayerViewController()
+        playerViewController.prepare(
+            playbackID: "abc",
+            playbackOptions: PlaybackOptions(
+                maximumResolutionTier: .upTo1080p,
+                minimumResolutionTier: .atLeast540p,
+                renditionOrder: .descending
+            )
+        )
+
+        let item = try XCTUnwrap(
+            playerViewController.player?.currentItem,
+            "Expected player item"
+        )
+
+        let url = try XCTUnwrap(
+            (item.asset as? AVURLAsset)?.url,
+            "Expected player item with URL"
+        )
+
+        let components = try XCTUnwrap(
+            URLComponents(
+                url: url,
+                resolvingAgainstBaseURL: false
+            )
+        )
+
+
+        XCTAssertTrue(
+            components.path.contains("abc")
+        )
+
+        XCTAssertNotNil(
+            components.queryItems?.first(where: {
+                $0.name == "max_resolution" && $0.value == "1080p"
+            })
+        )
+
+        XCTAssertNotNil(
+            components.queryItems?.first(where: {
+                $0.name == "min_resolution" && $0.value == "540p"
+            })
+        )
+
+        XCTAssertNotNil(
+            components.queryItems?.first(where: {
+                $0.name == "rendition_order" && $0.value == "desc"
+            })
+        )
+
+        playerViewController.prepare(
+            playbackID: "def",
+            playbackOptions: PlaybackOptions(
+                maximumResolutionTier: .upTo720p
+            )
+        )
+
+        let secondItem = try XCTUnwrap(
+            playerViewController.player?.currentItem,
+            "Expected player item"
+        )
+
+        let secondURL = try XCTUnwrap(
+            (secondItem.asset as? AVURLAsset)?.url,
+            "Expected player item with URL"
+        )
+
+        let secondURLComponents = try XCTUnwrap(
+            URLComponents(
+                url: secondURL,
+                resolvingAgainstBaseURL: false
+            )
+        )
+
+        XCTAssertTrue(
+            secondURLComponents.path.contains("def")
+        )
+
+        let secondURLQueryItems = try XCTUnwrap(
+            secondURLComponents.queryItems,
+            "Expected query items to be present"
+        )
+
+        XCTAssertNotNil(
+            secondURLQueryItems.first(where: {
+                $0.name == "max_resolution" && $0.value == "720p"
+            })
+        )
+
+        XCTAssertNil(
+            secondURLQueryItems.first(where: {
+                $0.name == "min_resolution"
+            })
+        )
+
+        XCTAssertNil(
+            secondURLQueryItems.first(where: {
+                $0.name == "rendition_order"
+            })
+        )
+    }
+
+    func testExistingPlayerLayerPreparationForPlayback() throws {
+        let playerLayer = AVPlayerLayer()
+        playerLayer.prepare(
+            playbackID: "abc",
+            playbackOptions: PlaybackOptions(
+                maximumResolutionTier: .upTo1080p,
+                minimumResolutionTier: .atLeast540p,
+                renditionOrder: .descending
+            )
+        )
+
+        let item = try XCTUnwrap(
+            playerLayer.player?.currentItem,
+            "Expected player item"
+        )
+
+        let url = try XCTUnwrap(
+            (item.asset as? AVURLAsset)?.url,
+            "Expected player item with URL"
+        )
+
+        let components = try XCTUnwrap(
+            URLComponents(
+                url: url,
+                resolvingAgainstBaseURL: false
+            )
+        )
+
+
+        XCTAssertTrue(
+            components.path.contains("abc")
+        )
+
+        XCTAssertNotNil(
+            components.queryItems?.first(where: {
+                $0.name == "max_resolution" && $0.value == "1080p"
+            })
+        )
+
+        XCTAssertNotNil(
+            components.queryItems?.first(where: {
+                $0.name == "min_resolution" && $0.value == "540p"
+            })
+        )
+
+        XCTAssertNotNil(
+            components.queryItems?.first(where: {
+                $0.name == "rendition_order" && $0.value == "desc"
+            })
+        )
+
+        playerLayer.prepare(
+            playbackID: "def",
+            playbackOptions: PlaybackOptions(
+                maximumResolutionTier: .upTo720p
+            )
+        )
+
+        let secondItem = try XCTUnwrap(
+            playerLayer.player?.currentItem,
+            "Expected player item"
+        )
+
+        let secondURL = try XCTUnwrap(
+            (secondItem.asset as? AVURLAsset)?.url,
+            "Expected player item with URL"
+        )
+
+        let secondURLComponents = try XCTUnwrap(
+            URLComponents(
+                url: secondURL,
+                resolvingAgainstBaseURL: false
+            )
+        )
+
+        XCTAssertTrue(
+            secondURLComponents.path.contains("def")
+        )
+
+        let secondURLQueryItems = try XCTUnwrap(
+            secondURLComponents.queryItems,
+            "Expected query items to be present"
+        )
+
+        XCTAssertNotNil(
+            secondURLQueryItems.first(where: {
+                $0.name == "max_resolution" && $0.value == "720p"
+            })
+        )
+
+        XCTAssertNil(
+            secondURLQueryItems.first(where: {
+                $0.name == "min_resolution"
+            })
+        )
+
+        XCTAssertNil(
+            secondURLQueryItems.first(where: {
+                $0.name == "rendition_order"
+            })
         )
     }
 }
