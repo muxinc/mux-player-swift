@@ -153,6 +153,7 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
         
         // get app cert
         var applicationCertificate: Data?
+        var appCertError: (any Error)?
         //  the drmtoday example does this by joining a dispatch group, but is this best?
         let group = DispatchGroup()
         group.enter()
@@ -161,15 +162,21 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
             playbackID: playbackID,
             drmToken: drmOptions.drmToken,
             completion: { result in
-                if let cert = try? result.get() {
-                    applicationCertificate = cert
+                do {
+                    applicationCertificate = try result.get()
+                } catch {
+                    appCertError = error
                 }
                 group.leave()
             }
         )
         group.wait()
         guard let applicationCertificate = applicationCertificate else {
-            print("failed to get application certificate")
+            request.processContentKeyResponseError(
+                FairPlaySessionError.because(
+                    cause: appCertError!
+                )
+            )
             return
         }
         
