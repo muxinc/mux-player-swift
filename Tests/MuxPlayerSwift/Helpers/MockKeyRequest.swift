@@ -60,6 +60,10 @@ class MockKeyRequest : KeyRequest {
         return fakeRequest.filter{ (f, _) in f == funcName }.count == times
     }
     
+    func verifyNotCalled(funcName: String) -> Bool {
+        return verifyWasCalled(funcName: funcName, times: 0)
+    }
+    
     var calls: [(String, [Any?])] {
         get {
             return fakeRequest
