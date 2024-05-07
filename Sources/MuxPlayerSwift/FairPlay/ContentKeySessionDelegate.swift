@@ -9,15 +9,15 @@ import Foundation
 import AVFoundation
 
 class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionManager> : NSObject, AVContentKeySessionDelegate {
-
+    
     weak var sessionManager: SessionManager?
-
+    
     init(
         sessionManager: SessionManager
     ) {
         self.sessionManager = sessionManager
     }
-
+    
     // MARK: AVContentKeySessionDelegate implementation
     
     func contentKeySession(_ session: AVContentKeySession, didProvide keyRequest: AVContentKeyRequest) {
@@ -87,8 +87,8 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionManager>
     // MARK: Logic
     
     func parsePlaybackId(fromSkdLocation uri: URL) -> String? {
-       // pull the playbackID out of the uri to the key
-       let urlComponents = URLComponents(url: uri, resolvingAgainstBaseURL: false)
+        // pull the playbackID out of the uri to the key
+        let urlComponents = URLComponents(url: uri, resolvingAgainstBaseURL: false)
         guard let urlComponents = urlComponents else {
             // not likely
             print("!! Error: Cannot Parse URI")
@@ -124,7 +124,7 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionManager>
             print("Missing Session Manager")
             return
         }
-
+        
         let playbackOptions = sessionManager.findRegisteredPlaybackOptions(
             for: playbackID
         )
@@ -196,7 +196,7 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionManager>
             print("Missing Session Manager")
             return
         }
-
+        
         // todo - DRM Today example does this by joining a DispatchGroup. Is this really preferable??
         var ckcData: Data? = nil
         let group = DispatchGroup()
@@ -226,6 +226,51 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionManager>
         let keyResponse = AVContentKeyResponse(fairPlayStreamingKeyResponseData: ckcData)
         request.processContentKeyResponse(keyResponse)
         // Done! no further interaction is required from us to play.
+    }
+}
+
+// Wraps a generic request for a key and delegates calls to it
+//  this protocol's methods are intended to match AVContentKeyRequest
+protocol KeyRequest {
+    
+    associatedtype Request
+    
+    func processContentKeyResponse(_ response: AVContentKeyResponse)
+    func processContentKeyResponseError(_ error: any Error)
+    func makeStreamingContentKeyRequestData(forApp appIdentifier: Data,
+                                            contentIdentifier: Data?,
+                                            options: [String : Any]?,
+                                            completionHandler handler: @escaping (Data?, (any Error)?) -> Void)
+}
+
+struct DefaultKeyRequest {
+    typealias Request = AVContentKeyRequest
+    
+    func processContentKeyResponse(_ response: AVContentKeyResponse) {
+        self.request.processContentKeyResponse(response)
+    }
+    
+    func processContentKeyResponseError(_ error: any Error) {
+        self.processContentKeyResponseError(error)
+    }
+    
+    func makeStreamingContentKeyRequestData(
+        forApp appIdentifier: Data,
+        contentIdentifier: Data?,
+        options: [String : Any]? = nil,
+        completionHandler handler: @escaping (Data?, (any Error)?) -> Void
+    ) {
+        self.makeStreamingContentKeyRequestData(forApp: appIdentifier,
+                                                contentIdentifier: contentIdentifier,
+                                                options: options,
+                                                completionHandler: handler
+        )
+    }
+    
+    let request: Request
+    
+    init(wrapping request: Request) {
+        self.request = request
     }
 }
 
