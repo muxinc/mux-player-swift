@@ -219,11 +219,6 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
             return
         }
         
-//        guard let optionsRegistry = self.playbackOptionsRegistry else {
-//            print("Missing Session Manager")
-//            return
-//        }
-
         // todo - DRM Today example does this by joining a DispatchGroup. Is this really preferable??
         var ckcData: Data? = nil
         let group = DispatchGroup()
