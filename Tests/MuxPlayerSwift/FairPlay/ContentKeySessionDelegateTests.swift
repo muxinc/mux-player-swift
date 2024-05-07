@@ -11,7 +11,7 @@ import XCTest
 
 class ContentKeySessionDelegateTests : XCTestCase {
     
-//    var sessionDelegate: ContentKeySessionDelegate<FairPlayStreamingSessionManager>!
+    //    var sessionDelegate: ContentKeySessionDelegate<FairPlayStreamingSessionManager>!
     var testPlaybackOptionsRegistry: TestPlaybackOptionsRegistry!
     var testCredentialClient: TestFairPlayStreamingSessionCredentialClient!
     
@@ -50,7 +50,16 @@ class ContentKeySessionDelegateTests : XCTestCase {
     }
     
     func testParsePlaybackId() throws {
-       let fakeKeyUri = "skd://fake.domain/?playbackId=12345&token=unrelated-to-test"
+        let fakePlaybackID = "fake-playback-id"
+        let fakeKeyUri = URL(
+            string:
+                "skd://fake.domain/?playbackId=\(fakePlaybackID)&token=unrelated-to-test"
+        )!
         
+        let foundPlaybackID = contentKeySessionDelegate.parsePlaybackId(
+            fromSkdLocation: fakeKeyUri
+        )
+        
+        XCTAssertEqual(fakePlaybackID, foundPlaybackID)
     }
 }
