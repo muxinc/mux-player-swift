@@ -8,14 +8,26 @@
 import Foundation
 import AVFoundation
 
-class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionManager> : NSObject, AVContentKeySessionDelegate {
+class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredentialClient & PlaybackOptionsRegistry> : NSObject, AVContentKeySessionDelegate {
     
-    weak var sessionManager: SessionManager?
-    
-    init(
+    weak var credentialClient: FairPlayStreamingSessionCredentialClient?
+    weak var playbackOptionsRegistry: PlaybackOptionsRegistry?
+
+    convenience init(
         sessionManager: SessionManager
     ) {
-        self.sessionManager = sessionManager
+        self.init(
+            credentialClient: sessionManager,
+            optionsRegistry: sessionManager
+        )
+    }
+    
+    init (
+        credentialClient: FairPlayStreamingSessionCredentialClient,
+        optionsRegistry: PlaybackOptionsRegistry
+    ) {
+        self.credentialClient = credentialClient
+        self.playbackOptionsRegistry = optionsRegistry
     }
     
     // MARK: AVContentKeySessionDelegate implementation
@@ -111,12 +123,17 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionManager>
             return
         }
         
-        guard let sessionManager = self.sessionManager else {
+        guard let credentialClient = self.credentialClient  else {
             print("Missing Session Manager")
             return
         }
         
-        let playbackOptions = sessionManager.findRegisteredPlaybackOptions(
+        guard let optionsRegistry = self.playbackOptionsRegistry  else {
+            print("Missing Session Manager")
+            return
+        }
+
+        let playbackOptions = optionsRegistry.findRegisteredPlaybackOptions(
             for: playbackID
         )
         guard let playbackOptions = playbackOptions,
@@ -132,7 +149,7 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionManager>
         //  the drmtoday example does this by joining a dispatch group, but is this best?
         let group = DispatchGroup()
         group.enter()
-        sessionManager.requestCertificate(
+        credentialClient.requestCertificate(
             fromDomain: rootDomain,
             playbackID: playbackID,
             drmToken: drmOptions.drmToken,
@@ -183,16 +200,21 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionManager>
         rootDomain: String, // without any "license." or "stream." prepended, eg mux.com, custom.1234.co.uk
         request: any KeyRequest
     ) {
-        guard let sessionManager = self.sessionManager else {
+        guard let credendtialClient = self.credentialClient else {
             print("Missing Session Manager")
             return
         }
         
+//        guard let optionsRegistry = self.playbackOptionsRegistry else {
+//            print("Missing Session Manager")
+//            return
+//        }
+
         // todo - DRM Today example does this by joining a DispatchGroup. Is this really preferable??
         var ckcData: Data? = nil
         let group = DispatchGroup()
         group.enter()
-        sessionManager.requestLicense(
+        credendtialClient.requestLicense(
             spcData: spcData,
             playbackID: playbackID,
             drmToken: drmToken,

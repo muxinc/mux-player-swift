@@ -9,6 +9,7 @@ import Foundation
 import AVFoundation
 @testable import MuxPlayerSwift
 
+// TODO: Still needed?
 class TestFairPlayStreamingSessionManager : FairPlayStreamingSessionManager {
     
     let credentialClient: FairPlayStreamingSessionCredentialClient
