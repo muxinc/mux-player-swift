@@ -88,13 +88,7 @@ extension String {
     static func makeLicenseDomain(rootDomain: String) -> Self {
         let customDomainWithDefault = rootDomain
         let licenseDomain = "license.\(customDomainWithDefault)"
-
-        // TODO: this check should not reach production or playing from staging will probably break
-        if("staging.mux.com" == customDomainWithDefault) {
-            return "license.gcp-us-west1-vos1.staging.mux.com"
-        } else {
-            return licenseDomain
-        }
+        return licenseDomain
     }
 }
 
