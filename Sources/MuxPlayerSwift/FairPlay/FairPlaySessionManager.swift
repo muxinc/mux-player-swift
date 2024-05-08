@@ -37,7 +37,7 @@ protocol FairPlayStreamingSessionCredentialClient: AnyObject {
 
 // MARK: - PlaybackOptionsRegistry
 
-protocol PlaybackOptionsRegistry {
+protocol PlaybackOptionsRegistry: AnyObject {
     /// Registers a ``PlaybackOptions`` for DRM playback, associated with the given playbackID
     func registerPlaybackOptions(_ opts: PlaybackOptions, for playbackID: String)
     /// Gets a DRM token previously registered via ``registerPlaybackOptions``

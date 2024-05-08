@@ -618,7 +618,7 @@ class FairPlaySessionManagerTests : XCTestCase {
             fairPlayStreamingSessionManager: defaultFairPlaySessionManager
         )
 
-        let i = AVPlayerItem(
+        let _ = AVPlayerItem(
             playbackID: "abc",
             playbackOptions: PlaybackOptions(
                 playbackToken: "def",

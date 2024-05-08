@@ -8,50 +8,39 @@
 import Foundation
 import AVFoundation
 
-class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionManager> : NSObject, AVContentKeySessionDelegate {
-
+class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredentialClient & PlaybackOptionsRegistry> : NSObject, AVContentKeySessionDelegate {
+    
     weak var sessionManager: SessionManager?
 
-    init(
-        sessionManager: SessionManager
-    ) {
+    init(sessionManager: SessionManager) {
         self.sessionManager = sessionManager
     }
-
+    
     // MARK: AVContentKeySessionDelegate implementation
     
     func contentKeySession(_ session: AVContentKeySession, didProvide keyRequest: AVContentKeyRequest) {
-        handleContentKeyRequest(request: keyRequest)
+        handleContentKeyRequest(request: DefaultKeyRequest(wrapping: keyRequest))
     }
     
     func contentKeySession(_ session: AVContentKeySession, didProvideRenewingContentKeyRequest keyRequest: AVContentKeyRequest) {
-        handleContentKeyRequest(request: keyRequest)
+        handleContentKeyRequest(request: DefaultKeyRequest(wrapping: keyRequest))
     }
     
     func contentKeySession(_ session: AVContentKeySession, contentKeyRequestDidSucceed keyRequest: AVContentKeyRequest) {
         // this func intentionally left blank
+        // TODO: Log more nicely (ie, with a Logger)
         print("CKC Request Success")
     }
     
     func contentKeySession(_ session: AVContentKeySession, contentKeyRequest keyRequest: AVContentKeyRequest, didFailWithError err: any Error) {
+        // TODO: Log more nicely (ie, with a Logger)
         print("CKC Request Failed!!! \(err.localizedDescription)")
-    }
-    
-    func contentKeySessionContentProtectionSessionIdentifierDidChange(_ session: AVContentKeySession) {
-        print("Content Key session ID changed apparently")
-    }
-    
-    func contentKeySessionDidGenerateExpiredSessionReport(_ session: AVContentKeySession) {
-        print("Expired session report generated (whatever that means)")
-    }
-    
-    func contentKeySession(_ session: AVContentKeySession, externalProtectionStatusDidChangeFor contentKey: AVContentKey) {
-        print("External Protection status changed for a content key sesison")
     }
     
     func contentKeySession(_ session: AVContentKeySession, shouldRetry keyRequest: AVContentKeyRequest,
                            reason retryReason: AVContentKeyRequest.RetryReason) -> Bool {
-        print("===shouldRetry called with reason \(retryReason)")
+        // TODO: use Logger
+        print("shouldRetry called with reason \(retryReason)")
         
         var shouldRetry = false
         
@@ -87,8 +76,8 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionManager>
     // MARK: Logic
     
     func parsePlaybackId(fromSkdLocation uri: URL) -> String? {
-       // pull the playbackID out of the uri to the key
-       let urlComponents = URLComponents(url: uri, resolvingAgainstBaseURL: false)
+        // pull the playbackID out of the uri to the key
+        let urlComponents = URLComponents(url: uri, resolvingAgainstBaseURL: false)
         guard let urlComponents = urlComponents else {
             // not likely
             print("!! Error: Cannot Parse URI")
@@ -103,7 +92,7 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionManager>
         return playbackID
     }
     
-    func handleContentKeyRequest(request: AVContentKeyRequest) {
+    func handleContentKeyRequest(request: any KeyRequest) {
         print("<><>handleContentKeyRequest: Called")
         // for hls, "the identifier must be an NSURL that matches a key URI in the Media Playlist." from the docs
         guard let keyURLStr = request.identifier as? String,
@@ -116,12 +105,16 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionManager>
         
         let playbackID = parsePlaybackId(fromSkdLocation: keyURL)
         guard let playbackID = playbackID else {
-            print("No playbackID found from server , aborting")
+            request.processContentKeyResponseError(
+                FairPlaySessionError.unexpected(
+                    message: "playbackID not present in key uri"
+                )
+            )
             return
         }
         
         guard let sessionManager = self.sessionManager else {
-            print("Missing Session Manager")
+            print("no session manager")
             return
         }
 
@@ -131,6 +124,11 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionManager>
         guard let playbackOptions = playbackOptions,
               case .drm(let drmOptions) = playbackOptions.playbackPolicy else {
             print("DRM Tokens must be registered when the AVPlayerItem is created, using FairplaySessionManager")
+            request.processContentKeyResponseError(
+                FairPlaySessionError.unexpected(
+                    message: "Token was not registered, only happens during SDK errors"
+                )
+            )
             return
         }
         
@@ -138,6 +136,7 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionManager>
         
         // get app cert
         var applicationCertificate: Data?
+        var appCertError: (any Error)?
         //  the drmtoday example does this by joining a dispatch group, but is this best?
         let group = DispatchGroup()
         group.enter()
@@ -146,15 +145,21 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionManager>
             playbackID: playbackID,
             drmToken: drmOptions.drmToken,
             completion: { result in
-                if let cert = try? result.get() {
-                    applicationCertificate = cert
+                do {
+                    applicationCertificate = try result.get()
+                } catch {
+                    appCertError = error
                 }
                 group.leave()
             }
         )
         group.wait()
         guard let applicationCertificate = applicationCertificate else {
-            print("failed to get application certificate")
+            request.processContentKeyResponseError(
+                FairPlaySessionError.because(
+                    cause: appCertError!
+                )
+            )
             return
         }
         
@@ -168,9 +173,9 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionManager>
             }
             
             guard let spcData = spcData else {
-                print("No SPC Data in spc response")
-                // `error` will be non-nil by contract
-                request.processContentKeyResponseError(error!)
+                request.processContentKeyResponseError(
+                    error ?? FairPlaySessionError.unexpected(message: "no SPC")
+                )
                 return
             }
             
@@ -185,18 +190,18 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionManager>
         }
     }
     
-    private func handleSpcObtainedFromCDM(
+    func handleSpcObtainedFromCDM(
         spcData: Data,
         playbackID: String,
         drmToken: String,
         rootDomain: String, // without any "license." or "stream." prepended, eg mux.com, custom.1234.co.uk
-        request: AVContentKeyRequest
+        request: any KeyRequest
     ) {
         guard let sessionManager = self.sessionManager else {
             print("Missing Session Manager")
             return
         }
-
+        
         // todo - DRM Today example does this by joining a DispatchGroup. Is this really preferable??
         var ckcData: Data? = nil
         let group = DispatchGroup()
@@ -216,16 +221,77 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionManager>
         group.wait()
         
         guard let ckcData = ckcData else {
-            print("no CKC Data in CKC response")
             request.processContentKeyResponseError(FairPlaySessionError.unexpected(message: "No CKC Data returned from CDM"))
             return
         }
         
         print("Submitting CKC to system")
         // Send CKC to CDM/wherever else so we can finally play our content
-        let keyResponse = AVContentKeyResponse(fairPlayStreamingKeyResponseData: ckcData)
+//        let keyResponse = AVContentKeyResponse(fairPlayStreamingKeyResponseData: ckcData)
+        let keyResponse = request.makeContentKeyResponse(data: ckcData)
         request.processContentKeyResponse(keyResponse)
         // Done! no further interaction is required from us to play.
+    }
+}
+
+// Wraps a generic request for a key and delegates calls to it
+//  this protocol's methods are intended to match AVContentKeyRequest
+protocol KeyRequest {
+    
+    associatedtype InnerRequest
+    
+    var identifier: Any? { get }
+    
+    func makeContentKeyResponse(data: Data) -> AVContentKeyResponse
+    
+    func processContentKeyResponse(_ response: AVContentKeyResponse)
+    func processContentKeyResponseError(_ error: any Error)
+    func makeStreamingContentKeyRequestData(forApp appIdentifier: Data,
+                                            contentIdentifier: Data?,
+                                            options: [String : Any]?,
+                                            completionHandler handler: @escaping (Data?, (any Error)?) -> Void)
+}
+
+// Wraps a real AVContentKeyRequest and straightforwardly delegates to it
+struct DefaultKeyRequest : KeyRequest {
+    typealias InnerRequest = AVContentKeyRequest
+    
+    var identifier: Any? {
+        get {
+            return self.request.identifier
+        }
+    }
+    
+    func makeContentKeyResponse(data: Data) -> AVContentKeyResponse {
+        return AVContentKeyResponse(fairPlayStreamingKeyResponseData: data)
+    }
+    
+    func processContentKeyResponse(_ response: AVContentKeyResponse) {
+        self.request.processContentKeyResponse(response)
+    }
+    
+    func processContentKeyResponseError(_ error: any Error) {
+        self.request.processContentKeyResponseError(error)
+    }
+    
+    func makeStreamingContentKeyRequestData(
+        forApp appIdentifier: Data,
+        contentIdentifier: Data?,
+        options: [String : Any]? = nil,
+        completionHandler handler: @escaping (Data?, (any Error)?) -> Void
+    ) {
+        self.request.makeStreamingContentKeyRequestData(
+            forApp: appIdentifier,
+            contentIdentifier: contentIdentifier,
+            options: options,
+            completionHandler: handler
+        )
+    }
+    
+    let request: InnerRequest
+    
+    init(wrapping request: InnerRequest) {
+        self.request = request
     }
 }
 
