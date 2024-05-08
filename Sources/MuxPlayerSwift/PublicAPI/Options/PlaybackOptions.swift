@@ -43,13 +43,16 @@ public enum MinResolutionTier {
     /// not exceed 1080p (1920 x 1080)
     case atLeast1080p
     /// The asset will stream with a resolution that does
-    /// not exceed 2440p (2160 x 4096)
+    /// not exceed 1440p (1440 x 2560)
     case atLeast1440p
     /// The asset will stream with a resolution that does
-    /// not exceed 2160 p(2560 x 1440)
+    /// not exceed 2160p (2160 x 4096)
     case atLeast2160p
 }
 
+
+/// The order of the available renditions provided to the
+/// player
 public enum RenditionOrder {
     /// By default no rendition order is specified
     case `default`
