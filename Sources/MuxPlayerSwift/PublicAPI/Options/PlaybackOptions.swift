@@ -50,7 +50,6 @@ public enum MinResolutionTier {
     case atLeast2160p
 }
 
-
 /// The order of the available renditions provided to the
 /// player
 public enum RenditionOrder {
@@ -63,20 +62,16 @@ public enum RenditionOrder {
 
 /// Limit playback to a single resolution tier
 public enum SingleResolutionTier {
-    /// The asset will stream with a resolution that does
-    /// not exceed 720p (1080 x 720)
+    /// The asset will be played at only 720p (1080 x 720).
     case only720p
 
-    /// The asset will stream with a resolution that does
-    /// not exceed 1080p (1920 x 1080)
+    /// The asset will be played at only 1080p (1920 x 1080).
     case only1080p
 
-    /// The asset will stream with a resolution that does
-    /// not exceed 720p (1080 x 720)
+    /// The asset will be played at only 1440p (1440 x 2560)
     case only1440p
 
-    /// The asset will stream with a resolution that does
-    /// not exceed 720p (1080 x 720)
+    /// The asset will be played at only 2160p (2160 x 4096).
     case only2160p
 }
 
