@@ -48,8 +48,6 @@ class PlayerSDK {
         #endif
 
         self.reverseProxyServer = ReverseProxyServer()
-
-        self.reverseProxyServer.start()
     }
 
     func registerPlayerLayer(
@@ -57,6 +55,10 @@ class PlayerSDK {
         monitoringOptions: MonitoringOptions,
         requiresReverseProxying: Bool = false
     ) {
+        if requiresReverseProxying && !self.reverseProxyServer.hasBeenStarted {
+            self.reverseProxyServer.start()
+        }
+
         monitor.setupMonitoring(
             playerLayer: playerLayer,
             options: monitoringOptions
@@ -79,6 +81,10 @@ class PlayerSDK {
         monitoringOptions: MonitoringOptions,
         requiresReverseProxying: Bool = false
     ) {
+        if requiresReverseProxying && !self.reverseProxyServer.hasBeenStarted {
+            self.reverseProxyServer.start()
+        }
+
         monitor.setupMonitoring(
             playerViewController: playerViewController,
             options: monitoringOptions

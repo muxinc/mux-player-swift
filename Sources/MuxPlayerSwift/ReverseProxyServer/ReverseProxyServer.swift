@@ -16,6 +16,10 @@ class ReverseProxyServer {
     var eventRecorder: EventRecorder = EventRecorder()
     var playlistLocalURLMapper: PlaylistLocalURLMapper = PlaylistLocalURLMapper()
 
+    var hasBeenStarted: Bool {
+        webServer.isRunning
+    }
+
     let port: UInt = 1234
     let originURLKey: String = "__hls_origin_url"
 

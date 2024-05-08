@@ -1,5 +1,5 @@
 //
-//  MainViewController.swift
+//  SinglePlayerExampleController.swift
 //  MuxPlayerSwiftExample
 //
 
@@ -11,7 +11,7 @@ import UIKit
 import MuxPlayerSwift
 
 // Single player example
-class MainViewController: UIViewController {
+class SinglePlayerExampleController: UIViewController {
 
     // MARK: Player View Controller
 
@@ -21,7 +21,7 @@ class MainViewController: UIViewController {
 
     // MARK: Mux Data Monitoring Parameters
 
-    var playerName: String = "MuxPlayerSwiftExample-MainPlayer"
+    var playerName: String = "MuxPlayerSwift-SinglePlayerExample"
 
     var environmentKey: String? {
         ProcessInfo.processInfo.environmentKey
@@ -203,7 +203,7 @@ class MainViewController: UIViewController {
             ]
         )
 
-        let playbackModifiersMenu = UIMenu(
+        let optionsMenu = UIMenu(
             children: [
                 maximumResolutionsMenu,
                 minimumResolutionsMenu,
@@ -213,8 +213,8 @@ class MainViewController: UIViewController {
 
 
         navigationItem.rightBarButtonItem = UIBarButtonItem(
-            title: "Adjust Playback Modifiers",
-            menu: playbackModifiersMenu
+            title: "Adjust SDK Options",
+            menu: optionsMenu
         )
 
         displayPlayerViewController()
@@ -243,12 +243,6 @@ class MainViewController: UIViewController {
             .view
             .translatesAutoresizingMaskIntoConstraints = false
         view.addConstraints([
-            playerViewController.view.centerXAnchor.constraint(
-                equalTo: view.centerXAnchor
-            ),
-            playerViewController.view.centerYAnchor.constraint(
-                equalTo: view.centerYAnchor
-            ),
             playerViewController.view.leadingAnchor.constraint(
                 equalTo: view.leadingAnchor
             ),

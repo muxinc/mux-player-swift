@@ -27,8 +27,8 @@
                                             <rect key="frame" x="0.0" y="0.0" width="393" height="88"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
-                                                <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" insetsLayoutMarginsFromSafeArea="NO" text="Basic AVKit Example" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="2B6-Ra-0LL">
-                                                    <rect key="frame" x="20" y="21.333333333333329" width="179.33333333333334" height="24"/>
+                                                <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" insetsLayoutMarginsFromSafeArea="NO" text="Single Player Example" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="2B6-Ra-0LL" userLabel="Single Player Example">
+                                                    <rect key="frame" x="20" y="21.333333333333329" width="192" height="24"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="20"/>
                                                     <nil key="textColor"/>
@@ -47,15 +47,42 @@
                                             <segue destination="BYZ-38-t0r" kind="show" id="dET-KM-oHN"/>
                                         </connections>
                                     </tableViewCell>
-                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" textLabel="3V8-cN-wHE" detailTextLabel="vof-0E-Ts3" rowHeight="88" style="IBUITableViewCellStyleSubtitle" id="7Ub-rm-FrO">
+                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" textLabel="xkN-F9-pLN" detailTextLabel="7HI-AU-2S9" rowHeight="88" style="IBUITableViewCellStyleSubtitle" id="ab1-hf-fKH">
                                         <rect key="frame" x="0.0" y="138" width="393" height="88"/>
+                                        <autoresizingMask key="autoresizingMask"/>
+                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="ab1-hf-fKH" id="NZP-hO-bjF">
+                                            <rect key="frame" x="0.0" y="0.0" width="393" height="88"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                            <subviews>
+                                                <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" insetsLayoutMarginsFromSafeArea="NO" text="Smart Cache Example" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="xkN-F9-pLN" userLabel="Smart Cache Example">
+                                                    <rect key="frame" x="20" y="21.333333333333329" width="193.33333333333334" height="24"/>
+                                                    <autoresizingMask key="autoresizingMask"/>
+                                                    <fontDescription key="fontDescription" type="system" pointSize="20"/>
+                                                    <nil key="textColor"/>
+                                                    <nil key="highlightedColor"/>
+                                                </label>
+                                                <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" insetsLayoutMarginsFromSafeArea="NO" text="Using AVPlayerViewController" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="7HI-AU-2S9">
+                                                    <rect key="frame" x="20" y="49" width="169.33333333333334" height="14.333333333333334"/>
+                                                    <autoresizingMask key="autoresizingMask"/>
+                                                    <fontDescription key="fontDescription" type="system" pointSize="0.0"/>
+                                                    <nil key="textColor"/>
+                                                    <nil key="highlightedColor"/>
+                                                </label>
+                                            </subviews>
+                                        </tableViewCellContentView>
+                                        <connections>
+                                            <segue destination="Yly-Kg-jpw" kind="show" id="dDj-cY-Cha"/>
+                                        </connections>
+                                    </tableViewCell>
+                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" textLabel="3V8-cN-wHE" detailTextLabel="vof-0E-Ts3" rowHeight="88" style="IBUITableViewCellStyleSubtitle" id="7Ub-rm-FrO">
+                                        <rect key="frame" x="0.0" y="226" width="393" height="88"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="7Ub-rm-FrO" id="rm2-cf-faX">
                                             <rect key="frame" x="0.0" y="0.0" width="393" height="88"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
-                                                <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" insetsLayoutMarginsFromSafeArea="NO" text="Player Layer Example" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="3V8-cN-wHE">
-                                                    <rect key="frame" x="20" y="21.333333333333329" width="186" height="24"/>
+                                                <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" insetsLayoutMarginsFromSafeArea="NO" text="Single Player Layer Example" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="3V8-cN-wHE" userLabel="Single Player Layer Example">
+                                                    <rect key="frame" x="19.999999999999986" y="21.333333333333329" width="244.66666666666666" height="24"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="20"/>
                                                     <nil key="textColor"/>
@@ -70,6 +97,9 @@
                                                 </label>
                                             </subviews>
                                         </tableViewCellContentView>
+                                        <connections>
+                                            <segue destination="JrU-9c-zyG" kind="show" id="q3v-VV-Yv9"/>
+                                        </connections>
                                     </tableViewCell>
                                 </cells>
                             </tableViewSection>
@@ -85,20 +115,21 @@
             </objects>
             <point key="canvasLocation" x="-1095" y="-94"/>
         </scene>
-        <!--View Controller-->
+        <!--Smart Cache Example View Controller-->
         <scene sceneID="uMF-mp-lAo">
             <objects>
-                <viewController id="Yly-Kg-jpw" sceneMemberID="viewController">
+                <viewController id="Yly-Kg-jpw" customClass="SmartCacheExampleViewController" customModule="MuxPlayerSwiftExample" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="jeE-3u-3Pt">
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <viewLayoutGuide key="safeArea" id="5Od-pm-2EA"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                     </view>
+                    <navigationItem key="navigationItem" id="ewG-T6-Pq1"/>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="RFi-ME-QBi" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-83" y="232"/>
+            <point key="canvasLocation" x="608" y="-116"/>
         </scene>
         <!--Experimental Cache View Controller-->
         <scene sceneID="e4E-2r-LPD">
@@ -116,6 +147,22 @@
             </objects>
             <point key="canvasLocation" x="-1095" y="754"/>
         </scene>
+        <!--Single Player Layer Example View Controller-->
+        <scene sceneID="Uuu-F8-ITi">
+            <objects>
+                <viewController id="JrU-9c-zyG" customClass="SinglePlayerLayerExampleViewController" customModule="MuxPlayerSwiftExample" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="D7I-9K-v0W">
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="yZ3-yd-HWZ"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                    </view>
+                    <navigationItem key="navigationItem" id="KJY-ai-G61"/>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="Uka-0a-JlQ" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-161" y="271"/>
+        </scene>
         <!--Navigation Controller-->
         <scene sceneID="2gk-Ck-Rao">
             <objects>
@@ -132,10 +179,10 @@
             </objects>
             <point key="canvasLocation" x="-2271" y="-93"/>
         </scene>
-        <!--Main View Controller-->
+        <!--Single Player Example Controller-->
         <scene sceneID="tne-QT-ifu">
             <objects>
-                <viewController id="BYZ-38-t0r" customClass="MainViewController" customModule="MuxPlayerSwiftExample" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController id="BYZ-38-t0r" customClass="SinglePlayerExampleController" customModule="MuxPlayerSwiftExample" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="8bC-Xf-vdC">
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
