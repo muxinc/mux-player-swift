@@ -171,3 +171,5 @@ func preparePlayerViewController(
 If your JWT includes a playback restriction, Mux will not be able perform domain validation when the playback URL is loaded by AVPlayer because no referrer information is supplied.
 
 To allow AVPlayer playback of referrer restricted assets set the allow_no_referrer boolean parameter to true when creating a playback restriction. Conversely, a playback restriction with allow_no_referrer to false will disallow AVPlayer playback. [See here for more](https://docs.mux.com/guides/video/secure-video-playback#using-referer-http-header-for-validation).
+
+## Release
