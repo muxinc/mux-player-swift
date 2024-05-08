@@ -144,6 +144,8 @@ public struct PlaybackOptions {
 
 extension PlaybackOptions {
 
+    // MARK: public initializers
+
     /// Initializes playback options for a public
     /// playback ID
     /// - Parameters:
@@ -257,5 +259,14 @@ extension PlaybackOptions {
                 playbackToken: playbackToken
             )
         )
+    }
+    
+    // MARK: Internal helpers
+    
+    /// Gets the root domain to be used when constructing URLs for playback, keys, etc.
+    /// If there is a custom domain, this function returns that value, otherwise it returns the
+    /// default `mux.com`
+    internal func rootDomain() -> String {
+        return customDomain ?? "mux.com"
     }
 }
