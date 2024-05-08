@@ -27,7 +27,7 @@ In your `Package.swift` file, add the following to as an item to the `dependenci
 ```
 .package(
       url: "https://github.com/muxinc/mux-player-swift,
-      .upToNextMajor(from: "0.2.0")
+      .upToNextMajor(from: "1.0.0")
     ),
 ```
 
