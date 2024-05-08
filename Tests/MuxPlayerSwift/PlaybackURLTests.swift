@@ -207,7 +207,7 @@ final class PlaybackURLTests: XCTestCase {
     func testReverseProxyTargetingURL() throws {
         let playbackOptions = PlaybackOptions(
             enableSmartCache: true,
-            SingleRenditionResolutionTier: .only1080p
+            singleRenditionResolutionTier: .only1080p
         )
 
         let playerItem = AVPlayerItem(

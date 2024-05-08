@@ -17,7 +17,7 @@ class SmartCacheExampleViewController: UIViewController {
         playbackID: playbackID,
         playbackOptions: PlaybackOptions(
             enableSmartCache: smartCacheEnabled,
-            SingleRenditionResolutionTier: singleRenditionResolutionTier
+            singleRenditionResolutionTier: singleRenditionResolutionTier
         ),
         monitoringOptions: monitoringOptions
     )

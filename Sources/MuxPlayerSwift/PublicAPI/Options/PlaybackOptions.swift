@@ -181,11 +181,11 @@ extension PlaybackOptions {
 
     public init(
         enableSmartCache: Bool,
-        SingleRenditionResolutionTier: SingleRenditionResolutionTier,
+        singleRenditionResolutionTier: SingleRenditionResolutionTier,
         renditionOrder: RenditionOrder = .default
     ) {
         self.enableSmartCache = enableSmartCache
-        switch SingleRenditionResolutionTier {
+        switch singleRenditionResolutionTier {
         case .only720p:
             self.playbackPolicy = .public(
                 PublicPlaybackOptions(
