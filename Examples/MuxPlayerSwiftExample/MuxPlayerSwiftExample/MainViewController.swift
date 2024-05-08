@@ -10,68 +10,91 @@ import UIKit
 
 import MuxPlayerSwift
 
+// Single player example
 class MainViewController: UIViewController {
+
+    // MARK: Player View Controller
 
     lazy var playerViewController = AVPlayerViewController(
         playbackID: playbackID
     )
 
-    var playbackID: String = "qxb01i6T202018GFS02vp9RIe01icTcDCjVzQpmaB00CUisJ4"
+    // MARK: Mux Data Monitoring Parameters
+
+    var playerName: String = "MuxPlayerSwiftExample-MainPlayer"
+
+    var environmentKey: String? {
+        ProcessInfo.processInfo.environmentKey
+    }
+
+    var monitoringOptions: MonitoringOptions {
+        if let environmentKey {
+            MonitoringOptions(
+                environmentKey: environmentKey,
+                playerName: playerName
+            )
+        } else {
+            MonitoringOptions(
+                playbackID: playbackID
+            )
+        }
+    }
+
+    // MARK: Mux Video Playback Parameters
+
+    var playbackID: String {
+        ProcessInfo.processInfo.playbackID ?? "qxb01i6T202018GFS02vp9RIe01icTcDCjVzQpmaB00CUisJ4"
+    }
 
     var minimumResolutionTier: MinResolutionTier = .default {
         didSet {
-            playerViewController.player?.pause()
-            hidePlayerViewController()
-            self.playerViewController = AVPlayerViewController(
-                playbackID: self.playbackID,
+            playerViewController.prepare(
+                playbackID: playbackID,
                 playbackOptions: PlaybackOptions(
-                    maximumResolutionTier: self.maximumResolutionTier,
-                    minimumResolutionTier: self.minimumResolutionTier,
-                    renditionOrder: self.renditionOrder
-                )
+                    maximumResolutionTier: maximumResolutionTier,
+                    minimumResolutionTier: minimumResolutionTier,
+                    renditionOrder: renditionOrder
+                ),
+                monitoringOptions: monitoringOptions
             )
-            displayPlayerViewController()
-            playerViewController.player?.play()
         }
     }
 
     var maximumResolutionTier: MaxResolutionTier = .default {
         didSet {
-            playerViewController.player?.pause()
-            hidePlayerViewController()
-            self.playerViewController = AVPlayerViewController(
-                playbackID: self.playbackID,
+            playerViewController.prepare(
+                playbackID: playbackID,
                 playbackOptions: PlaybackOptions(
-                    maximumResolutionTier: self.maximumResolutionTier,
-                    minimumResolutionTier: self.minimumResolutionTier,
-                    renditionOrder: self.renditionOrder
-                )
+                    maximumResolutionTier: maximumResolutionTier,
+                    minimumResolutionTier: minimumResolutionTier,
+                    renditionOrder: renditionOrder
+                ),
+                monitoringOptions: monitoringOptions
             )
-            displayPlayerViewController()
-            playerViewController.player?.play()
         }
     }
 
     var renditionOrder: RenditionOrder = .default {
         didSet {
-            playerViewController.player?.pause()
-            hidePlayerViewController()
-            self.playerViewController = AVPlayerViewController(
-                playbackID: self.playbackID,
+            playerViewController.prepare(
+                playbackID: playbackID,
                 playbackOptions: PlaybackOptions(
-                    maximumResolutionTier: self.maximumResolutionTier,
-                    minimumResolutionTier: self.minimumResolutionTier,
-                    renditionOrder: self.renditionOrder
-                )
+                    maximumResolutionTier: maximumResolutionTier,
+                    minimumResolutionTier: minimumResolutionTier,
+                    renditionOrder: renditionOrder
+                ),
+                monitoringOptions: monitoringOptions
             )
-            displayPlayerViewController()
-            playerViewController.player?.play()
         }
     }
+
+    // MARK: Status Bar Appearance
 
     override var childForStatusBarStyle: UIViewController? {
         playerViewController
     }
+
+    // MARK: View Controller Lifecycle
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -81,6 +104,12 @@ class MainViewController: UIViewController {
         let maximumResolutionsMenu = UIMenu(
             title: "Set Maximum Resolution",
             children: [
+                UIAction(
+                    title: "Default",
+                    handler: { _ in
+                        self.maximumResolutionTier = .default
+                    }
+                ),
                 UIAction(
                     title: "Up to 720p",
                     handler: { _ in
@@ -111,6 +140,12 @@ class MainViewController: UIViewController {
         let minimumResolutionsMenu = UIMenu(
             title: "Set Minimum Resolution",
             children: [
+                UIAction(
+                    title: "Default",
+                    handler: { _ in
+                        self.minimumResolutionTier = .default
+                    }
+                ),
                 UIAction(
                     title: "At least 480p",
                     handler: { _ in
@@ -154,9 +189,9 @@ class MainViewController: UIViewController {
             title: "Set Rendition Order",
             children: [
                 UIAction(
-                    title: "Ascending",
+                    title: "Default",
                     handler: { _ in
-                        self.renditionOrder = .ascending
+                        self.renditionOrder = .default
                     }
                 ),
                 UIAction(
@@ -196,6 +231,8 @@ class MainViewController: UIViewController {
         playerViewController.stopMonitoring()
         super.viewWillDisappear(animated)
     }
+
+    // MARK: Player Lifecycle
 
     func displayPlayerViewController() {
         playerViewController.willMove(toParent: self)
