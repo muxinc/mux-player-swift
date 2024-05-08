@@ -14,7 +14,12 @@ class SmartCacheExampleViewController: UIViewController {
     // MARK: Player View Controller
 
     lazy var playerViewController = AVPlayerViewController(
-        playbackID: playbackID
+        playbackID: playbackID,
+        playbackOptions: PlaybackOptions(
+            enableSmartCache: smartCacheEnabled,
+            SingleRenditionResolutionTier: singleRenditionResolutionTier
+        ),
+        monitoringOptions: monitoringOptions
     )
 
     // MARK: Mux Data Monitoring Parameters
