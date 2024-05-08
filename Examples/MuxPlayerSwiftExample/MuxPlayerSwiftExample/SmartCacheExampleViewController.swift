@@ -45,7 +45,7 @@ class SmartCacheExampleViewController: UIViewController {
     }
 
     var smartCacheEnabled: Bool = true
-    var singleRenditionResolutionTier: SingleResolutionTier = .only720p
+    var singleRenditionResolutionTier: SingleRenditionResolutionTier = .only720p
 
     // MARK: Status Bar Appearance
 

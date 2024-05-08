@@ -61,7 +61,7 @@ public enum RenditionOrder {
 
 
 /// Limit playback to a single resolution tier
-public enum SingleResolutionTier {
+public enum SingleRenditionResolutionTier {
     /// The asset will be played at only 720p (1080 x 720).
     case only720p
 
@@ -181,11 +181,11 @@ extension PlaybackOptions {
 
     public init(
         enableSmartCache: Bool,
-        singleResolutionTier: SingleResolutionTier,
+        SingleRenditionResolutionTier: SingleRenditionResolutionTier,
         renditionOrder: RenditionOrder = .default
     ) {
         self.enableSmartCache = enableSmartCache
-        switch singleResolutionTier {
+        switch SingleRenditionResolutionTier {
         case .only720p:
             self.playbackPolicy = .public(
                 PublicPlaybackOptions(
