@@ -27,12 +27,6 @@ class PlayerSDK {
 
     init() {
         self.monitor = Monitor()
-        self.diagnosticsLogger = Logger(
-            OSLog(
-                subsystem: "com.mux.player",
-                category: "Diagnostics"
-            )
-        )
 
         #if DEBUG
         self.abrLogger = Logger(
@@ -41,8 +35,17 @@ class PlayerSDK {
                 category: "ABR"
             )
         )
+        self.diagnosticsLogger = Logger(
+            OSLog(
+                subsystem: "com.mux.player",
+                category: "Diagnostics"
+            )
+        )
         #else
         self.abrLogger = Logger(
+            .disabled
+        )
+        self.diagnosticsLogger = Logger(
             .disabled
         )
         #endif
