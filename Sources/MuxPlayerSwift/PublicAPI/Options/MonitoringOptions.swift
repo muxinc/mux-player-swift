@@ -9,10 +9,11 @@ import MuxCore
 /// Options to customize monitoring data reported by Mux
 public struct MonitoringOptions {
 
-    /// Environment key associated with the monitoring data
+    // Environment key associated with the monitoring data
     var environmentKey: String?
 
-    /// Identifies the player name
+    /// Identifies the player name used when setting up
+    /// monitoring with Mux Data
     public var playerName: String
 
     var customerData: MUXSDKCustomerData?
