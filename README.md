@@ -2,8 +2,6 @@
 
 A collection of helpful utilities for using AVKit and AVFoundation to stream video from Mux.
 
-This SDK is pre-release software and may contain issues or missing functionality. We recommend against submitting apps based on it to the App Store.
-
 We'd love to hear your feedback, shoot us a note at avplayer@mux.com with any feature requests, API feedback, or to tell us about what you'd like to build.
 
 ## Installation
@@ -85,7 +83,7 @@ func preparePlayerViewController(
 let examplePlayerViewController = preparePlayerViewController(playbackID: playbackID)
 ```
 
-When using the AVPlayerViewController convenience initializers provided the `MuxPlayerSwift` there are no required steps to enable Mux Data monitoring for video streamed from a Mux playback URL. Metrics and monitoring data will be routed to the same environment as the asset being played
+When using the AVPlayerViewController convenience initializers provided by `MuxPlayerSwift` there are no required steps to enable Mux Data monitoring for video streamed from a Mux playback URL. Metrics and monitoring data will be routed to the same environment as the asset being played
 
 See the below section for how to route monitoring data to a specific environment key and how to change or customize metadata provided to Mux Data.
 
@@ -179,4 +177,4 @@ Steps to release a new version of the SDK
 2. Update `SemanticVersion.swift` with new version values.
 3. Tag the commit for the release on `main` with the name `vX.Y.Z` where X, Y, and Z are the major, minor, and patch versions of the release respectively.
 4. Create a new GitHub release on `main` for the tag with the tag name as the title and include releases notes in the description.
-5. Update the SDK static documentation by running: `./scripts/create-docc-archive.sh` and `./scripts/post-process-docc-archive.sh`.
+5. Update the SDK static documentation by running: `./scripts/generate-static-documentation.sh`.
