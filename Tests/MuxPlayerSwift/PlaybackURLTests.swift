@@ -206,8 +206,8 @@ final class PlaybackURLTests: XCTestCase {
 
     func testReverseProxyTargetingURL() throws {
         let playbackOptions = PlaybackOptions(
-            customDomain: "play.example.com",
-            enableSmartCache: true
+            enableSmartCache: true,
+            singleResolutionTier: .only1080p
         )
 
         let playerItem = AVPlayerItem(
@@ -217,7 +217,7 @@ final class PlaybackURLTests: XCTestCase {
 
         XCTAssertEqual(
             (playerItem.asset as! AVURLAsset).url.absoluteString,
-            "http://127.0.0.1:1234/abc.m3u8?redundant_streams=true&__hls_origin_url=https://stream.play.example.com/abc.m3u8?redundant_streams%3Dtrue"
+            "http://127.0.0.1:1234/abc.m3u8?redundant_streams=true&max_resolution=1080p&min_resolution=1080p&__hls_origin_url=https://stream.mux.com/abc.m3u8?redundant_streams%3Dtrue%26max_resolution%3D1080p%26min_resolution%3D1080p"
         )
     }
 

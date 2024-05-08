@@ -60,6 +60,26 @@ public enum RenditionOrder {
     case descending
 }
 
+
+/// Limit playback to a single resolution tier
+public enum SingleResolutionTier {
+    /// The asset will stream with a resolution that does
+    /// not exceed 720p (1080 x 720)
+    case only720p
+
+    /// The asset will stream with a resolution that does
+    /// not exceed 1080p (1920 x 1080)
+    case only1080p
+
+    /// The asset will stream with a resolution that does
+    /// not exceed 720p (1080 x 720)
+    case only1440p
+
+    /// The asset will stream with a resolution that does
+    /// not exceed 720p (1080 x 720)
+    case only2160p
+}
+
 extension MaxResolutionTier {
     var queryValue: String {
         switch self {
@@ -148,13 +168,10 @@ extension PlaybackOptions {
     ///   video the player will download
     ///   - renditionOrder: ordering of available renditions
     ///   in the manifest
-    ///   - enableSmartCache: enable smart cache to store
-    ///   on-demand HTTP live stream on disk
     public init(
         maximumResolutionTier: MaxResolutionTier = .default,
         minimumResolutionTier: MinResolutionTier = .default,
-        renditionOrder: RenditionOrder = .default,
-        enableSmartCache: Bool = false
+        renditionOrder: RenditionOrder = .default
     ) {
         self.playbackPolicy = .public(
             PublicPlaybackOptions(
@@ -164,7 +181,53 @@ extension PlaybackOptions {
                 useRedundantStreams: true
             )
         )
+        self.enableSmartCache = false
+    }
+
+    public init(
+        enableSmartCache: Bool,
+        singleResolutionTier: SingleResolutionTier,
+        renditionOrder: RenditionOrder = .default
+    ) {
         self.enableSmartCache = enableSmartCache
+        switch singleResolutionTier {
+        case .only720p:
+            self.playbackPolicy = .public(
+                PublicPlaybackOptions(
+                    maximumResolutionTier: .upTo720p,
+                    minimumResolutionTier: .atLeast720p,
+                    renditionOrder: renditionOrder,
+                    useRedundantStreams: true
+                )
+            )
+        case .only1080p:
+            self.playbackPolicy = .public(
+                PublicPlaybackOptions(
+                    maximumResolutionTier: .upTo1080p,
+                    minimumResolutionTier: .atLeast1080p,
+                    renditionOrder: renditionOrder,
+                    useRedundantStreams: true
+                )
+            )
+        case .only1440p:
+            self.playbackPolicy = .public(
+                PublicPlaybackOptions(
+                    maximumResolutionTier: .upTo1440p,
+                    minimumResolutionTier: .atLeast1440p,
+                    renditionOrder: renditionOrder,
+                    useRedundantStreams: true
+                )
+            )
+        case .only2160p:
+            self.playbackPolicy = .public(
+                PublicPlaybackOptions(
+                    maximumResolutionTier: .upTo2160p,
+                    minimumResolutionTier: .atLeast2160p,
+                    renditionOrder: renditionOrder,
+                    useRedundantStreams: true
+                )
+            )
+        }
     }
 
 
@@ -185,14 +248,11 @@ extension PlaybackOptions {
     ///   video the player will download
     ///   - renditionOrder: ordering of available renditions
     ///   in the manifest
-    ///   - enableSmartCache: enable smart cache to store
-    ///   on-demand HTTP live stream on disk
     public init(
         customDomain: String,
         maximumResolutionTier: MaxResolutionTier = .default,
         minimumResolutionTier: MinResolutionTier = .default,
-        renditionOrder: RenditionOrder = .default,
-        enableSmartCache: Bool = false
+        renditionOrder: RenditionOrder = .default
     ) {
         self.customDomain = customDomain
         self.playbackPolicy = .public(
@@ -203,7 +263,7 @@ extension PlaybackOptions {
                 useRedundantStreams: true
             )
         )
-        self.enableSmartCache = enableSmartCache
+        self.enableSmartCache = false
     }
 
     /// Initializes playback options with a
@@ -219,7 +279,6 @@ extension PlaybackOptions {
             )
         )
     }
-
 
     /// Initializes playback options with a
     /// signed playback token
