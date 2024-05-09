@@ -154,15 +154,14 @@ public struct PlaybackOptions {
 
 extension PlaybackOptions {
 
-    /// Initializes playback options for a public
-    /// playback ID
+    /// Initializes playback options for a public playback ID
     /// - Parameters:
     ///   - maximumResolutionTier: maximum resolution of the
     ///   video the player will download
     ///   - minimumResolutionTier: maximum resolution of the
     ///   video the player will download
     ///   - renditionOrder: ordering of available renditions
-    ///   in the manifest
+    ///   presented to the player
     public init(
         maximumResolutionTier: MaxResolutionTier = .default,
         minimumResolutionTier: MinResolutionTier = .default,
@@ -179,6 +178,37 @@ extension PlaybackOptions {
         self.enableSmartCache = false
     }
 
+
+    /// Initializes playback options for a public playback ID
+    /// - Parameters:
+    ///   - singleRenditionResolutionTier: a single resolution
+    ///   tier that the player will request. At this time
+    ///   the smart cache can only be enabled when playback
+    ///   is constrained to a single resolution tier
+    ///   - renditionOrder: ordering of available renditions
+    ///   presented to the player
+    public init(
+        singleRenditionResolutionTier: SingleRenditionResolutionTier,
+        renditionOrder: RenditionOrder = .default
+    ) {
+        self.init(
+            enableSmartCache: false,
+            singleRenditionResolutionTier: singleRenditionResolutionTier,
+            renditionOrder: renditionOrder
+        )
+    }
+
+
+    /// Initializes playback options for a public playback ID
+    /// - Parameters:
+    ///   - enableSmartCache: if set to `true` enables caching
+    ///   of your video data locally
+    ///   - singleRenditionResolutionTier: a single resolution
+    ///   tier that the player will request. At this time
+    ///   the smart cache can only be enabled when playback
+    ///   is constrained to a single resolution tier
+    ///   - renditionOrder: ordering of available renditions
+    ///   presented to the player
     public init(
         enableSmartCache: Bool,
         singleRenditionResolutionTier: SingleRenditionResolutionTier,
@@ -242,7 +272,7 @@ extension PlaybackOptions {
     ///   - minimumResolutionTier: maximum resolution of the
     ///   video the player will download
     ///   - renditionOrder: ordering of available renditions
-    ///   in the manifest
+    ///   presented to the player
     public init(
         customDomain: String,
         maximumResolutionTier: MaxResolutionTier = .default,
