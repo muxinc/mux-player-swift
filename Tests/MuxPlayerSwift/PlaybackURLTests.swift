@@ -17,8 +17,12 @@ final class PlaybackURLTests: XCTestCase {
             playbackOptions: playbackOptions
         )
 
+        let playbackURL = try XCTUnwrap(
+            (playerItem.asset as? AVURLAsset)?.url
+        )
+
         XCTAssertEqual(
-            (playerItem.asset as! AVURLAsset).url.absoluteString,
+            playbackURL.absoluteString,
             "https://stream.mux.com/abc.m3u8?redundant_streams=true"
         )
     }
@@ -51,8 +55,12 @@ final class PlaybackURLTests: XCTestCase {
                 playbackOptions: playbackOptions
             )
 
+            let playbackURL = try XCTUnwrap(
+                (playerItem.asset as? AVURLAsset)?.url
+            )
+
             XCTAssertEqual(
-                (playerItem.asset as! AVURLAsset).url.absoluteString,
+                playbackURL.absoluteString,
                 expectedURLs[tier.queryValue]
             )
         }
@@ -97,8 +105,12 @@ final class PlaybackURLTests: XCTestCase {
                 playbackOptions: playbackOptions
             )
 
+            let playbackURL = try XCTUnwrap(
+                (playerItem.asset as? AVURLAsset)?.url
+            )
+
             XCTAssertEqual(
-                (playerItem.asset as! AVURLAsset).url.absoluteString,
+                playbackURL.absoluteString,
                 expectedURLs[tier.queryValue]
             )
         }
@@ -128,8 +140,12 @@ final class PlaybackURLTests: XCTestCase {
                 playbackOptions: playbackOptions
             )
 
+            let playbackURL = try XCTUnwrap(
+                (playerItem.asset as? AVURLAsset)?.url
+            )
+
             XCTAssertEqual(
-                (playerItem.asset as! AVURLAsset).url.absoluteString,
+                playbackURL.absoluteString,
                 expectedURLs[tier.queryValue]
             )
         }
@@ -146,12 +162,37 @@ final class PlaybackURLTests: XCTestCase {
             playbackOptions: playbackOptions
         )
         
+        let playbackURL = try XCTUnwrap(
+            (playerItem.asset as? AVURLAsset)?.url
+        )
+
         XCTAssertEqual(
-            (playerItem.asset as! AVURLAsset).url.absoluteString,
+            playbackURL.absoluteString,
             "https://stream.mux.com/abc.m3u8?redundant_streams=true&max_resolution=2160p&min_resolution=1440p"
         )
     }
-    
+
+    func testSingleRenditionResolutionTierOption() throws {
+        let playbackOptions = PlaybackOptions(
+            enableSmartCache: false,
+            singleRenditionResolutionTier: .only1080p
+        )
+
+        let playerItem = AVPlayerItem(
+            playbackID: "abc",
+            playbackOptions: playbackOptions
+        )
+
+        let playbackURL = try XCTUnwrap(
+            (playerItem.asset as? AVURLAsset)?.url
+        )
+
+        XCTAssertEqual(
+            playbackURL.absoluteString,
+            "https://stream.mux.com/abc.m3u8?redundant_streams=true&max_resolution=1080p&min_resolution=1080p"
+        )
+    }
+
     func testCustomDomainPlaybackURL() throws {
 
         let playbackOptions = PlaybackOptions(
@@ -163,8 +204,12 @@ final class PlaybackURLTests: XCTestCase {
             playbackOptions: playbackOptions
         )
 
+        let playbackURL = try XCTUnwrap(
+            (playerItem.asset as? AVURLAsset)?.url
+        )
+
         XCTAssertEqual(
-            (playerItem.asset as! AVURLAsset).url.absoluteString,
+            playbackURL.absoluteString,
             "https://stream.play.example.com/abc.m3u8?redundant_streams=true"
         )
     }
@@ -180,8 +225,12 @@ final class PlaybackURLTests: XCTestCase {
             playbackOptions: playbackOptions
         )
 
+        let playbackURL = try XCTUnwrap(
+            (playerItem.asset as? AVURLAsset)?.url
+        )
+
         XCTAssertEqual(
-            (playerItem.asset as! AVURLAsset).url.absoluteString,
+            playbackURL.absoluteString,
             "https://stream.mux.com/abc.m3u8?token=WhoooopsNotAnActualToken"
         )
     }
@@ -198,8 +247,12 @@ final class PlaybackURLTests: XCTestCase {
             playbackOptions: playbackOptions
         )
 
+        let playbackURL = try XCTUnwrap(
+            (playerItem.asset as? AVURLAsset)?.url
+        )
+
         XCTAssertEqual(
-            (playerItem.asset as! AVURLAsset).url.absoluteString,
+            playbackURL.absoluteString,
             "https://stream.play.example.com/abc.m3u8?token=WhoooopsNotAnActualToken"
         )
     }
@@ -215,8 +268,12 @@ final class PlaybackURLTests: XCTestCase {
             playbackOptions: playbackOptions
         )
 
+        let playbackURL = try XCTUnwrap(
+            (playerItem.asset as? AVURLAsset)?.url
+        )
+
         XCTAssertEqual(
-            (playerItem.asset as! AVURLAsset).url.absoluteString,
+            playbackURL.absoluteString,
             "http://127.0.0.1:1234/abc.m3u8?redundant_streams=true&max_resolution=1080p&min_resolution=1080p&__hls_origin_url=https://stream.mux.com/abc.m3u8?redundant_streams%3Dtrue%26max_resolution%3D1080p%26min_resolution%3D1080p"
         )
     }
