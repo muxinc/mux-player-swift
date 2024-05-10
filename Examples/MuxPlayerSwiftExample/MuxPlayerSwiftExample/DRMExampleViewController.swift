@@ -1,0 +1,97 @@
+//
+//  DRMExampleViewController.swift
+//  MuxPlayerSwiftExample
+//
+
+import AVKit
+import UIKit
+
+import MuxPlayerSwift
+
+class DRMExampleViewController: UIViewController {
+
+    // MARK: Player View Controller
+
+    lazy var playerViewController = AVPlayerViewController(
+        playbackID: playbackID,
+        playbackOptions: PlaybackOptions(
+            playbackToken: playbackToken,
+            drmToken: drmToken,
+            customDomain: customDomain
+        )
+    )
+
+    // MARK: Mux Data Monitoring Parameters
+
+    var playerName: String = "MuxPlayerSwift-DRMExample"
+
+    var environmentKey: String? {
+        ProcessInfo.processInfo.environmentKey
+    }
+
+    // MARK: Mux Video Playback Parameters
+
+    var playbackID: String {
+        ProcessInfo.processInfo.playbackID ?? "qxb01i6T202018GFS02vp9RIe01icTcDCjVzQpmaB00CUisJ4"
+    }
+
+    var playbackToken: String {
+        ProcessInfo.processInfo.playbackToken ?? ""
+    }
+
+    var drmToken: String {
+        ProcessInfo.processInfo.drmToken ?? ""
+    }
+
+    var customDomain: String {
+        ProcessInfo.processInfo.customDomain ?? ""
+    }
+
+    // MARK: Status Bar Appearance
+
+    override var childForStatusBarStyle: UIViewController? {
+        playerViewController
+    }
+
+    // MARK: View Controller Lifecycle
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+
+        view.backgroundColor = .black
+
+        displayPlayerViewController()
+    }
+
+    // MARK: Player Lifecycle
+
+    func displayPlayerViewController() {
+        playerViewController.willMove(toParent: self)
+        addChild(playerViewController)
+        view.addSubview(playerViewController.view)
+        playerViewController.didMove(toParent: self)
+        playerViewController
+            .view
+            .translatesAutoresizingMaskIntoConstraints = false
+        view.addConstraints([
+            playerViewController.view.leadingAnchor.constraint(
+                equalTo: view.leadingAnchor
+            ),
+            playerViewController.view.trailingAnchor.constraint(
+                equalTo: view.trailingAnchor
+            ),
+            playerViewController.view.layoutMarginsGuide.topAnchor.constraint(
+                equalTo: view.topAnchor
+            ),
+            playerViewController.view.layoutMarginsGuide.bottomAnchor
+                .constraint(equalTo: view.bottomAnchor),
+        ])
+    }
+
+    func hidePlayerViewController() {
+        playerViewController.willMove(toParent: nil)
+        playerViewController.view.removeFromSuperview()
+        playerViewController.removeFromParent()
+    }
+
+}
