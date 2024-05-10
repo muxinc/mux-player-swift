@@ -49,8 +49,31 @@ class SmartCacheExampleViewController: UIViewController {
         ProcessInfo.processInfo.playbackID ?? "qxb01i6T202018GFS02vp9RIe01icTcDCjVzQpmaB00CUisJ4"
     }
 
-    var smartCacheEnabled: Bool = true
-    var singleRenditionResolutionTier: SingleRenditionResolutionTier = .only720p
+    var smartCacheEnabled: Bool = true {
+        didSet {
+            playerViewController.prepare(
+                playbackID: playbackID,
+                playbackOptions: PlaybackOptions(
+                    enableSmartCache: smartCacheEnabled,
+                    singleRenditionResolutionTier: singleRenditionResolutionTier
+                ),
+                monitoringOptions: monitoringOptions
+            )
+        }
+    }
+
+    var singleRenditionResolutionTier: SingleRenditionResolutionTier = .only720p {
+        didSet {
+            playerViewController.prepare(
+                playbackID: playbackID,
+                playbackOptions: PlaybackOptions(
+                    enableSmartCache: smartCacheEnabled,
+                    singleRenditionResolutionTier: singleRenditionResolutionTier
+                ),
+                monitoringOptions: monitoringOptions
+            )
+        }
+    }
 
     // MARK: Status Bar Appearance
 
