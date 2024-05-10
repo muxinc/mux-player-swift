@@ -43,20 +43,36 @@ public enum MinResolutionTier {
     /// not exceed 1080p (1920 x 1080)
     case atLeast1080p
     /// The asset will stream with a resolution that does
-    /// not exceed 2440p (2160 x 4096)
+    /// not exceed 1440p (1440 x 2560)
     case atLeast1440p
     /// The asset will stream with a resolution that does
-    /// not exceed 2160 p(2560 x 1440)
+    /// not exceed 2160p (2160 x 4096)
     case atLeast2160p
 }
 
+/// The order of the available renditions provided to the
+/// player
 public enum RenditionOrder {
     /// By default no rendition order is specified
     case `default`
-    /// The asset will choose renditions in ascending order
-    case ascending
     /// The asset will choose renditions in descending order
     case descending
+}
+
+
+/// Limit playback to a single resolution tier
+public enum SingleRenditionResolutionTier {
+    /// The asset will be played at only 720p (1080 x 720).
+    case only720p
+
+    /// The asset will be played at only 1080p (1920 x 1080).
+    case only1080p
+
+    /// The asset will be played at only 1440p (1440 x 2560)
+    case only1440p
+
+    /// The asset will be played at only 2160p (2160 x 4096).
+    case only2160p
 }
 
 extension MaxResolutionTier {
@@ -102,8 +118,6 @@ extension RenditionOrder {
         switch self {
         case .default:
             return ""
-        case .ascending:
-            return "asc"
         case .descending:
             return "desc"
         }
@@ -140,21 +154,22 @@ public struct PlaybackOptions {
     var playbackPolicy: PlaybackPolicy
 
     var customDomain: String?
+
+    var enableSmartCache: Bool = false
 }
 
 extension PlaybackOptions {
+    
+    // MARK: - Initializers
 
-    // MARK: public initializers
-
-    /// Initializes playback options for a public
-    /// playback ID
+    /// Initializes playback options for a public playback ID
     /// - Parameters:
     ///   - maximumResolutionTier: maximum resolution of the
     ///   video the player will download
     ///   - minimumResolutionTier: maximum resolution of the
     ///   video the player will download
     ///   - renditionOrder: ordering of available renditions
-    ///   in the manifest
+    ///   presented to the player
     public init(
         maximumResolutionTier: MaxResolutionTier = .default,
         minimumResolutionTier: MinResolutionTier = .default,
@@ -168,6 +183,84 @@ extension PlaybackOptions {
                 useRedundantStreams: true
             )
         )
+        self.enableSmartCache = false
+    }
+
+
+    /// Initializes playback options for a public playback ID
+    /// - Parameters:
+    ///   - singleRenditionResolutionTier: a single resolution
+    ///   tier that the player will request. At this time
+    ///   the smart cache can only be enabled when playback
+    ///   is constrained to a single resolution tier
+    ///   - renditionOrder: ordering of available renditions
+    ///   presented to the player
+    public init(
+        singleRenditionResolutionTier: SingleRenditionResolutionTier,
+        renditionOrder: RenditionOrder = .default
+    ) {
+        self.init(
+            enableSmartCache: false,
+            singleRenditionResolutionTier: singleRenditionResolutionTier,
+            renditionOrder: renditionOrder
+        )
+    }
+
+
+    /// Initializes playback options for a public playback ID
+    /// - Parameters:
+    ///   - enableSmartCache: if set to `true` enables caching
+    ///   of your video data locally
+    ///   - singleRenditionResolutionTier: a single resolution
+    ///   tier that the player will request. At this time
+    ///   the smart cache can only be enabled when playback
+    ///   is constrained to a single resolution tier
+    ///   - renditionOrder: ordering of available renditions
+    ///   presented to the player
+    public init(
+        enableSmartCache: Bool,
+        singleRenditionResolutionTier: SingleRenditionResolutionTier,
+        renditionOrder: RenditionOrder = .default
+    ) {
+        self.enableSmartCache = enableSmartCache
+        switch singleRenditionResolutionTier {
+        case .only720p:
+            self.playbackPolicy = .public(
+                PublicPlaybackOptions(
+                    maximumResolutionTier: .upTo720p,
+                    minimumResolutionTier: .atLeast720p,
+                    renditionOrder: renditionOrder,
+                    useRedundantStreams: true
+                )
+            )
+        case .only1080p:
+            self.playbackPolicy = .public(
+                PublicPlaybackOptions(
+                    maximumResolutionTier: .upTo1080p,
+                    minimumResolutionTier: .atLeast1080p,
+                    renditionOrder: renditionOrder,
+                    useRedundantStreams: true
+                )
+            )
+        case .only1440p:
+            self.playbackPolicy = .public(
+                PublicPlaybackOptions(
+                    maximumResolutionTier: .upTo1440p,
+                    minimumResolutionTier: .atLeast1440p,
+                    renditionOrder: renditionOrder,
+                    useRedundantStreams: true
+                )
+            )
+        case .only2160p:
+            self.playbackPolicy = .public(
+                PublicPlaybackOptions(
+                    maximumResolutionTier: .upTo2160p,
+                    minimumResolutionTier: .atLeast2160p,
+                    renditionOrder: renditionOrder,
+                    useRedundantStreams: true
+                )
+            )
+        }
     }
 
 
@@ -187,7 +280,7 @@ extension PlaybackOptions {
     ///   - minimumResolutionTier: maximum resolution of the
     ///   video the player will download
     ///   - renditionOrder: ordering of available renditions
-    ///   in the manifest
+    ///   presented to the player
     public init(
         customDomain: String,
         maximumResolutionTier: MaxResolutionTier = .default,
@@ -203,6 +296,7 @@ extension PlaybackOptions {
                 useRedundantStreams: true
             )
         )
+        self.enableSmartCache = false
     }
     
     /// Initializes playback options for use with a signed playback token

@@ -58,9 +58,10 @@ extension AVPlayerLayer {
             playbackID: playbackID
         )
 
-        PlayerSDK.shared.monitor.setupMonitoring(
+        PlayerSDK.shared.registerPlayerLayer(
             playerLayer: self,
-            options: monitoringOptions
+            monitoringOptions: monitoringOptions,
+            requiresReverseProxying: playbackOptions.enableSmartCache
         )
     }
 
@@ -90,9 +91,10 @@ extension AVPlayerLayer {
 
         self.player = player
 
-        PlayerSDK.shared.monitor.setupMonitoring(
+        PlayerSDK.shared.registerPlayerLayer(
             playerLayer: self,
-            options: monitoringOptions
+            monitoringOptions: monitoringOptions,
+            requiresReverseProxying: playbackOptions.enableSmartCache
         )
     }
 
@@ -105,10 +107,11 @@ extension AVPlayerLayer {
     /// Prepares an already instantiated AVPlayerLayer
     /// for playback.
     ///
-    /// If no AVPlayerLayer doesn't hold an AVPlayer reference,
-    /// this method will create one and set the AVPlayerLayer
-    /// player property. If the AVPlayerLayer already holds
-    /// a player, it will be configured for playback.
+    /// If AVPlayerLayer doesn't already hold an
+    /// AVPlayer reference, this method will create one and
+    /// set the AVPlayerLayer player property. If
+    /// the AVPlayerLayer already holds a player,
+    /// it will be configured for playback.
     ///
     ///   - playbackID: playback ID of the Mux Asset
     ///   you'd like to play
@@ -128,10 +131,11 @@ extension AVPlayerLayer {
     /// Prepares an already instantiated AVPlayerLayer
     /// for playback.
     ///
-    /// If no AVPlayerLayer doesn't hold an AVPlayer reference,
-    /// this method will create one and set the AVPlayerLayer
-    /// player property. If the AVPlayerLayer already holds
-    /// a player, it will be configured for playback.
+    /// If AVPlayerLayer doesn't already hold an
+    /// AVPlayer reference, this method will create one and
+    /// set the AVPlayerLayer player property. If
+    /// the AVPlayerLayer already holds a player,
+    /// it will be configured for playback.
     /// - Parameters:
     ///   - playbackID: playback ID of the Mux Asset
     ///   you'd like to play
@@ -146,6 +150,7 @@ extension AVPlayerLayer {
                 playbackID: playbackID,
                 playbackOptions: playbackOptions
             ),
+            enableSmartCache: playbackOptions.enableSmartCache,
             monitoringOptions: MonitoringOptions(
                 playbackID: playbackID
             )
@@ -155,10 +160,11 @@ extension AVPlayerLayer {
     /// Prepares an already instantiated AVPlayerLayer
     /// for playback.
     ///
-    /// If no AVPlayerLayer doesn't hold an AVPlayer reference,
-    /// this method will create one and set the AVPlayerLayer
-    /// player property. If the AVPlayerLayer already holds
-    /// a player, it will be configured for playback.
+    /// If AVPlayerLayer doesn't already hold an
+    /// AVPlayer reference, this method will create one and
+    /// set the AVPlayerLayer player property. If
+    /// the AVPlayerLayer already holds a player,
+    /// it will be configured for playback.
     /// - Parameters:
     ///   - playbackID: playback ID of the Mux Asset
     ///   you'd like to play
@@ -179,10 +185,11 @@ extension AVPlayerLayer {
     /// Prepares an already instantiated AVPlayerLayer
     /// for playback.
     ///
-    /// If no AVPlayerLayer doesn't hold an AVPlayer reference,
-    /// this method will create one and set the AVPlayerLayer
-    /// player property. If the AVPlayerLayer already holds
-    /// a player, it will be configured for playback.
+    /// If AVPlayerLayer doesn't already hold an
+    /// AVPlayer reference, this method will create one and
+    /// set the AVPlayerLayer player property. If
+    /// the AVPlayerLayer already holds a player,
+    /// it will be configured for playback.
     /// - Parameters:
     ///   - playbackID: playback ID of the Mux Asset
     ///   you'd like to play
@@ -200,12 +207,14 @@ extension AVPlayerLayer {
                 playbackID: playbackID,
                 playbackOptions: playbackOptions
             ),
+            enableSmartCache: playbackOptions.enableSmartCache,
             monitoringOptions: monitoringOptions
         )
     }
 
     internal func prepare(
         playerItem: AVPlayerItem,
+        enableSmartCache: Bool = false,
         monitoringOptions: MonitoringOptions
     ) {
         if let player {
@@ -218,9 +227,10 @@ extension AVPlayerLayer {
             )
         }
 
-        PlayerSDK.shared.monitor.setupMonitoring(
+        PlayerSDK.shared.registerPlayerLayer(
             playerLayer: self,
-            options: monitoringOptions
+            monitoringOptions: monitoringOptions,
+            requiresReverseProxying: enableSmartCache
         )
     }
 }
