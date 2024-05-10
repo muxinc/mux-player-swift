@@ -35,14 +35,17 @@ class DRMExampleViewController: UIViewController {
         ProcessInfo.processInfo.playbackID ?? "qxb01i6T202018GFS02vp9RIe01icTcDCjVzQpmaB00CUisJ4"
     }
 
+    // TODO: Display error alert if ProcessInfo returns nil
     var playbackToken: String {
         ProcessInfo.processInfo.playbackToken ?? ""
     }
 
+    // TODO: Display error alert if ProcessInfo returns nil
     var drmToken: String {
         ProcessInfo.processInfo.drmToken ?? ""
     }
 
+    // TODO: Display error alert if ProcessInfo returns nil
     var customDomain: String {
         ProcessInfo.processInfo.customDomain ?? ""
     }
