@@ -8,10 +8,10 @@ import Foundation
 public struct SemanticVersion {
 
     /// Major version component.
-    public static let major = 0
+    public static let major = 1
 
     /// Minor version component.
-    public static let minor = 5
+    public static let minor = 0
 
     /// Patch version component.
     public static let patch = 0

@@ -16,11 +16,15 @@ let package = Package(
     dependencies: [
         .package(
             url: "https://github.com/muxinc/mux-stats-sdk-avplayer",
-            exact: "3.4.2"
+            exact: "3.6.1"
         ),
         .package(
             url: "https://github.com/apple/swift-docc-plugin",
             from: "1.2.0"
+        ),
+        .package(
+            url: "https://github.com/yene/GCDWebServer",
+            exact: "3.5.7"
         ),
     ],
     targets: [
@@ -30,6 +34,10 @@ let package = Package(
                 .product(
                     name: "MUXSDKStats",
                     package: "mux-stats-sdk-avplayer"
+                ),
+                .product(
+                    name: "GCDWebServer",
+                    package: "GCDWebServer"
                 )
             ]
         ),

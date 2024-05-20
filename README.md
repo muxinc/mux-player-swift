@@ -2,8 +2,6 @@
 
 A collection of helpful utilities for using AVKit and AVFoundation to stream video from Mux.
 
-This SDK is pre-release software and may contain issues or missing functionality. We recommend against submitting apps based on it to the App Store.
-
 We'd love to hear your feedback, shoot us a note at avplayer@mux.com with any feature requests, API feedback, or to tell us about what you'd like to build.
 
 ## Installation
@@ -27,7 +25,7 @@ In your `Package.swift` file, add the following to as an item to the `dependenci
 ```
 .package(
       url: "https://github.com/muxinc/mux-player-swift,
-      .upToNextMajor(from: "0.2.0")
+      .upToNextMajor(from: "1.0.0")
     ),
 ```
 
@@ -85,7 +83,7 @@ func preparePlayerViewController(
 let examplePlayerViewController = preparePlayerViewController(playbackID: playbackID)
 ```
 
-When using the AVPlayerViewController convenience initializers provided the `MuxPlayerSwift` there are no required steps to enable Mux Data monitoring for video streamed from a Mux playback URL. Metrics and monitoring data will be routed to the same environment as the asset being played
+When using the AVPlayerViewController convenience initializers provided by `MuxPlayerSwift` there are no required steps to enable Mux Data monitoring for video streamed from a Mux playback URL. Metrics and monitoring data will be routed to the same environment as the asset being played
 
 See the below section for how to route monitoring data to a specific environment key and how to change or customize metadata provided to Mux Data.
 
@@ -171,3 +169,12 @@ func preparePlayerViewController(
 If your JWT includes a playback restriction, Mux will not be able perform domain validation when the playback URL is loaded by AVPlayer because no referrer information is supplied.
 
 To allow AVPlayer playback of referrer restricted assets set the allow_no_referrer boolean parameter to true when creating a playback restriction. Conversely, a playback restriction with allow_no_referrer to false will disallow AVPlayer playback. [See here for more](https://docs.mux.com/guides/video/secure-video-playback#using-referer-http-header-for-validation).
+
+## Release
+
+Steps to release a new version of the SDK
+1. Merge any changes directly into `main`.
+2. Update `SemanticVersion.swift` with new version values.
+3. Tag the commit for the release on `main` with the name `vX.Y.Z` where X, Y, and Z are the major, minor, and patch versions of the release respectively.
+4. Create a new GitHub release on `main` for the tag with the tag name as the title and include releases notes in the description.
+5. Update the SDK static documentation by running: `./scripts/generate-static-documentation.sh`.
