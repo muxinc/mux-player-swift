@@ -5,23 +5,33 @@
 import AVFoundation
 import Foundation
 
-internal extension URL {
-    static func make(
+internal enum PlaybackURLConstants {
+    static let reverseProxyScheme = "http"
+
+    static let reverseProxyHost = "127.0.0.1"
+
+    static let reverseProxyPort = Int(1234)
+}
+
+internal extension URLComponents {
+    init(
         playbackID: String,
         playbackOptions: PlaybackOptions
-    ) -> Self {
-        var components = URLComponents()
-        components.scheme = "https"
+    ) {
+        self.init()
+        self.scheme = "https"
 
         if let customDomain = playbackOptions.customDomain {
-            components.host = "stream.\(customDomain)"
+            self.host = "stream.\(customDomain)"
         } else {
-            components.host = "stream.mux.com"
+            self.host = "stream.mux.com"
         }
 
-        components.path = "/\(playbackID).m3u8"
+        self.path = "/\(playbackID).m3u8"
 
-        if case PlaybackOptions.PlaybackPolicy.public(let publicPlaybackOptions) = playbackOptions.playbackPolicy {
+        if case PlaybackOptions.PlaybackPolicy.public(
+            let publicPlaybackOptions
+        ) = playbackOptions.playbackPolicy {
             var queryItems: [URLQueryItem] = []
 
             if publicPlaybackOptions.useRedundantStreams {
@@ -60,7 +70,8 @@ internal extension URL {
                 )
             }
 
-            components.queryItems = queryItems
+            self.queryItems = queryItems
+
         } else if case PlaybackOptions.PlaybackPolicy.signed(let signedPlaybackOptions) = playbackOptions.playbackPolicy {
 
             var queryItems: [URLQueryItem] = []
@@ -72,7 +83,7 @@ internal extension URL {
                 )
             )
 
-            components.queryItems = queryItems
+            self.queryItems = queryItems
 
         } else if case PlaybackOptions.PlaybackPolicy.drm(let drmPlaybackOptions) = playbackOptions.playbackPolicy {
 
@@ -85,18 +96,28 @@ internal extension URL {
                 )
             )
 
-            components.queryItems = queryItems
+            self.queryItems = queryItems
 
         }
 
-        guard let playbackURL = components.url else {
-            preconditionFailure("Invalid playback URL components")
-        }
+        let isReverseProxyEnabled = playbackOptions.enableSmartCache
 
-        return playbackURL
+        if isReverseProxyEnabled {
+            // TODO: clean up
+            self.queryItems = (self.queryItems ?? []) + [
+                URLQueryItem(
+                    name: "__hls_origin_url",
+                    value: self.url!.absoluteString
+                )
+            ]
+
+            // TODO: currently enables reverse proxying unless caching is disabled
+            self.scheme = PlaybackURLConstants.reverseProxyScheme
+            self.host = PlaybackURLConstants.reverseProxyHost
+            self.port = PlaybackURLConstants.reverseProxyPort
+        }
     }
 }
-
 
 internal extension AVPlayerItem {
 
@@ -131,11 +152,15 @@ internal extension AVPlayerItem {
 
         // Create a new `AVAsset` that has been prepared
         // for playback
+        guard let playbackURL = URLComponents(
+            playbackID: playbackID,
+            playbackOptions: playbackOptions
+        ).url else {
+            preconditionFailure("Invalid playback URL components")
+        }
+
         let asset = AVURLAsset(
-            url: URL.make(
-                playbackID: playbackID,
-                playbackOptions: playbackOptions
-            )
+            url: playbackURL
         )
 
         self.init(
@@ -147,5 +172,7 @@ internal extension AVPlayerItem {
             playbackID: playbackID,
             playbackOptions: playbackOptions
         )
+
+        self.init(url: playbackURL)
     }
 }

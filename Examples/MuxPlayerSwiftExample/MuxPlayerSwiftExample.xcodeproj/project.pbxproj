@@ -7,9 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		190579AE2BEDC90E00A697B8 /* DRMExampleViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 190579AD2BEDC90E00A697B8 /* DRMExampleViewController.swift */; };
 		193228BB2ACF6AC700966FE1 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 193228BA2ACF6AC700966FE1 /* AppDelegate.swift */; };
 		193228BD2ACF6AC700966FE1 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 193228BC2ACF6AC700966FE1 /* SceneDelegate.swift */; };
-		193228BF2ACF6AC700966FE1 /* MainViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 193228BE2ACF6AC700966FE1 /* MainViewController.swift */; };
 		193228C22ACF6AC700966FE1 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 193228C02ACF6AC700966FE1 /* Main.storyboard */; };
 		193228C42ACF6AC800966FE1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 193228C32ACF6AC800966FE1 /* Assets.xcassets */; };
 		193228C72ACF6AC800966FE1 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 193228C52ACF6AC800966FE1 /* LaunchScreen.storyboard */; };
@@ -17,6 +17,10 @@
 		193228DC2ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 193228DB2ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITests.swift */; };
 		193228DE2ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 193228DD2ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITestsLaunchTests.swift */; };
 		193228EC2ACF6B3400966FE1 /* MuxPlayerSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 193228EB2ACF6B3400966FE1 /* MuxPlayerSwift */; };
+		1966C5302BEB4740005486D5 /* ProcessInfo+EnvironmentVariables.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1966C52F2BEB4740005486D5 /* ProcessInfo+EnvironmentVariables.swift */; };
+		19DD16AF2BEC010400F4DF4F /* SinglePlayerExampleController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19DD16AE2BEC010400F4DF4F /* SinglePlayerExampleController.swift */; };
+		19DD16B12BEC028C00F4DF4F /* SmartCacheExampleViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19DD16B02BEC028C00F4DF4F /* SmartCacheExampleViewController.swift */; };
+		19DD16B32BEC048300F4DF4F /* SinglePlayerLayerExampleViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19DD16B22BEC048300F4DF4F /* SinglePlayerLayerExampleViewController.swift */; };
 		358572022BD9FB700098C3F6 /* DRMExamples.swift in Sources */ = {isa = PBXBuildFile; fileRef = 358572012BD9FB700098C3F6 /* DRMExamples.swift */; };
 /* End PBXBuildFile section */
 
@@ -38,10 +42,10 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		190579AD2BEDC90E00A697B8 /* DRMExampleViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DRMExampleViewController.swift; sourceTree = "<group>"; };
 		193228B72ACF6AC700966FE1 /* MuxPlayerSwiftExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MuxPlayerSwiftExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		193228BA2ACF6AC700966FE1 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		193228BC2ACF6AC700966FE1 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
-		193228BE2ACF6AC700966FE1 /* MainViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainViewController.swift; sourceTree = "<group>"; };
 		193228C12ACF6AC700966FE1 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		193228C32ACF6AC800966FE1 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		193228C62ACF6AC800966FE1 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
@@ -51,6 +55,10 @@
 		193228D72ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MuxPlayerSwiftExampleUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		193228DB2ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MuxPlayerSwiftExampleUITests.swift; sourceTree = "<group>"; };
 		193228DD2ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MuxPlayerSwiftExampleUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		1966C52F2BEB4740005486D5 /* ProcessInfo+EnvironmentVariables.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ProcessInfo+EnvironmentVariables.swift"; sourceTree = "<group>"; };
+		19DD16AE2BEC010400F4DF4F /* SinglePlayerExampleController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SinglePlayerExampleController.swift; sourceTree = "<group>"; };
+		19DD16B02BEC028C00F4DF4F /* SmartCacheExampleViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartCacheExampleViewController.swift; sourceTree = "<group>"; };
+		19DD16B22BEC048300F4DF4F /* SinglePlayerLayerExampleViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SinglePlayerLayerExampleViewController.swift; sourceTree = "<group>"; };
 		358572012BD9FB700098C3F6 /* DRMExamples.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DRMExamples.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -105,12 +113,16 @@
 			children = (
 				193228BA2ACF6AC700966FE1 /* AppDelegate.swift */,
 				193228BC2ACF6AC700966FE1 /* SceneDelegate.swift */,
-				193228BE2ACF6AC700966FE1 /* MainViewController.swift */,
+				19DD16AE2BEC010400F4DF4F /* SinglePlayerExampleController.swift */,
+				19DD16B02BEC028C00F4DF4F /* SmartCacheExampleViewController.swift */,
+				19DD16B22BEC048300F4DF4F /* SinglePlayerLayerExampleViewController.swift */,
+				190579AD2BEDC90E00A697B8 /* DRMExampleViewController.swift */,
 				193228C02ACF6AC700966FE1 /* Main.storyboard */,
 				193228C32ACF6AC800966FE1 /* Assets.xcassets */,
 				193228C52ACF6AC800966FE1 /* LaunchScreen.storyboard */,
 				193228C82ACF6AC800966FE1 /* Info.plist */,
 				358572012BD9FB700098C3F6 /* DRMExamples.swift */,
+				1966C52F2BEB4740005486D5 /* ProcessInfo+EnvironmentVariables.swift */,
 			);
 			path = MuxPlayerSwiftExample;
 			sourceTree = "<group>";
@@ -270,9 +282,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				358572022BD9FB700098C3F6 /* DRMExamples.swift in Sources */,
-				193228BF2ACF6AC700966FE1 /* MainViewController.swift in Sources */,
+				19DD16B32BEC048300F4DF4F /* SinglePlayerLayerExampleViewController.swift in Sources */,
 				193228BB2ACF6AC700966FE1 /* AppDelegate.swift in Sources */,
+				19DD16B12BEC028C00F4DF4F /* SmartCacheExampleViewController.swift in Sources */,
+				19DD16AF2BEC010400F4DF4F /* SinglePlayerExampleController.swift in Sources */,
+				1966C5302BEB4740005486D5 /* ProcessInfo+EnvironmentVariables.swift in Sources */,
 				193228BD2ACF6AC700966FE1 /* SceneDelegate.swift in Sources */,
+				190579AE2BEDC90E00A697B8 /* DRMExampleViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
