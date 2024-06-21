@@ -46,8 +46,8 @@ class DRMExampleViewController: UIViewController {
     }
 
     // TODO: Display error alert if ProcessInfo returns nil
-    var customDomain: String {
-        ProcessInfo.processInfo.customDomain ?? ""
+    var customDomain: String? {
+        ProcessInfo.processInfo.customDomain ?? nil
     }
 
     // MARK: Status Bar Appearance
