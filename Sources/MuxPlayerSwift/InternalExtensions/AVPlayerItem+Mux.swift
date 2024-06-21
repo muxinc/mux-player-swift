@@ -162,16 +162,28 @@ internal extension AVPlayerItem {
         let asset = AVURLAsset(
             url: playbackURL
         )
+        if case .drm = playbackOptions.playbackPolicy {
+            PlayerSDK.shared.fairPlaySessionManager.registerPlaybackOptions(
+                playbackOptions,
+                for: playbackID
+            )
+            // asset must be attached as early as possible to avoid crashes when attaching later
+//            fairPlaySessionManager.addContentKeyRecipient(
+//                urlAsset
+//            )
+        }
+        
+        self.init(url: playbackURL)
 
         self.init(
             asset: asset
         )
 
-        PlayerSDK.shared.registerPlayerItem(
-            self,
-            playbackID: playbackID,
-            playbackOptions: playbackOptions
-        )
+//        PlayerSDK.shared.registerPlayerItem(
+//            self,
+//            playbackID: playbackID,
+//            playbackOptions: playbackOptions
+//        )
 
         self.init(url: playbackURL)
     }
