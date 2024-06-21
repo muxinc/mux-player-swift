@@ -17,11 +17,10 @@ class MainViewController: UIViewController {
 //    )
     let videoIdx = 0
     lazy var playerViewController = AVPlayerViewController(
-        playbackID: DRMExample.DRM_EXAMPLES[videoIdx].playbackID,
+        playbackID: "fPHwnrNKTqTdZTX00xmbbs316CauXMg02KJKZlpaxNKmc",
         playbackOptions: PlaybackOptions(
-            playbackToken: DRMExample.DRM_EXAMPLES[videoIdx].playbackToken,
-            drmToken: DRMExample.DRM_EXAMPLES[videoIdx].drmToken,
-            customDomain: "staging.mux.com"
+            playbackToken: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJ2IiwiZXhwIjoxNzI2MTYyMTMwLCJraWQiOiJucFI2TFZHSjVMZG5pdXNzVzAwSEJHcHhzbElNVGVpSzhiaHI4Z0U2VHNtdyIsInN1YiI6ImZQSHduck5LVHFUZFpUWDAweG1iYnMzMTZDYXVYTWcwMktKS1pscGF4TkttYyJ9.TDP-unjybwwTQJnSoYGwpNH-_lGM1-uhCdGIWYtS3XAyekSvhQYKQBiTMF435_31vIAVQ5H2rkyQvGA6CajZWgAWe_c9_ZuPB9CJ9SEvvGZmw8bj-k1H7vFzFA_dGhWIhnhi9eW1wl_w3EsxRwZP9BRrhLec8QZGN-JAvv-upPMFTXOo1O8DNg_pag9c0u0h609YwIcBcpvBrhZDAxied_xr7GpZuZaB7SY65gx0jSuYO4S1Wp5BgWJ3jSTRFSP2jPvNHxXr-VFoCKKnAZ5v9mV6pmRZ17A-U3IsL1tsRYkLC4toIrz24sdmaPIIj3-s1E2-5g3irRujtyxJTsUaTw",
+            drmToken: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJsIiwiZXhwIjoxNzI2MTYyMTMzLCJraWQiOiJucFI2TFZHSjVMZG5pdXNzVzAwSEJHcHhzbElNVGVpSzhiaHI4Z0U2VHNtdyIsInN1YiI6ImZQSHduck5LVHFUZFpUWDAweG1iYnMzMTZDYXVYTWcwMktKS1pscGF4TkttYyJ9.OE06Sg79FagTAAho9fz-g0Jd6OexCrrey8j9v0ETo3UQ1wmawKPC95-3VJkT-qkvXgPaaApDmDS2c5ormiPZxAH3fO_nPDh8oVDGHQgnLXtKKCsL4j9jd2whBEoIpHYnjUnrp4pt1klJqGljN1LqUVYsecpXlh3JUPBjcoRW1eGuAdqbW4kfQpq7c-rZRLCs4WtFm8fSh8UamBLrvULJzgXGQmX1UlzIuN2Y_u-AxuO9VCKaSfLKobko2j9ozQ3VdnEqsThv3iQORCZHmuq4sxSwOyNLMidGcbiPGayJHDm31iG4mipdMzhICb22uCwZDEnEkT7TC08FSMMx1CZHWw"
         )
     )
 
