@@ -172,7 +172,5 @@ internal extension AVPlayerItem {
             playbackID: playbackID,
             playbackOptions: playbackOptions
         )
-
-        self.init(url: playbackURL)
     }
 }
