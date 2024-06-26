@@ -173,10 +173,12 @@ class DefaultFairPlayStreamingSessionManager<
                 self.logger.debug(
                     "Application certificate response headers: \(httpResponse.allHeaderFields, privacy: .auto(mask: .hash))"
                 )
-                if let errorBody = data {
-                    let errorUtf = String(data: errorBody, encoding: .utf8)
+                if let data, let utfData = String(
+                    data: data,
+                    encoding: .utf8
+                ) {
                     self.logger.debug(
-                        "Application certificate error: \(errorUtf ?? "nil")"
+                        "Application certificate error: \(utfData ?? "nil")"
                     )
                 }
 
