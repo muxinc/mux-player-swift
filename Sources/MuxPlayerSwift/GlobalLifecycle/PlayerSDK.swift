@@ -39,15 +39,13 @@ class PlayerSDK {
         #else
         let sessionManager = DefaultFairPlayStreamingSessionManager(
             contentKeySession: AVContentKeySession(keySystem: .fairPlayStreaming),
-            urlSession: .shared,
-            logger: contentKeyLogger
+            urlSession: .shared
         )
         sessionManager.sessionDelegate = ContentKeySessionDelegate(
             sessionManager: sessionManager
         )
         self.init(
-            fairPlayStreamingSessionManager: sessionManager,
-            contentKeyLogger: contentKeyLogger
+            fairPlayStreamingSessionManager: sessionManager
         )
         #endif
     }
