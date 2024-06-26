@@ -21,12 +21,7 @@ internal extension URLComponents {
         self.init()
         self.scheme = "https"
 
-        if let customDomain = playbackOptions.customDomain {
-            self.host = "stream.\(customDomain)"
-        } else {
-            self.host = "stream.mux.com"
-        }
-
+        self.host = "stream.\(playbackOptions.rootDomain())"
         self.path = "/\(playbackID).m3u8"
 
         if case PlaybackOptions.PlaybackPolicy.public(
