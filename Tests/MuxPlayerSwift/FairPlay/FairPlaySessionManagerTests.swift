@@ -8,6 +8,7 @@
 import Foundation
 import XCTest
 import AVKit
+import os
 @testable import MuxPlayerSwift
 
 class FairPlaySessionManagerTests : XCTestCase {

@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import os
 @testable import MuxPlayerSwift
 
 /// Testing version of the FairPlayStreamingSessionCredentialClient`
@@ -16,7 +17,14 @@ class TestFairPlayStreamingSessionCredentialClient: FairPlayStreamingSessionCred
     private let fakeCert: Data?
     private let fakeLicense: Data?
     private let failsWith: (any Error)!
-    
+
+    var logger: Logger = Logger(
+        OSLog(
+            subsystem: "com.mux.player",
+            category: "CK"
+        )
+    )
+
     func requestCertificate(fromDomain rootDomain: String, playbackID: String, drmToken: String, completion requestCompletion: @escaping (Result<Data, any Error>) -> Void) {
         if let fakeCert = fakeCert {
             requestCompletion(Result.success(fakeCert))
