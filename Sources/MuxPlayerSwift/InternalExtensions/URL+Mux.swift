@@ -5,7 +5,6 @@
 import Foundation
 
 internal extension URL {
-
     var isReverseProxyable: Bool {
         guard let components = URLComponents(
             url: self,

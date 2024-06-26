@@ -82,45 +82,6 @@ protocol ContentKeyProvider {
 // these methods so this declaration can be empty
 extension AVContentKeySession: ContentKeyProvider { }
 
-// MARK: helpers for interacting with the license server
-
-extension String {
-    // Generates a domain name appropriate for the Mux license proxy associted with the given
-    // "root domain". For example `mux.com` returns `license.mux.com` and
-    // `customdomain.xyz.com` returns `license.customdomain.xyz.com`
-    static func makeLicenseDomain(rootDomain: String) -> Self {
-        let customDomainWithDefault = rootDomain
-        let licenseDomain = "license.\(customDomainWithDefault)"
-        return licenseDomain
-    }
-}
-
-extension URL {
-    // Generates an authenticated URL to Mux's license proxy, for a 'license' (a CKC for fairplay),
-    // for the given playabckID and DRM Token, at the given domain
-    // - SeeAlso ``init(playbackID:,drmToken:,applicationCertificateLicenseDomain:)``
-    init(
-        playbackID: String,
-        drmToken: String,
-        licenseDomain: String
-    ) {
-        let absoluteString = "https://\(licenseDomain)/license/fairplay/\(playbackID)?token=\(drmToken)"
-        self.init(string: absoluteString)!
-    }
-
-    // Generates an authenticated URL to Mux's license proxy, for an application certificate, for the
-    // given plabackID and DRM token, at the given domain
-    // - SeeAlso ``init(playbackID:,drmToken:,licenseDomain: String)``
-    init(
-        playbackID: String,
-        drmToken: String,
-        applicationCertificateLicenseDomain: String
-    ) {
-        let absoluteString = "https://\(applicationCertificateLicenseDomain)/appcert/fairplay/\(playbackID)?token=\(drmToken)"
-        self.init(string: absoluteString)!
-    }
-}
-
 // MARK: - DefaultFairPlayStreamingSessionManager
 
 class DefaultFairPlayStreamingSessionManager<
@@ -174,16 +135,25 @@ class DefaultFairPlayStreamingSessionManager<
         drmToken: String,
         completion requestCompletion: @escaping (Result<Data, Error>) -> Void
     ) {
-        let url = URL(
+        guard let url = URLComponents(
             playbackID: playbackID,
             drmToken: drmToken,
-            applicationCertificateLicenseDomain: String.makeLicenseDomain(
-                rootDomain: rootDomain
+            applicationCertificateHostSuffix: rootDomain
+        ).url else {
+            logger.debug(
+                "Invalid FairPlay certificate domain \(rootDomain, privacy: .auto(mask: .hash))"
             )
-        )
+            requestCompletion(
+                Result.failure(
+                    FairPlaySessionError.unexpected(
+                        message: "Invalid certificate domain"
+                    )
+                )
+            )
+            return
+        }
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
-        
 
         logger.debug(
             "Requesting application certificate from \(url, privacy: .auto(mask: .hash))"
@@ -269,13 +239,21 @@ class DefaultFairPlayStreamingSessionManager<
         offline _: Bool,
         completion requestCompletion: @escaping (Result<Data, Error>) -> Void
     ) {
-        let url = URL(
+        guard let url = URLComponents(
             playbackID: playbackID,
             drmToken: drmToken,
-            licenseDomain: String.makeLicenseDomain(
-                rootDomain: rootDomain
+            licenseHostSuffix: rootDomain
+        ).url else {
+            requestCompletion(
+                Result.failure(
+                    FairPlaySessionError.unexpected(
+                        message: "Invalid FairPlay license domain"
+                    )
+                )
             )
-        )
+            return
+        }
+
         var request = URLRequest(url: url)
         
         // POST body is the SPC bytes
