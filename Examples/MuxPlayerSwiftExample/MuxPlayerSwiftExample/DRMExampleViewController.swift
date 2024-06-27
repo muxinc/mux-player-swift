@@ -63,6 +63,10 @@ class DRMExampleViewController: UIViewController {
 
         view.backgroundColor = .black
 
+        playerViewController.delegate = self
+        playerViewController.allowsPictureInPicturePlayback = true
+        playerViewController.canStartPictureInPictureAutomaticallyFromInline = true
+
         displayPlayerViewController()
     }
 
@@ -97,4 +101,13 @@ class DRMExampleViewController: UIViewController {
         playerViewController.removeFromParent()
     }
 
+}
+
+extension DRMExampleViewController: AVPlayerViewControllerDelegate{
+    func playerViewController(
+        _ playerViewController: AVPlayerViewController,
+        restoreUserInterfaceForPictureInPictureStopWithCompletionHandler completionHandler: @escaping (Bool) -> Void
+    ) {
+        completionHandler(true)
+    }
 }
