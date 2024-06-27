@@ -159,4 +159,14 @@ internal extension URLComponents {
 
         self.queryItems = queryItems
     }
+
+    // MARK: - Helper Methods
+
+    func findQueryValue(key: String) -> String? {
+        return self.queryItems?
+            .first(where: {
+                $0.name.lowercased() == key.lowercased()
+            })?
+            .value
+    }
 }
