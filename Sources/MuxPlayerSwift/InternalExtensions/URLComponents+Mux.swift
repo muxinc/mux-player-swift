@@ -125,14 +125,12 @@ internal extension URLComponents {
 
         var queryItems: [URLQueryItem] = []
 
-        queryItems.append(
+        self.queryItems = [ 
             URLQueryItem(
                 name: "token",
                 value: drmToken
             )
-        )
-
-        self.queryItems = queryItems
+        ]
     }
 
     // Generates an authenticated URL for retrieving a FairPlay
@@ -148,16 +146,12 @@ internal extension URLComponents {
         self.host = "license.\(applicationCertificateHostSuffix)"
         self.path = "/appcert/fairplay/\(playbackID)"
 
-        var queryItems: [URLQueryItem] = []
-
-        queryItems.append(
+        self.queryItems = [
             URLQueryItem(
                 name: "token",
                 value: drmToken
             )
-        )
-
-        self.queryItems = queryItems
+        ]
     }
 
     // MARK: - Helper Methods
