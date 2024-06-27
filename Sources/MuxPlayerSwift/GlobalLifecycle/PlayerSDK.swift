@@ -22,9 +22,9 @@ class PlayerSDK {
     
     let fairPlaySessionManager: FairPlayStreamingSessionManager
 
-    let diagnosticsLogger: Logger
+    var diagnosticsLogger: Logger
 
-    let abrLogger: Logger
+    var abrLogger: Logger
 
     let reverseProxyServer: ReverseProxyServer
 
@@ -44,7 +44,9 @@ class PlayerSDK {
         sessionManager.sessionDelegate = ContentKeySessionDelegate(
             sessionManager: sessionManager
         )
-        self.init(fairPlayStreamingSessionManager: sessionManager)
+        self.init(
+            fairPlayStreamingSessionManager: sessionManager
+        )
         #endif
     }
 
@@ -78,6 +80,39 @@ class PlayerSDK {
         #endif
 
         self.reverseProxyServer = ReverseProxyServer()
+    }
+
+    func enableLogging() {
+        self.abrLogger = Logger(
+            OSLog(
+                subsystem: "com.mux.player",
+                category: "ABR"
+            )
+        )
+        self.diagnosticsLogger = Logger(
+            OSLog(
+                subsystem: "com.mux.player",
+                category: "Diagnostics"
+            )
+        )
+        self.fairPlaySessionManager.logger = Logger(
+            OSLog(
+                subsystem: "com.mux.player",
+                category: "CK"
+            )
+        )
+    }
+
+    func disableLogging() {
+        self.abrLogger = Logger(
+            .disabled
+        )
+        self.diagnosticsLogger = Logger(
+            .disabled
+        )
+        self.fairPlaySessionManager.logger = Logger(
+            .disabled
+        )
     }
 
     func registerPlayerItem(

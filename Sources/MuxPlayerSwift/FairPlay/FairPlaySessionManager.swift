@@ -5,8 +5,9 @@
 //  Created by Emily Dixon on 4/19/24.
 //
 
-import Foundation
 import AVFoundation
+import Foundation
+import os
 
 // MARK: - FairPlayStreamingSessionManager
 
@@ -33,6 +34,8 @@ protocol FairPlayStreamingSessionCredentialClient: AnyObject {
         offline _: Bool,
         completion requestCompletion: @escaping (Result<Data, Error>) -> Void
     )
+
+    var logger: Logger { get set }
 }
 
 // MARK: - PlaybackOptionsRegistry
@@ -79,45 +82,6 @@ protocol ContentKeyProvider {
 // these methods so this declaration can be empty
 extension AVContentKeySession: ContentKeyProvider { }
 
-// MARK: helpers for interacting with the license server
-
-extension String {
-    // Generates a domain name appropriate for the Mux license proxy associted with the given
-    // "root domain". For example `mux.com` returns `license.mux.com` and
-    // `customdomain.xyz.com` returns `license.customdomain.xyz.com`
-    static func makeLicenseDomain(rootDomain: String) -> Self {
-        let customDomainWithDefault = rootDomain
-        let licenseDomain = "license.\(customDomainWithDefault)"
-        return licenseDomain
-    }
-}
-
-extension URL {
-    // Generates an authenticated URL to Mux's license proxy, for a 'license' (a CKC for fairplay),
-    // for the given playabckID and DRM Token, at the given domain
-    // - SeeAlso ``init(playbackID:,drmToken:,applicationCertificateLicenseDomain:)``
-    init(
-        playbackID: String,
-        drmToken: String,
-        licenseDomain: String
-    ) {
-        let absoluteString = "https://\(licenseDomain)/license/fairplay/\(playbackID)?token=\(drmToken)"
-        self.init(string: absoluteString)!
-    }
-
-    // Generates an authenticated URL to Mux's license proxy, for an application certificate, for the
-    // given plabackID and DRM token, at the given domain
-    // - SeeAlso ``init(playbackID:,drmToken:,licenseDomain: String)``
-    init(
-        playbackID: String,
-        drmToken: String,
-        applicationCertificateLicenseDomain: String
-    ) {
-        let absoluteString = "https://\(applicationCertificateLicenseDomain)/appcert/fairplay/\(playbackID)?token=\(drmToken)"
-        self.init(string: absoluteString)!
-    }
-}
-
 // MARK: - DefaultFairPlayStreamingSessionManager
 
 class DefaultFairPlayStreamingSessionManager<
@@ -127,6 +91,19 @@ class DefaultFairPlayStreamingSessionManager<
     var playbackOptionsByPlaybackID: [String: PlaybackOptions] = [:]
     // note - null on simulators or other environments where fairplay isn't supported
     let contentKeySession: ContentKeySession
+    
+    #if DEBUG
+    var logger: Logger = Logger(
+        OSLog(
+            subsystem: "com.mux.player",
+            category: "CK"
+        )
+    )
+    #else
+    var logger: Logger = Logger(
+        OSLog.disabled
+    )
+    #endif
 
     var sessionDelegate: AVContentKeySessionDelegate? {
         didSet {
@@ -158,33 +135,59 @@ class DefaultFairPlayStreamingSessionManager<
         drmToken: String,
         completion requestCompletion: @escaping (Result<Data, Error>) -> Void
     ) {
-        let url = URL(
+        guard let url = URLComponents(
             playbackID: playbackID,
             drmToken: drmToken,
-            applicationCertificateLicenseDomain: String.makeLicenseDomain(
-                rootDomain: rootDomain
+            applicationCertificateHostSuffix: rootDomain
+        ).url else {
+            logger.debug(
+                "Invalid FairPlay certificate domain \(rootDomain, privacy: .auto(mask: .hash))"
             )
-        )
+            requestCompletion(
+                Result.failure(
+                    FairPlaySessionError.unexpected(
+                        message: "Invalid certificate domain"
+                    )
+                )
+            )
+            return
+        }
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
-        
-        print("Getting app cert from \(url)")
+
+        logger.debug(
+            "Requesting application certificate from \(url, privacy: .auto(mask: .hash))"
+        )
+
         let dataTask = urlSession.dataTask(with: request) { [requestCompletion] data, response, error in
-            print("!--! APP CERT RESPONSE")
+            self.logger.debug(
+                "Application certificate request completed"
+            )
+
             var responseCode: Int? = nil
             if let httpResponse = response as? HTTPURLResponse {
                 responseCode = httpResponse.statusCode
-                print("Cert response code: \(httpResponse.statusCode)")
-                print("Cert response headers: ", httpResponse.allHeaderFields)
-                if let errorBody = data {
-                    let errorUtf = String(data: errorBody, encoding: .utf8)
-                    print("Cert Error: \(errorUtf ?? "nil")")
+                self.logger.debug(
+                    "Application certificate response code: \(httpResponse.statusCode)"
+                )
+                self.logger.debug(
+                    "Application certificate response headers: \(httpResponse.allHeaderFields, privacy: .auto(mask: .hash))"
+                )
+                if let data, let utfData = String(
+                    data: data,
+                    encoding: .utf8
+                ) {
+                    self.logger.debug(
+                        "Application certificate error: \(utfData)"
+                    )
                 }
 
             }
             // error case: I/O failed
             if let error = error {
-                print("Cert Request Failed: \(error.localizedDescription)")
+                self.logger.debug(
+                    "Applicate certificate request failed with error: \(error.localizedDescription)"
+                )
                 requestCompletion(Result.failure(
                     FairPlaySessionError.because(cause: error)
                 ))
@@ -192,7 +195,9 @@ class DefaultFairPlayStreamingSessionManager<
             }
             // error case: I/O finished with non-successful response
             guard responseCode == 200 else {
-                print("Cert request failed: \(String(describing: responseCode))")
+                self.logger.debug(
+                    "Applicate certificate request failed with response code: \(String(describing: responseCode))"
+                )
                 requestCompletion(
                     Result.failure(
                         FairPlaySessionError.httpFailed(
@@ -205,15 +210,21 @@ class DefaultFairPlayStreamingSessionManager<
             // this edge case (200 with invalid data) is possible from our DRM vendor
             guard let data = data,
                   data.count > 0 else {
-                print("Cert data unexpectedly nil from server")
-                requestCompletion(Result.failure(
-                    FairPlaySessionError.unexpected(message: "No cert data with 200 OK respone")
-                ))
+                self.logger.debug(
+                    "Applicate certificate request completed with missing data and response code \(responseCode.debugDescription)"
+                )
+                requestCompletion(
+                    Result.failure(
+                        FairPlaySessionError.unexpected(
+                            message: "No cert data with 200 OK respone"
+                        )
+                    )
+                )
                 return
             }
             
-            print(">> App Cert Response data:\(data.base64EncodedString())")
-            
+            self.logger.debug("Application certificate response data:\(data.base64EncodedString(), privacy: .auto(mask: .hash))")
+
             requestCompletion(Result.success(data))
         }
         
@@ -230,13 +241,21 @@ class DefaultFairPlayStreamingSessionManager<
         offline _: Bool,
         completion requestCompletion: @escaping (Result<Data, Error>) -> Void
     ) {
-        let url = URL(
+        guard let url = URLComponents(
             playbackID: playbackID,
             drmToken: drmToken,
-            licenseDomain: String.makeLicenseDomain(
-                rootDomain: rootDomain
+            licenseHostSuffix: rootDomain
+        ).url else {
+            requestCompletion(
+                Result.failure(
+                    FairPlaySessionError.unexpected(
+                        message: "Invalid FairPlay license domain"
+                    )
+                )
             )
-        )
+            return
+        }
+
         var request = URLRequest(url: url)
         
         // POST body is the SPC bytes
@@ -246,13 +265,15 @@ class DefaultFairPlayStreamingSessionManager<
         // QUERY PARAMS
         request.setValue("application/octet-stream", forHTTPHeaderField: "Content-Type")
         request.setValue(String(format: "%lu", request.httpBody?.count ?? 0), forHTTPHeaderField: "Content-Length")
-        print("Sending License/CKC Request to: \(request.url?.absoluteString ?? "nil")")
-        print("\t with header fields: \(String(describing: request.allHTTPHeaderFields))")
-        
+        logger.debug("Sending License/CKC Request to: \(request.url?.absoluteString ?? "nil")")
+        logger.debug("\t with header fields: \(String(describing: request.allHTTPHeaderFields))")
+
         let task = urlSession.dataTask(with: request) { [requestCompletion] data, response, error in
             // error case: I/O failed
             if let error = error {
-                print("URL Session Task Failed: \(error.localizedDescription)")
+                self.logger.debug(
+                    "URL Session Task Failed: \(error.localizedDescription)"
+                )
                 requestCompletion(Result.failure(
                     FairPlaySessionError.because(cause: error)
                 ))
@@ -262,12 +283,18 @@ class DefaultFairPlayStreamingSessionManager<
             var responseCode: Int? = nil
             if let httpResponse = response as? HTTPURLResponse {
                 responseCode = httpResponse.statusCode
-                print("License response code: \(httpResponse.statusCode)")
-                print("License response headers: ", httpResponse.allHeaderFields)
+                self.logger.debug(
+                    "License response code: \(httpResponse.statusCode)"
+                )
+                self.logger.debug(
+                    "License response headers: \(httpResponse.allHeaderFields, privacy: .auto(mask: .hash))"
+                )
             }
             // error case: I/O finished with non-successful response
             guard responseCode == 200 else {
-                print("CKC request failed: \(String(describing: responseCode))")
+                self.logger.debug(
+                    "CKC request failed: \(String(describing: responseCode))"
+                )
                 requestCompletion(Result.failure(
                     FairPlaySessionError.httpFailed(
                         responseStatusCode: responseCode ?? 0
@@ -281,7 +308,7 @@ class DefaultFairPlayStreamingSessionManager<
             guard let data = data,
                   data.count > 0
             else {
-                print("No CKC data despite server returning success")
+                self.logger.debug("No CKC data despite server returning success")
                 requestCompletion(Result.failure(
                     FairPlaySessionError.unexpected(message: "No license data with 200 response")
                 ))
@@ -301,7 +328,7 @@ class DefaultFairPlayStreamingSessionManager<
         _ options: PlaybackOptions,
         for playbackID: String
     ) {
-        print("Registering playbackID \(playbackID)")
+        logger.debug("Registering playbackID \(playbackID)")
         playbackOptionsByPlaybackID[playbackID] = options
     }
     
@@ -309,13 +336,13 @@ class DefaultFairPlayStreamingSessionManager<
     func findRegisteredPlaybackOptions(
         for playbackID: String
     ) -> PlaybackOptions? {
-        print("Finding playbackID \(playbackID)")
+        logger.debug("Finding playbackID \(playbackID)")
         return playbackOptionsByPlaybackID[playbackID]
     }
     
     /// Unregisters a ``PlaybackOptions`` for DRM playback, given the assiciated playback ID
     func unregisterPlaybackOptions(for playbackID: String) {
-        print("UN-Registering playbackID \(playbackID)")
+        logger.debug("UN-Registering playbackID \(playbackID)")
         playbackOptionsByPlaybackID.removeValue(forKey: playbackID)
     }
 

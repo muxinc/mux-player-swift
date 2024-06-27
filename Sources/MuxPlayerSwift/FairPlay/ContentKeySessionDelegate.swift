@@ -5,125 +5,155 @@
 //  Created by Emily Dixon on 4/19/24.
 //
 
-import Foundation
 import AVFoundation
+import Foundation
+import os
 
 class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredentialClient & PlaybackOptionsRegistry> : NSObject, AVContentKeySessionDelegate {
     
     weak var sessionManager: SessionManager?
 
-    init(sessionManager: SessionManager) {
+    var logger: Logger
+
+    init(
+        sessionManager: SessionManager
+    ) {
         self.sessionManager = sessionManager
+        self.logger = sessionManager.logger
     }
     
     // MARK: AVContentKeySessionDelegate implementation
     
-    func contentKeySession(_ session: AVContentKeySession, didProvide keyRequest: AVContentKeyRequest) {
+    func contentKeySession(
+        _ session: AVContentKeySession,
+        didProvide keyRequest: AVContentKeyRequest
+    ) {
+        handleContentKeyRequest(
+            request: DefaultKeyRequest(wrapping: keyRequest)
+        )
+    }
+    
+    func contentKeySession(
+        _ session: AVContentKeySession,
+        didProvideRenewingContentKeyRequest keyRequest: AVContentKeyRequest
+    ) {
         handleContentKeyRequest(request: DefaultKeyRequest(wrapping: keyRequest))
     }
     
-    func contentKeySession(_ session: AVContentKeySession, didProvideRenewingContentKeyRequest keyRequest: AVContentKeyRequest) {
-        handleContentKeyRequest(request: DefaultKeyRequest(wrapping: keyRequest))
+    func contentKeySession(
+        _ session: AVContentKeySession,
+        contentKeyRequestDidSucceed keyRequest: AVContentKeyRequest
+    ) {
+        logger.debug(
+            "CK Request Succeeded"
+        )
     }
     
-    func contentKeySession(_ session: AVContentKeySession, contentKeyRequestDidSucceed keyRequest: AVContentKeyRequest) {
-        // this func intentionally left blank
-        // TODO: Log more nicely (ie, with a Logger)
-        print("CKC Request Success")
+    func contentKeySession(
+        _ session: AVContentKeySession, contentKeyRequest
+        keyRequest: AVContentKeyRequest, didFailWithError
+        err: any Error
+    ) {
+        logger.debug(
+            "CK Request Failed Error: \(err.localizedDescription)"
+        )
     }
     
-    func contentKeySession(_ session: AVContentKeySession, contentKeyRequest keyRequest: AVContentKeyRequest, didFailWithError err: any Error) {
-        // TODO: Log more nicely (ie, with a Logger)
-        print("CKC Request Failed!!! \(err.localizedDescription)")
-    }
-    
-    func contentKeySession(_ session: AVContentKeySession, shouldRetry keyRequest: AVContentKeyRequest,
-                           reason retryReason: AVContentKeyRequest.RetryReason) -> Bool {
-        // TODO: use Logger
-        print("shouldRetry called with reason \(retryReason)")
-        
-        var shouldRetry = false
-        
+    func contentKeySession(
+        _ session: AVContentKeySession,
+        shouldRetry keyRequest: AVContentKeyRequest,
+        reason retryReason: AVContentKeyRequest.RetryReason
+    ) -> Bool {
+        logger.debug(
+            "Retrying with reason: \(retryReason.rawValue)"
+        )
+
         switch retryReason {
             /*
              Indicates that the content key request should be retried because the key response was not set soon enough either
              due the initial request/response was taking too long, or a lease was expiring in the meantime.
              */
-        case AVContentKeyRequest.RetryReason.timedOut:
-            shouldRetry = true
-            
+        case .timedOut:
+            return true
+
             /*
              Indicates that the content key request should be retried because a key response with expired lease was set on the
              previous content key request.
              */
-        case AVContentKeyRequest.RetryReason.receivedResponseWithExpiredLease:
-            shouldRetry = true
-            
+        case .receivedResponseWithExpiredLease:
+            return true
+
             /*
              Indicates that the content key request should be retried because an obsolete key response was set on the previous
              content key request.
              */
-        case AVContentKeyRequest.RetryReason.receivedObsoleteContentKey:
-            shouldRetry = true
-            
+        case .receivedObsoleteContentKey:
+            return true
+
         default:
-            break
+            return false
         }
-        
-        return shouldRetry
     }
     
     // MARK: Logic
     
     func parsePlaybackId(fromSkdLocation uri: URL) -> String? {
         // pull the playbackID out of the uri to the key
-        let urlComponents = URLComponents(url: uri, resolvingAgainstBaseURL: false)
-        guard let urlComponents = urlComponents else {
+        guard let urlComponents = URLComponents(
+            url: uri,
+            resolvingAgainstBaseURL: false
+        ) else {
             // not likely
-            print("!! Error: Cannot Parse URI")
+            logger.debug("\(#function) Error: cannot parse key URL [\(uri)]")
             return nil
         }
-        let playbackID = urlComponents.findQueryValue(key: "playbackId")
-        guard let playbackID = playbackID else {
-            print("!! Error: URI [\(uri)] did not have playbackId!")
-            return nil
-        }
-        print("|| PlaybackID from \(uri) is \(playbackID)")
-        return playbackID
+
+        return urlComponents.findQueryValue(
+            key: "playbackId"
+        )
     }
     
     func handleContentKeyRequest(request: any KeyRequest) {
-        print("<><>handleContentKeyRequest: Called")
-        // for hls, "the identifier must be an NSURL that matches a key URI in the Media Playlist." from the docs
-        guard let keyURLStr = request.identifier as? String,
-              let keyURL = URL(string: keyURLStr),
-              let assetIDData = keyURLStr.data(using: .utf8)
-        else {
-            print("request identifier was not a key url, this is exceptional for hls")
+        logger.debug(
+            "Called \(#function)"
+        )
+
+        guard let sessionManager = self.sessionManager else {
+            // TODO: Should this also invoke `processContentKeyResponseError`?
+            logger.debug("Missing session manager")
             return
         }
-        
-        let playbackID = parsePlaybackId(fromSkdLocation: keyURL)
-        guard let playbackID = playbackID else {
+
+        // for hls, "the identifier must be an NSURL that matches a key URI in the Media Playlist." from the docs
+        guard let requestIdentifierString = request.identifier as? String,
+              let mediaPlaylistKeyURL = URL(string: requestIdentifierString),
+              let utfEncodedRequestIdentifierString = requestIdentifierString.data(using: .utf8)
+        else {
+            // TODO: Should this also invoke `processContentKeyResponseError`?
+            logger.debug(
+                "CK request identifier not a valid key url."
+            )
+            return
+        }
+
+        guard let playbackID = parsePlaybackId(
+            fromSkdLocation: mediaPlaylistKeyURL
+        ) else {
             request.processContentKeyResponseError(
                 FairPlaySessionError.unexpected(
                     message: "playbackID not present in key uri"
                 )
             )
-            return
-        }
-        
-        guard let sessionManager = self.sessionManager else {
-            print("no session manager")
+            logger.debug("\(#function) Error: key url SDK location missing playbackId [\(mediaPlaylistKeyURL.absoluteString)]")
             return
         }
 
-        let playbackOptions = sessionManager.findRegisteredPlaybackOptions(
+        guard let playbackOptions = sessionManager.findRegisteredPlaybackOptions(
             for: playbackID
-        )
-        guard let playbackOptions = playbackOptions,
-              case .drm(let drmOptions) = playbackOptions.playbackPolicy else {
-            print("DRM Tokens must be registered when the AVPlayerItem is created, using FairplaySessionManager")
+        ), case .drm(let drmOptions) = playbackOptions.playbackPolicy else {
+            logger.debug(
+                "Unregistered DRM token. Make sure this is done right after AVPlayerItem is initialized."
+            )
             request.processContentKeyResponseError(
                 FairPlaySessionError.unexpected(
                     message: "Token was not registered, only happens during SDK errors"
@@ -164,11 +194,15 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
         }
         
         // exchange app cert for SPC using KeyRequest to give to CDM
-        request.makeStreamingContentKeyRequestData(forApp: applicationCertificate,
-                                                   contentIdentifier: assetIDData,
-                                                   options: [AVContentKeyRequestProtocolVersionsKey: [1]]) { [weak self] spcData, error in
+        request.makeStreamingContentKeyRequestData(
+            forApp: applicationCertificate,
+            contentIdentifier: utfEncodedRequestIdentifierString,
+            options: [AVContentKeyRequestProtocolVersionsKey: [1]]
+        ) { [weak self] spcData, error in
             guard let self = self else {
-                // todo - log or something?
+                PlayerSDK.shared.diagnosticsLogger.debug(
+                    "Content key request completed: missing session delegate"
+                )
                 return
             }
             
@@ -198,7 +232,7 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
         request: any KeyRequest
     ) {
         guard let sessionManager = self.sessionManager else {
-            print("Missing Session Manager")
+            logger.debug("Missing Session Manager")
             return
         }
         
@@ -221,15 +255,23 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
         group.wait()
         
         guard let ckcData = ckcData else {
-            request.processContentKeyResponseError(FairPlaySessionError.unexpected(message: "No CKC Data returned from CDM"))
+            request.processContentKeyResponseError(
+                FairPlaySessionError.unexpected(
+                    message: "No CKC Data returned from CDM"
+                )
+            )
             return
         }
         
-        print("Submitting CKC to system")
+        logger.debug("Submitting CKC to system")
         // Send CKC to CDM/wherever else so we can finally play our content
-//        let keyResponse = AVContentKeyResponse(fairPlayStreamingKeyResponseData: ckcData)
-        let keyResponse = request.makeContentKeyResponse(data: ckcData)
-        request.processContentKeyResponse(keyResponse)
+        let keyResponse = request.makeContentKeyResponse(
+            data: ckcData
+        )
+        request.processContentKeyResponse(
+            keyResponse
+        )
+        logger.debug("Protected content now available for processing")
         // Done! no further interaction is required from us to play.
     }
 }
@@ -292,19 +334,5 @@ struct DefaultKeyRequest : KeyRequest {
     
     init(wrapping request: InnerRequest) {
         self.request = request
-    }
-}
-
-extension URLComponents {
-    func findQueryValue(key: String) -> String? {
-        if let items = self.queryItems {
-            for item in items {
-                if item.name.lowercased() == key.lowercased() {
-                    return item.value
-                }
-            }
-        }
-        
-        return nil
     }
 }

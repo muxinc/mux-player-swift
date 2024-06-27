@@ -8,6 +8,7 @@
 import Foundation
 import XCTest
 import AVKit
+import os
 @testable import MuxPlayerSwift
 
 class FairPlaySessionManagerTests : XCTestCase {
@@ -36,60 +37,60 @@ class FairPlaySessionManagerTests : XCTestCase {
         )
 
     }
-    
-    // Also tests PlaybackOptions.rootDomain
-    func testMakeLicenseDomain() throws {
-        let optionsWithoutCustomDomain = PlaybackOptions()
-        let defaultLicenseDomain = String.makeLicenseDomain(
-            rootDomain: optionsWithoutCustomDomain.rootDomain()
+
+    func testDefaultLicenseURL() throws {
+        let fakePlaybackId = "abc"
+        let fakeDrmToken = "fake_drm_token"
+        let fakeLicenseDomain = PlaybackOptions().rootDomain()
+
+        let licenseURL = try XCTUnwrap(
+            URLComponents(
+                playbackID: fakePlaybackId,
+                drmToken: fakeDrmToken,
+                licenseHostSuffix: fakeLicenseDomain
+            ).url
         )
-        XCTAssert(
-            defaultLicenseDomain == "license.mux.com",
-            "Default license server is license.mux.com"
-        )
-        
-        var optionsCustomDomain = PlaybackOptions()
-        optionsCustomDomain.customDomain = "fake.custom.domain.xyz"
-        let customLicenseDomain = String.makeLicenseDomain(
-            rootDomain: optionsCustomDomain.rootDomain()
-        )
-        XCTAssert(
-            customLicenseDomain == "license.fake.custom.domain.xyz",
-            "Custom license server is license.fake.custom.domain.xyz"
+        XCTAssertEqual(
+            licenseURL.absoluteString,
+            "https://license.mux.com/license/fairplay/abc?token=fake_drm_token"
         )
     }
-    
-    func testMakeLicenseURL() throws {
-        let fakePlaybackId = "fake_playback_id"
+
+    func testCustomLicenseURL() throws {
+        let fakePlaybackId = "abc"
         let fakeDrmToken = "fake_drm_token"
-        let fakeLicenseDomain = "license.fake.domain.xyz"
+        let fakeLicenseDomain = "fake.domain.xyz"
         
-        let licenseURL = URL(
-            playbackID: fakePlaybackId,
-            drmToken: fakeDrmToken,
-            licenseDomain: fakeLicenseDomain
+        let licenseURL = try XCTUnwrap(
+            URLComponents(
+                playbackID: fakePlaybackId,
+                drmToken: fakeDrmToken,
+                licenseHostSuffix: fakeLicenseDomain
+            ).url
         )
-        let expected = "https://\(fakeLicenseDomain)/license/fairplay/\(fakePlaybackId)?token=\(fakeDrmToken)"
         
         XCTAssertEqual(
-            expected, licenseURL.absoluteString
+            licenseURL.absoluteString,
+            "https://license.fake.domain.xyz/license/fairplay/abc?token=fake_drm_token"
         )
     }
     
     func testMakeAppCertificateUrl() throws {
-        let fakePlaybackId = "fake_playback_id"
+        let fakePlaybackId = "abc"
         let fakeDrmToken = "fake_drm_token"
-        let fakeLicenseDomain = "license.fake.domain.xyz"
-        
-        let licenseURL = URL(
-            playbackID: fakePlaybackId,
-            drmToken: fakeDrmToken,
-            applicationCertificateLicenseDomain: fakeLicenseDomain
+        let applicationCertificateDomain = "fake.domain.xyz"
+
+        let licenseURL = try XCTUnwrap(
+            URLComponents(
+                playbackID: fakePlaybackId,
+                drmToken: fakeDrmToken,
+                applicationCertificateHostSuffix: applicationCertificateDomain
+            ).url
         )
-        let expected = "https://\(fakeLicenseDomain)/appcert/fairplay/\(fakePlaybackId)?token=\(fakeDrmToken)"
         
         XCTAssertEqual(
-            expected, licenseURL.absoluteString
+            "https://license.fake.domain.xyz/appcert/fairplay/abc?token=fake_drm_token",
+            licenseURL.absoluteString
         )
     }
     

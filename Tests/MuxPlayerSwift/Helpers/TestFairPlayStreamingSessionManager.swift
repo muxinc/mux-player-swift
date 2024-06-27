@@ -7,13 +7,21 @@
 
 import Foundation
 import AVFoundation
+import os
 @testable import MuxPlayerSwift
 
 class TestFairPlayStreamingSessionManager : FairPlayStreamingSessionCredentialClient & PlaybackOptionsRegistry {
     
     let credentialClient: FairPlayStreamingSessionCredentialClient
     let optionsRegistry: PlaybackOptionsRegistry
-    
+
+    var logger: Logger = Logger(
+        OSLog(
+            subsystem: "com.mux.player",
+            category: "CK"
+        )
+    )
+
     func requestCertificate(fromDomain rootDomain: String, playbackID: String, drmToken: String, completion requestCompletion: @escaping (Result<Data, any Error>) -> Void) {
         credentialClient.requestCertificate(fromDomain: rootDomain, playbackID: playbackID, drmToken: drmToken, completion: requestCompletion)
     }
