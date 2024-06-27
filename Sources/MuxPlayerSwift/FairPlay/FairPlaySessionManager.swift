@@ -178,7 +178,7 @@ class DefaultFairPlayStreamingSessionManager<
                     encoding: .utf8
                 ) {
                     self.logger.debug(
-                        "Application certificate error: \(utfData ?? "nil")"
+                        "Application certificate error: \(utfData)"
                     )
                 }
 
