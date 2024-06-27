@@ -108,15 +108,9 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
             return nil
         }
 
-        guard let playbackID = urlComponents.findQueryValue(
+        return urlComponents.findQueryValue(
             key: "playbackId"
-        ) else {
-            // not likely
-            logger.debug("\(#function) Error: key url missing playbackId [\(uri)]")
-            return nil
-        }
-
-        return playbackID
+        )
     }
     
     func handleContentKeyRequest(request: any KeyRequest) {
@@ -150,6 +144,7 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
                     message: "playbackID not present in key uri"
                 )
             )
+            logger.debug("\(#function) Error: key url SDK location missing playbackId [\(mediaPlaylistKeyURL.absoluteString)]")
             return
         }
 
