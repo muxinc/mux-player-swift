@@ -329,7 +329,6 @@ extension PlaybackOptions {
         self.customDomain = customDomain
     }
 
-
     /// Initializes playback options with a
     /// signed playback token
     /// - Parameters:
