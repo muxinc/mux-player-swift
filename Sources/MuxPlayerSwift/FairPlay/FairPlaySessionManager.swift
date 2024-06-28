@@ -89,7 +89,6 @@ class DefaultFairPlayStreamingSessionManager<
 >: FairPlayStreamingSessionManager {
 
     var playbackOptionsByPlaybackID: [String: PlaybackOptions] = [:]
-    // note - null on simulators or other environments where fairplay isn't supported
     let contentKeySession: ContentKeySession
     
     #if DEBUG
