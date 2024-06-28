@@ -123,8 +123,6 @@ internal extension URLComponents {
         self.host = "license.\(licenseHostSuffix)"
         self.path = "/license/fairplay/\(playbackID)"
 
-        var queryItems: [URLQueryItem] = []
-
         self.queryItems = [ 
             URLQueryItem(
                 name: "token",
