@@ -101,6 +101,33 @@
                                             <segue destination="JrU-9c-zyG" kind="show" id="q3v-VV-Yv9"/>
                                         </connections>
                                     </tableViewCell>
+                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" textLabel="OjC-bp-Jb4" detailTextLabel="bKF-tz-9d2" rowHeight="88" style="IBUITableViewCellStyleSubtitle" id="odP-sm-cIe">
+                                        <rect key="frame" x="0.0" y="314" width="393" height="88"/>
+                                        <autoresizingMask key="autoresizingMask"/>
+                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="odP-sm-cIe" id="dOo-zJ-LIx">
+                                            <rect key="frame" x="0.0" y="0.0" width="393" height="88"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                            <subviews>
+                                                <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" insetsLayoutMarginsFromSafeArea="NO" text="DRM Example" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="OjC-bp-Jb4" userLabel="DRM Example">
+                                                    <rect key="frame" x="20.000000000000007" y="21.333333333333329" width="122.66666666666667" height="24"/>
+                                                    <autoresizingMask key="autoresizingMask"/>
+                                                    <fontDescription key="fontDescription" type="system" pointSize="20"/>
+                                                    <nil key="textColor"/>
+                                                    <nil key="highlightedColor"/>
+                                                </label>
+                                                <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" insetsLayoutMarginsFromSafeArea="NO" text="Using AVPlayerViewController" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="bKF-tz-9d2" userLabel="Using AVPlayerViewController">
+                                                    <rect key="frame" x="20" y="49" width="169.33333333333334" height="14.333333333333334"/>
+                                                    <autoresizingMask key="autoresizingMask"/>
+                                                    <fontDescription key="fontDescription" type="system" pointSize="0.0"/>
+                                                    <nil key="textColor"/>
+                                                    <nil key="highlightedColor"/>
+                                                </label>
+                                            </subviews>
+                                        </tableViewCellContentView>
+                                        <connections>
+                                            <segue destination="buK-6n-LKx" kind="show" id="eWu-XH-VJ4"/>
+                                        </connections>
+                                    </tableViewCell>
                                 </cells>
                             </tableViewSection>
                         </sections>
@@ -162,6 +189,22 @@
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Uka-0a-JlQ" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="-161" y="271"/>
+        </scene>
+        <!--Example View Controller-->
+        <scene sceneID="U4Y-IB-cxt">
+            <objects>
+                <viewController id="buK-6n-LKx" customClass="DRMExampleViewController" customModule="MuxPlayerSwiftExample" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="FcW-4i-Ijl">
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="kho-JC-OWZ"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                    </view>
+                    <navigationItem key="navigationItem" id="ZYa-D0-7Yh"/>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="vny-A5-ZSO" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="434" y="573"/>
         </scene>
         <!--Navigation Controller-->
         <scene sceneID="2gk-Ck-Rao">

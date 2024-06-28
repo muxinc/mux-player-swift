@@ -96,3 +96,8 @@ fastlane/test_output
 # https://github.com/johnno1962/injectionforxcode
 
 iOSInjectionProject/
+
+# The Example App xcodeproj creates these files when a custom scheme is made
+
+.swiftpm
+Examples/MuxPlayerSwiftExample/MuxPlayerSwiftExample.xcodeproj/xcshareddata

@@ -75,7 +75,7 @@ extension AVPlayerViewController {
             playbackID: playbackID,
             playbackOptions: playbackOptions
         )
-
+   
         let player = AVPlayer(playerItem: playerItem)
 
         self.player = player
