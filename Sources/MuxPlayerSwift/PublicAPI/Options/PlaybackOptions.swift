@@ -327,6 +327,7 @@ extension PlaybackOptions {
             )
         )
         self.customDomain = customDomain
+        self.enableSmartCache = false
     }
 
     /// Initializes playback options with a
