@@ -139,10 +139,16 @@ public struct PlaybackOptions {
     struct SignedPlaybackOptions {
         var playbackToken: String
     }
+    
+    struct DRMPlaybackOptions {
+        var playbackToken: String
+        var drmToken: String
+    }
 
     enum PlaybackPolicy {
         case `public`(PublicPlaybackOptions)
         case signed(SignedPlaybackOptions)
+        case drm(DRMPlaybackOptions)
     }
 
     var playbackPolicy: PlaybackPolicy
@@ -153,6 +159,8 @@ public struct PlaybackOptions {
 }
 
 extension PlaybackOptions {
+    
+    // MARK: - Initializers
 
     /// Initializes playback options for a public playback ID
     /// - Parameters:
@@ -290,8 +298,8 @@ extension PlaybackOptions {
         )
         self.enableSmartCache = false
     }
-
-    /// Initializes playback options with a
+    
+    /// Initializes playback options for use with a signed playback token
     /// signed playback token
     /// - Parameter playbackToken: JSON web token signed
     /// with a signing key
@@ -299,10 +307,27 @@ extension PlaybackOptions {
         playbackToken: String
     ) {
         self.playbackPolicy = .signed(
-            SignedPlaybackOptions(
-                playbackToken: playbackToken
+            SignedPlaybackOptions(playbackToken: playbackToken)
+        )
+    }
+
+    /// Initializes playback options for use with Mux Video DRM
+    /// - Parameter playbackToken: JSON web token signed
+    /// with a signing key
+    /// - Parameter drmToken: JSON web token for DRM playback
+    public init(
+        playbackToken: String,
+        drmToken: String,
+        customDomain: String? = nil
+    ) {
+        self.playbackPolicy = .drm(
+            DRMPlaybackOptions(
+                playbackToken: playbackToken,
+                drmToken: drmToken
             )
         )
+        self.customDomain = customDomain
+        self.enableSmartCache = false
     }
 
     /// Initializes playback options with a
@@ -328,5 +353,14 @@ extension PlaybackOptions {
                 playbackToken: playbackToken
             )
         )
+    }
+    
+    // MARK: Internal helpers
+    
+    /// Gets the root domain to be used when constructing URLs for playback, keys, etc.
+    /// If there is a custom domain, this function returns that value, otherwise it returns the
+    /// default `mux.com`
+    internal func rootDomain() -> String {
+        return customDomain ?? "mux.com"
     }
 }

@@ -17,16 +17,43 @@ class PlayerSDK {
 
     let monitor: Monitor
 
-    let diagnosticsLogger: Logger
+    var diagnosticsLogger: Logger
 
-    let abrLogger: Logger
+    var abrLogger: Logger
 
     let reverseProxyServer: ReverseProxyServer
 
     let keyValueObservation = KeyValueObservation()
 
-    init() {
+    let fairPlaySessionManager: FairPlayStreamingSessionManager
+
+    convenience init() {
+        #if targetEnvironment(simulator)
+        self.init(
+            fairPlayStreamingSessionManager: DefaultFairPlayStreamingSessionManager(
+                contentKeySession: AVContentKeySession(keySystem: .clearKey),
+                urlSession: .shared
+            )
+        )
+        #else
+        let sessionManager = DefaultFairPlayStreamingSessionManager(
+            contentKeySession: AVContentKeySession(keySystem: .fairPlayStreaming),
+            urlSession: .shared
+        )
+        sessionManager.sessionDelegate = ContentKeySessionDelegate(
+            sessionManager: sessionManager
+        )
+        self.init(
+            fairPlayStreamingSessionManager: sessionManager
+        )
+        #endif
+    }
+
+    init(
+        fairPlayStreamingSessionManager: FairPlayStreamingSessionManager
+    ) {
         self.monitor = Monitor()
+        self.fairPlaySessionManager = fairPlayStreamingSessionManager
 
         #if DEBUG
         self.abrLogger = Logger(
@@ -51,6 +78,58 @@ class PlayerSDK {
         #endif
 
         self.reverseProxyServer = ReverseProxyServer()
+    }
+
+    func enableLogging() {
+        self.abrLogger = Logger(
+            OSLog(
+                subsystem: "com.mux.player",
+                category: "ABR"
+            )
+        )
+        self.diagnosticsLogger = Logger(
+            OSLog(
+                subsystem: "com.mux.player",
+                category: "Diagnostics"
+            )
+        )
+        self.fairPlaySessionManager.logger = Logger(
+            OSLog(
+                subsystem: "com.mux.player",
+                category: "CK"
+            )
+        )
+    }
+
+    func disableLogging() {
+        self.abrLogger = Logger(
+            .disabled
+        )
+        self.diagnosticsLogger = Logger(
+            .disabled
+        )
+        self.fairPlaySessionManager.logger = Logger(
+            .disabled
+        )
+    }
+
+    func registerPlayerItem(
+        _ playerItem: AVPlayerItem,
+        playbackID: String,
+        playbackOptions: PlaybackOptions
+    ) {
+        // as? AVURLAsset check should never fail
+        if case .drm = playbackOptions.playbackPolicy,
+           let urlAsset = playerItem.asset as? AVURLAsset {
+            fairPlaySessionManager.registerPlaybackOptions(
+                playbackOptions,
+                for: playbackID
+            )
+            // asset must be attached as early as possible to avoid crashes when attaching later
+            fairPlaySessionManager.addContentKeyRecipient(
+                urlAsset
+            )
+        }
     }
 
     func registerPlayerLayer(
@@ -164,5 +243,24 @@ class PlayerSDK {
                 observations.removeValue(forKey: ObjectIdentifier(player))
             }
         }
+    }
+}
+
+// MARK extension for observations for DRM
+extension PlayerSDK {
+    func observePlayerForDRM(_ player: AVPlayer) {
+        keyValueObservation.register(
+            player,
+            for: \AVPlayer.currentItem,
+            options: [.old, .new]
+        ) { player, change in
+            if let oldAsset = change.oldValue??.asset as? AVURLAsset {
+                PlayerSDK.shared.fairPlaySessionManager.removeContentKeyRecipient(oldAsset)
+            }
+        }
+    }
+    
+    func stopObservingPlayerForDrm(_ player: AVPlayer) {
+        keyValueObservation.unregister(player)
     }
 }
