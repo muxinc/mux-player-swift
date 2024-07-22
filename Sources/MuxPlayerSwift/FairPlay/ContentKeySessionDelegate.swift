@@ -55,8 +55,34 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
         err: any Error
     ) {
         logger.debug(
-            "CK Request Failed Error: \(err.localizedDescription)"
+            "CK Request Failed Error Localized Description: \(err.localizedDescription)"
         )
+
+        if let error = err as? NSError {
+            if let localizedFailureReason = error.localizedFailureReason {
+                logger.debug(
+                    "CK Request Failed Error Localized Failure Reason: \(localizedFailureReason))"
+                )
+            }
+
+            logger.debug(
+                "CK Request Failed Error Code: \(error.code)"
+            )
+
+            logger.debug(
+                "CK Request Failed Error User Info: \(error.userInfo)"
+            )
+
+            if let underlyingError = error.userInfo[NSUnderlyingErrorKey] as? NSError {
+                logger.debug(
+                    "CK Request Failed Underlying Error Localized Description: \(underlyingError.localizedDescription)"
+                )
+
+                logger.debug(
+                    "CK Request Failed Underlying Error Code: \(underlyingError.code)"
+                )
+            }
+        }
     }
     
     func contentKeySession(
