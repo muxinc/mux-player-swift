@@ -15,7 +15,7 @@ class PlayerSDK {
     static let shared = PlayerSDK()
     #endif
 
-    let monitor: Monitor
+    var monitor: Monitor
 
     var diagnosticsLogger: Logger
 
@@ -135,7 +135,8 @@ class PlayerSDK {
     func registerPlayerLayer(
         playerLayer: AVPlayerLayer,
         monitoringOptions: MonitoringOptions,
-        requiresReverseProxying: Bool = false
+        requiresReverseProxying: Bool = false,
+        usingDRM: Bool = false
     ) {
         if requiresReverseProxying && !self.reverseProxyServer.hasBeenStarted {
             self.reverseProxyServer.start()
@@ -143,7 +144,8 @@ class PlayerSDK {
 
         monitor.setupMonitoring(
             playerLayer: playerLayer,
-            options: monitoringOptions
+            options: monitoringOptions,
+            usingDRM: usingDRM
         )
 
         if let player = playerLayer.player, 
@@ -161,7 +163,8 @@ class PlayerSDK {
     func registerPlayerViewController(
         playerViewController: AVPlayerViewController,
         monitoringOptions: MonitoringOptions,
-        requiresReverseProxying: Bool = false
+        requiresReverseProxying: Bool = false,
+        usingDRM: Bool = false
     ) {
         if requiresReverseProxying && !self.reverseProxyServer.hasBeenStarted {
             self.reverseProxyServer.start()
@@ -169,7 +172,8 @@ class PlayerSDK {
 
         monitor.setupMonitoring(
             playerViewController: playerViewController,
-            options: monitoringOptions
+            options: monitoringOptions,
+            usingDRM: usingDRM
         )
 
         if let player = playerViewController.player,

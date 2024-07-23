@@ -58,11 +58,21 @@ extension AVPlayerLayer {
             playbackID: playbackID
         )
 
-        PlayerSDK.shared.registerPlayerLayer(
-            playerLayer: self,
-            monitoringOptions: monitoringOptions,
-            requiresReverseProxying: playbackOptions.enableSmartCache
-        )
+        if case PlaybackOptions.PlaybackPolicy.drm(_) = playbackOptions.playbackPolicy {
+            PlayerSDK.shared.registerPlayerLayer(
+                playerLayer: self,
+                monitoringOptions: monitoringOptions,
+                requiresReverseProxying: playbackOptions.enableSmartCache,
+                usingDRM: true
+            )
+        } else {
+            PlayerSDK.shared.registerPlayerLayer(
+                playerLayer: self,
+                monitoringOptions: monitoringOptions,
+                requiresReverseProxying: playbackOptions.enableSmartCache,
+                usingDRM: false
+            )
+        }
     }
 
     /// Initializes an AVPlayerLayer that's configured
@@ -150,7 +160,7 @@ extension AVPlayerLayer {
                 playbackID: playbackID,
                 playbackOptions: playbackOptions
             ),
-            enableSmartCache: playbackOptions.enableSmartCache,
+            playbackOptions: playbackOptions,
             monitoringOptions: MonitoringOptions(
                 playbackID: playbackID
             )
@@ -207,14 +217,14 @@ extension AVPlayerLayer {
                 playbackID: playbackID,
                 playbackOptions: playbackOptions
             ),
-            enableSmartCache: playbackOptions.enableSmartCache,
+            playbackOptions: playbackOptions,
             monitoringOptions: monitoringOptions
         )
     }
 
     internal func prepare(
         playerItem: AVPlayerItem,
-        enableSmartCache: Bool = false,
+        playbackOptions: PlaybackOptions = PlaybackOptions(),
         monitoringOptions: MonitoringOptions
     ) {
         if let player {
@@ -227,10 +237,19 @@ extension AVPlayerLayer {
             )
         }
 
+        let usingDRM: Bool
+
+        if case PlaybackOptions.PlaybackPolicy.drm(_) = playbackOptions.playbackPolicy {
+            usingDRM = true
+        } else {
+            usingDRM = false
+        }
+
         PlayerSDK.shared.registerPlayerLayer(
             playerLayer: self,
             monitoringOptions: monitoringOptions,
-            requiresReverseProxying: enableSmartCache
+            requiresReverseProxying: playbackOptions.enableSmartCache,
+            usingDRM: usingDRM
         )
     }
 }

@@ -23,6 +23,30 @@ class PlayerLayerBackedView: UIView {
     }
 }
 
+class TestMonitor: Monitor {
+    var monitoringRegistrations: [(MonitoringOptions, Bool)] = []
+
+    override func setupMonitoring(
+        playerViewController: AVPlayerViewController,
+        options: MonitoringOptions,
+        usingDRM: Bool = false
+    ) {
+        monitoringRegistrations.append(
+            (options, usingDRM)
+        )
+    }
+
+    override func setupMonitoring(
+        playerLayer: AVPlayerLayer,
+        options: MonitoringOptions,
+        usingDRM: Bool = false
+    ) {
+        monitoringRegistrations.append(
+            (options, usingDRM)
+        )
+    }
+}
+
 class MonitorTests: XCTestCase {
 
     override func setUp() {
@@ -31,6 +55,7 @@ class MonitorTests: XCTestCase {
     }
 
     func testPlayerViewControllerMonitoringLifecycle() throws {
+        PlayerSDK.shared.monitor = Monitor()
 
         let playerViewController = AVPlayerViewController(
             playbackID: "abc"
@@ -52,6 +77,7 @@ class MonitorTests: XCTestCase {
     }
 
     func testPlayerLayerMonitoringLifecycle() throws {
+        PlayerSDK.shared.monitor = Monitor()
 
         let playerLayer = AVPlayerLayer(
             playbackID: "abc"
@@ -73,6 +99,7 @@ class MonitorTests: XCTestCase {
     }
 
     func testExistingPlayerLayerMonitoringLifecycle() throws {
+        PlayerSDK.shared.monitor = Monitor()
 
         let playerLayerBackedView = PlayerLayerBackedView()
 
@@ -98,4 +125,70 @@ class MonitorTests: XCTestCase {
         )
     }
 
+    func testDRMPlayerViewControllerMonitoring() throws {
+        let testMonitor = TestMonitor()
+        PlayerSDK.shared.monitor = testMonitor
+
+        let playerViewController = AVPlayerViewController(
+            playbackID: "abc",
+            playbackOptions: PlaybackOptions(
+                playbackToken: "abc",
+                drmToken: "def"
+            )
+        )
+
+        let registration = try XCTUnwrap(
+            testMonitor.monitoringRegistrations.first
+        )
+
+        XCTAssertTrue(registration.1)
+
+        testMonitor.monitoringRegistrations.removeAll()
+    }
+
+    func testDRMPlayerLayerMonitoring() throws {
+        let testMonitor = TestMonitor()
+        PlayerSDK.shared.monitor = testMonitor
+
+        let playerLayer = AVPlayerLayer(
+            playbackID: "abc",
+            playbackOptions: PlaybackOptions(
+                playbackToken: "abc",
+                drmToken: "def"
+            )
+        )
+
+        let registration = try XCTUnwrap(
+            testMonitor.monitoringRegistrations.first
+        )
+
+        XCTAssertTrue(registration.1)
+        testMonitor.monitoringRegistrations.removeAll()
+    }
+
+    func testDRMExistingPlayerLayerMonitoring() throws {
+        let testMonitor = TestMonitor()
+        PlayerSDK.shared.monitor = testMonitor
+
+        let playerLayerBackedView = PlayerLayerBackedView()
+
+        let preexistingPlayerLayer = try XCTUnwrap(
+            playerLayerBackedView.layer as? AVPlayerLayer
+        )
+
+        preexistingPlayerLayer.prepare(
+            playbackID: "abc",
+            playbackOptions: PlaybackOptions(
+                playbackToken: "def",
+                drmToken: "ghi"
+            )
+        )
+
+        let registration = try XCTUnwrap(
+            testMonitor.monitoringRegistrations.first
+        )
+
+        XCTAssertTrue(registration.1)
+        testMonitor.monitoringRegistrations.removeAll()
+    }
 }

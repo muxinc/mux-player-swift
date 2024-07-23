@@ -84,11 +84,21 @@ extension AVPlayerViewController {
             playbackID: playbackID
         )
 
-        PlayerSDK.shared.registerPlayerViewController(
-            playerViewController: self,
-            monitoringOptions: monitoringOptions,
-            requiresReverseProxying: playbackOptions.enableSmartCache
-        )
+        if case PlaybackOptions.PlaybackPolicy.drm(_) = playbackOptions.playbackPolicy {
+            PlayerSDK.shared.registerPlayerViewController(
+                playerViewController: self,
+                monitoringOptions: monitoringOptions,
+                requiresReverseProxying: playbackOptions.enableSmartCache,
+                usingDRM: true
+            )
+        } else {
+            PlayerSDK.shared.registerPlayerViewController(
+                playerViewController: self,
+                monitoringOptions: monitoringOptions,
+                requiresReverseProxying: playbackOptions.enableSmartCache,
+                usingDRM: false
+            )
+        }
     }
 
     /// Initializes an AVPlayerViewController that's configured
@@ -117,11 +127,21 @@ extension AVPlayerViewController {
 
         self.player = player
 
-        PlayerSDK.shared.registerPlayerViewController(
-            playerViewController: self,
-            monitoringOptions: monitoringOptions,
-            requiresReverseProxying: playbackOptions.enableSmartCache
-        )
+        if case PlaybackOptions.PlaybackPolicy.drm(_) = playbackOptions.playbackPolicy {
+            PlayerSDK.shared.registerPlayerViewController(
+                playerViewController: self,
+                monitoringOptions: monitoringOptions,
+                requiresReverseProxying: playbackOptions.enableSmartCache,
+                usingDRM: true
+            )
+        } else {
+            PlayerSDK.shared.registerPlayerViewController(
+                playerViewController: self,
+                monitoringOptions: monitoringOptions,
+                requiresReverseProxying: playbackOptions.enableSmartCache,
+                usingDRM: false
+            )
+        }
     }
 
     /// Stops monitoring the player
@@ -177,6 +197,7 @@ extension AVPlayerViewController {
                 playbackID: playbackID,
                 playbackOptions: playbackOptions
             ),
+            playbackOptions: playbackOptions,
             monitoringOptions: MonitoringOptions(
                 playbackID: playbackID
             )
@@ -235,12 +256,14 @@ extension AVPlayerViewController {
                 playbackID: playbackID,
                 playbackOptions: playbackOptions
             ),
+            playbackOptions: playbackOptions,
             monitoringOptions: monitoringOptions
         )
     }
 
     internal func prepare(
         playerItem: AVPlayerItem,
+        playbackOptions: PlaybackOptions = PlaybackOptions(),
         monitoringOptions: MonitoringOptions
     ) {
         if let player {
@@ -253,9 +276,19 @@ extension AVPlayerViewController {
             )
         }
 
-        PlayerSDK.shared.monitor.setupMonitoring(
+        let usingDRM: Bool
+
+        if case PlaybackOptions.PlaybackPolicy.drm(_) = playbackOptions.playbackPolicy {
+            usingDRM = true
+        } else {
+            usingDRM = false
+        }
+
+        PlayerSDK.shared.registerPlayerViewController(
             playerViewController: self,
-            options: monitoringOptions
+            monitoringOptions: monitoringOptions,
+            requiresReverseProxying: playbackOptions.enableSmartCache,
+            usingDRM: usingDRM
         )
     }
 }
