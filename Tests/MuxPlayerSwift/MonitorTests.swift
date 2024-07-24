@@ -31,6 +31,12 @@ class TestMonitor: Monitor {
         options: MonitoringOptions,
         usingDRM: Bool = false
     ) {
+        super.setupMonitoring(
+            playerViewController: playerViewController, 
+            options: options,
+            usingDRM: usingDRM
+        )
+
         monitoringRegistrations.append(
             (options, usingDRM)
         )
@@ -41,6 +47,12 @@ class TestMonitor: Monitor {
         options: MonitoringOptions,
         usingDRM: Bool = false
     ) {
+        super.setupMonitoring(
+            playerLayer: playerLayer,
+            options: options,
+            usingDRM: usingDRM
+        )
+
         monitoringRegistrations.append(
             (options, usingDRM)
         )
@@ -137,6 +149,13 @@ class MonitorTests: XCTestCase {
             )
         )
 
+        let playerBinding = try XCTUnwrap(
+            testMonitor.bindings[ObjectIdentifier(playerViewController)]
+        )
+        XCTAssertNotNil(
+            playerBinding
+        )
+
         let registration = try XCTUnwrap(
             testMonitor.monitoringRegistrations.first
         )
@@ -156,6 +175,13 @@ class MonitorTests: XCTestCase {
                 playbackToken: "abc",
                 drmToken: "def"
             )
+        )
+
+        let playerBinding = try XCTUnwrap(
+            testMonitor.bindings[ObjectIdentifier(playerLayer)]
+        )
+        XCTAssertNotNil(
+            playerBinding
         )
 
         let registration = try XCTUnwrap(
@@ -182,6 +208,13 @@ class MonitorTests: XCTestCase {
                 playbackToken: "def",
                 drmToken: "ghi"
             )
+        )
+
+        let playerBinding = try XCTUnwrap(
+            testMonitor.bindings[ObjectIdentifier(preexistingPlayerLayer)]
+        )
+        XCTAssertNotNil(
+            playerBinding
         )
 
         let registration = try XCTUnwrap(
