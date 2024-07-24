@@ -28,32 +28,39 @@ class PlayerSDK {
     let fairPlaySessionManager: FairPlayStreamingSessionManager
 
     convenience init() {
+        let monitor = Monitor()
+
         #if targetEnvironment(simulator)
         self.init(
             fairPlayStreamingSessionManager: DefaultFairPlayStreamingSessionManager(
                 contentKeySession: AVContentKeySession(keySystem: .clearKey),
-                urlSession: .shared
-            )
+                urlSession: .shared,
+                errorDispatcher: monitor
+            ),
+            monitor: monitor
         )
         #else
         let sessionManager = DefaultFairPlayStreamingSessionManager(
             contentKeySession: AVContentKeySession(keySystem: .fairPlayStreaming),
-            urlSession: .shared
+            urlSession: .shared,
+            errorDispatcher: monitor
         )
         sessionManager.sessionDelegate = ContentKeySessionDelegate(
             sessionManager: sessionManager
         )
         self.init(
-            fairPlayStreamingSessionManager: sessionManager
+            fairPlayStreamingSessionManager: sessionManager,
+            monitor: monitor
         )
         #endif
     }
 
     init(
-        fairPlayStreamingSessionManager: FairPlayStreamingSessionManager
+        fairPlayStreamingSessionManager: FairPlayStreamingSessionManager,
+        monitor: Monitor
     ) {
-        self.monitor = Monitor()
         self.fairPlaySessionManager = fairPlayStreamingSessionManager
+        self.monitor = monitor
 
         #if DEBUG
         self.abrLogger = Logger(

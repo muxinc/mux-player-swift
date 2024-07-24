@@ -29,7 +29,8 @@ class FairPlaySessionManagerTests : XCTestCase {
         let defaultFairPlaySessionManager = DefaultFairPlayStreamingSessionManager(
             // .clearKey is used because .fairPlay requires a physical device
             contentKeySession: session,
-            urlSession: mockURLSession
+            urlSession: mockURLSession,
+            errorDispatcher: Monitor()
         )
         self.sessionManager = defaultFairPlaySessionManager
         defaultFairPlaySessionManager.sessionDelegate = ContentKeySessionDelegate(
@@ -576,7 +577,8 @@ class FairPlaySessionManagerTests : XCTestCase {
         )
         let defaultFairPlaySessionManager = DefaultFairPlayStreamingSessionManager(
             contentKeySession: session,
-            urlSession: mockURLSession
+            urlSession: mockURLSession,
+            errorDispatcher: Monitor()
         )
         self.sessionManager = defaultFairPlaySessionManager
         let sessionDelegate = ContentKeySessionDelegate(
@@ -616,7 +618,8 @@ class FairPlaySessionManagerTests : XCTestCase {
 
 
         PlayerSDK.shared = PlayerSDK(
-            fairPlayStreamingSessionManager: defaultFairPlaySessionManager
+            fairPlayStreamingSessionManager: defaultFairPlaySessionManager,
+            monitor: Monitor()
         )
 
         let _ = AVPlayerItem(
