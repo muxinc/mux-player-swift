@@ -90,7 +90,8 @@ class DefaultFairPlayStreamingSessionManager<
 
     var playbackOptionsByPlaybackID: [String: PlaybackOptions] = [:]
     let contentKeySession: ContentKeySession
-    
+    let errorDispatcher: (any ErrorDispatcher)
+
     #if DEBUG
     var logger: Logger = Logger(
         OSLog(
@@ -276,6 +277,12 @@ class DefaultFairPlayStreamingSessionManager<
                 requestCompletion(Result.failure(
                     FairPlaySessionError.because(cause: error)
                 ))
+//                // TODO: Confirm error code
+//                self.errorDispatcher.dispatchError(
+//                    errorCode: "5001",
+//                    errorMessage: error.localizedDescription,
+//                    playerObjectIdentifier: <#T##ObjectIdentifier#>
+//                )
                 return
             }
             
@@ -349,10 +356,12 @@ class DefaultFairPlayStreamingSessionManager<
 
     init(
         contentKeySession: ContentKeySession,
-        urlSession: URLSession
+        urlSession: URLSession,
+        errorDispatcher: any ErrorDispatcher
     ) {
         self.contentKeySession = contentKeySession
         self.urlSession = urlSession
+        self.errorDispatcher = errorDispatcher
     }
 }
 

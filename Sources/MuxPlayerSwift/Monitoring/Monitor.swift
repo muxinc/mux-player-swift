@@ -9,7 +9,7 @@ import Foundation
 import MuxCore
 import MUXSDKStats
 
-class Monitor {
+class Monitor: ErrorDispatcher {
 
     struct MonitoredPlayer {
         var name: String
@@ -206,5 +206,25 @@ class Monitor {
         MUXSDKStats.destroyPlayer(playerName)
 
         bindings.removeValue(forKey: objectIdentifier)
+    }
+
+    // MARK: - Error Dispatch
+
+    func dispatchError(
+        errorCode: String,
+        errorMessage: String,
+        playerObjectIdentifier: ObjectIdentifier
+    ) {
+        guard let monitoredPlayer = self.bindings[playerObjectIdentifier] else {
+            return
+        }
+
+        let playerName = monitoredPlayer.name
+
+        MUXSDKStats.dispatchError(
+            errorCode,
+            withMessage: errorMessage,
+            forPlayer: playerName
+        )
     }
 }
