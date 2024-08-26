@@ -265,22 +265,3 @@ class PlayerSDK {
         }
     }
 }
-
-// MARK extension for observations for DRM
-extension PlayerSDK {
-    func observePlayerForDRM(_ player: AVPlayer) {
-        keyValueObservation.register(
-            player,
-            for: \AVPlayer.currentItem,
-            options: [.old, .new]
-        ) { player, change in
-            if let oldAsset = change.oldValue??.asset as? AVURLAsset {
-                PlayerSDK.shared.fairPlaySessionManager.removeContentKeyRecipient(oldAsset)
-            }
-        }
-    }
-    
-    func stopObservingPlayerForDrm(_ player: AVPlayer) {
-        keyValueObservation.unregister(player)
-    }
-}
