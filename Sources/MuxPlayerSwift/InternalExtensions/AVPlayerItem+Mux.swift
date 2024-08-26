@@ -28,7 +28,8 @@ internal extension AVPlayerItem {
     convenience init(playbackID: String) {
         self.init(
             playbackID: playbackID,
-            playbackOptions: PlaybackOptions()
+            playbackOptions: PlaybackOptions(),
+            playerSDK: .shared
         )
     }
 
@@ -42,6 +43,18 @@ internal extension AVPlayerItem {
     convenience init(
         playbackID: String,
         playbackOptions: PlaybackOptions
+    ) {
+        self.init(
+            playbackID: playbackID,
+            playbackOptions: playbackOptions,
+            playerSDK: .shared
+        )
+    }
+
+    convenience init(
+        playbackID: String,
+        playbackOptions: PlaybackOptions,
+        playerSDK: PlayerSDK
     ) {
         // Create a new `AVAsset` that has been prepared
         // for playback
@@ -60,7 +73,7 @@ internal extension AVPlayerItem {
             asset: asset
         )
 
-        PlayerSDK.shared.registerPlayerItem(
+        playerSDK.registerPlayerItem(
             self,
             playbackID: playbackID,
             playbackOptions: playbackOptions
