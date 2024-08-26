@@ -231,7 +231,7 @@ class PlayerSDK {
     }
 
     class KeyValueObservation {
-        var observations: [ObjectIdentifier: NSKeyValueObservation] = [:]
+        var observations: [ObjectIdentifier: Set<NSKeyValueObservation>] = [:]
 
         func register<Value>(
             _ player: AVPlayer,
@@ -239,18 +239,27 @@ class PlayerSDK {
             options: NSKeyValueObservingOptions,
             changeHandler: @escaping (AVPlayer, NSKeyValueObservedChange<Value>) -> Void
         ) {
-            let observation = player.observe(keyPath,
-                                             options: options,
-                                             changeHandler: changeHandler
+            let observation = player.observe(
+                keyPath,
+                options: options,
+                changeHandler: changeHandler
             )
-            observations[ObjectIdentifier(player)] = observation
+
+            if var o = observations[ObjectIdentifier(player)] {
+                o.insert(observation)
+                observations[ObjectIdentifier(player)] = o
+            } else {
+                observations[ObjectIdentifier(player)] = Set(arrayLiteral: observation)
+            }
         }
 
         func unregister(
             _ player: AVPlayer
         ) {
-            if let observation = observations[ObjectIdentifier(player)] {
-                observation.invalidate()
+            if let o = observations[ObjectIdentifier(player)] {
+                o.forEach { observation in
+                    observation.invalidate()
+                }
                 observations.removeValue(forKey: ObjectIdentifier(player))
             }
         }
