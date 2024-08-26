@@ -208,6 +208,15 @@ class Monitor: ErrorDispatcher {
         bindings.removeValue(forKey: objectIdentifier)
     }
 
+    // MARK: - Player Item Tracking
+
+    func handleUpdatedCurrentPlayerItem(
+        _ playerItem: AVPlayerItem,
+        for player: AVPlayer
+    ) {
+        
+    }
+
     // MARK: - Error Dispatch
 
     func dispatchError(

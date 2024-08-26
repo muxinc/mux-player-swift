@@ -155,6 +155,25 @@ class PlayerSDK {
             usingDRM: usingDRM
         )
 
+        if let player = playerLayer.player {
+            keyValueObservation.register(
+                player,
+                for: \.currentItem,
+                options: [.initial, .new, .old]
+            ) { player, change in
+                if let newValue = change.newValue {
+                    if let n = newValue {
+                        self.monitor.handleUpdatedCurrentPlayerItem(
+                            n,
+                            for: player
+                        )
+                    } else {
+                        // Handle nil case
+                    }
+                }
+            }
+        }
+
         if let player = playerLayer.player, 
         requiresReverseProxying == true {
             keyValueObservation.register(
