@@ -234,22 +234,4 @@ class Monitor: ErrorDispatcher {
     ) {
 
     }
-
-    func dispatchError(
-        errorCode: String,
-        errorMessage: String,
-        playerObjectIdentifier: ObjectIdentifier
-    ) {
-        guard let monitoredPlayer = self.bindings[playerObjectIdentifier] else {
-            return
-        }
-
-        let playerName = monitoredPlayer.name
-
-        MUXSDKStats.dispatchError(
-            errorCode,
-            withMessage: errorMessage,
-            forPlayer: playerName
-        )
-    }
 }

@@ -28,11 +28,13 @@ class TestMonitor: Monitor {
 
     override func setupMonitoring(
         playerViewController: AVPlayerViewController,
+        playbackID: String,
         options: MonitoringOptions,
         usingDRM: Bool = false
     ) {
         super.setupMonitoring(
             playerViewController: playerViewController, 
+            playbackID: playbackID,
             options: options,
             usingDRM: usingDRM
         )
@@ -44,11 +46,13 @@ class TestMonitor: Monitor {
 
     override func setupMonitoring(
         playerLayer: AVPlayerLayer,
+        playbackID: String,
         options: MonitoringOptions,
         usingDRM: Bool = false
     ) {
         super.setupMonitoring(
-            playerLayer: playerLayer,
+            playerLayer: playerLayer, 
+            playbackID: playbackID,
             options: options,
             usingDRM: usingDRM
         )
