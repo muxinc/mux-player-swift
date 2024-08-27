@@ -152,7 +152,8 @@ class DefaultFairPlayStreamingSessionManager<
                 )
             )
             errorDispatcher.dispatchApplicationCertificateRequestError(
-                error
+                error: error,
+                playbackID: playbackID
             )
             return
         }
@@ -197,7 +198,8 @@ class DefaultFairPlayStreamingSessionManager<
                     error
                 ))
                 self.errorDispatcher.dispatchApplicationCertificateRequestError(
-                    error
+                    error: error,
+                    playbackID: playbackID
                 )
                 return
             }
@@ -215,7 +217,8 @@ class DefaultFairPlayStreamingSessionManager<
                     )
                 )
                 self.errorDispatcher.dispatchApplicationCertificateRequestError(
-                    error
+                    error: error,
+                    playbackID: playbackID
                 )
                 return
             }
@@ -234,7 +237,8 @@ class DefaultFairPlayStreamingSessionManager<
                     )
                 )
                 self.errorDispatcher.dispatchApplicationCertificateRequestError(
-                    error
+                    error: error,
+                    playbackID: playbackID
                 )
                 return
             }
@@ -271,7 +275,8 @@ class DefaultFairPlayStreamingSessionManager<
                 )
             )
             errorDispatcher.dispatchLicenseRequestError(
-                error
+                error: error,
+                playbackID: playbackID
             )
             return
         }
@@ -299,7 +304,8 @@ class DefaultFairPlayStreamingSessionManager<
                     error
                 ))
                 self.errorDispatcher.dispatchLicenseRequestError(
-                    error
+                    error: error,
+                    playbackID: playbackID
                 )
                 return
             }
@@ -326,7 +332,8 @@ class DefaultFairPlayStreamingSessionManager<
                     error
                 ))
                 self.errorDispatcher.dispatchLicenseRequestError(
-                    error
+                    error: error,
+                    playbackID: playbackID
                 )
 
                 return
@@ -343,7 +350,8 @@ class DefaultFairPlayStreamingSessionManager<
                     error
                 ))
                 self.errorDispatcher.dispatchLicenseRequestError(
-                    error
+                    error: error,
+                    playbackID: playbackID
                 )
                 return
             }

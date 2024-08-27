@@ -142,6 +142,7 @@ class PlayerSDK {
     func registerPlayerLayer(
         playerLayer: AVPlayerLayer,
         monitoringOptions: MonitoringOptions,
+        playbackID: String,
         requiresReverseProxying: Bool = false,
         usingDRM: Bool = false
     ) {
@@ -151,6 +152,7 @@ class PlayerSDK {
 
         monitor.setupMonitoring(
             playerLayer: playerLayer,
+            playbackID: playbackID,
             options: monitoringOptions,
             usingDRM: usingDRM
         )
@@ -185,6 +187,7 @@ class PlayerSDK {
     func registerPlayerViewController(
         playerViewController: AVPlayerViewController,
         monitoringOptions: MonitoringOptions,
+        playbackID: String,
         requiresReverseProxying: Bool = false,
         usingDRM: Bool = false
     ) {
@@ -194,6 +197,7 @@ class PlayerSDK {
 
         monitor.setupMonitoring(
             playerViewController: playerViewController,
+            playbackID: playbackID,
             options: monitoringOptions,
             usingDRM: usingDRM
         )

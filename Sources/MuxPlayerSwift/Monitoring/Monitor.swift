@@ -20,6 +20,7 @@ class Monitor: ErrorDispatcher {
 
     func setupMonitoring(
         playerViewController: AVPlayerViewController,
+        playbackID: String,
         options: MonitoringOptions,
         usingDRM: Bool = false
     ) {
@@ -116,6 +117,7 @@ class Monitor: ErrorDispatcher {
 
     func setupMonitoring(
         playerLayer: AVPlayerLayer,
+        playbackID: String,
         options: MonitoringOptions,
         usingDRM: Bool = false
     ) {
@@ -214,21 +216,23 @@ class Monitor: ErrorDispatcher {
         _ playerItem: AVPlayerItem?,
         for player: AVPlayer
     ) {
-        
+
     }
 
     // MARK: - Error Dispatch
 
     func dispatchApplicationCertificateRequestError(
-        _ error: FairPlaySessionError
+        error: FairPlaySessionError,
+        playbackID: String
     ) {
 
     }
 
     func dispatchLicenseRequestError(
-        _ error: FairPlaySessionError
+        error: FairPlaySessionError,
+        playbackID: String
     ) {
-        
+
     }
 
     func dispatchError(

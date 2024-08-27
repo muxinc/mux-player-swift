@@ -7,11 +7,13 @@ import Foundation
 
 protocol ErrorDispatcher {
     func dispatchApplicationCertificateRequestError(
-        _ error: FairPlaySessionError
+        error: FairPlaySessionError,
+        playbackID: String
     )
 
     func dispatchLicenseRequestError(
-        _ error: FairPlaySessionError
+        error: FairPlaySessionError,
+        playbackID: String
     )
 
 

@@ -27,7 +27,8 @@ extension AVPlayerViewController {
 
         PlayerSDK.shared.registerPlayerViewController(
             playerViewController: self,
-            monitoringOptions: monitoringOptions
+            monitoringOptions: monitoringOptions,
+            playbackID: playbackID
         )
     }
 
@@ -53,7 +54,8 @@ extension AVPlayerViewController {
 
         PlayerSDK.shared.registerPlayerViewController(
             playerViewController: self,
-            monitoringOptions: monitoringOptions
+            monitoringOptions: monitoringOptions,
+            playbackID: playbackID
         )
     }
 
@@ -88,6 +90,7 @@ extension AVPlayerViewController {
             PlayerSDK.shared.registerPlayerViewController(
                 playerViewController: self,
                 monitoringOptions: monitoringOptions,
+                playbackID: playbackID,
                 requiresReverseProxying: playbackOptions.enableSmartCache,
                 usingDRM: true
             )
@@ -95,6 +98,7 @@ extension AVPlayerViewController {
             PlayerSDK.shared.registerPlayerViewController(
                 playerViewController: self,
                 monitoringOptions: monitoringOptions,
+                playbackID: playbackID,
                 requiresReverseProxying: playbackOptions.enableSmartCache,
                 usingDRM: false
             )
@@ -131,6 +135,7 @@ extension AVPlayerViewController {
             PlayerSDK.shared.registerPlayerViewController(
                 playerViewController: self,
                 monitoringOptions: monitoringOptions,
+                playbackID: playbackID,
                 requiresReverseProxying: playbackOptions.enableSmartCache,
                 usingDRM: true
             )
@@ -138,6 +143,7 @@ extension AVPlayerViewController {
             PlayerSDK.shared.registerPlayerViewController(
                 playerViewController: self,
                 monitoringOptions: monitoringOptions,
+                playbackID: playbackID,
                 requiresReverseProxying: playbackOptions.enableSmartCache,
                 usingDRM: false
             )
@@ -168,6 +174,7 @@ extension AVPlayerViewController {
             playerItem: AVPlayerItem(
                 playbackID: playbackID
             ),
+            playbackID: playbackID,
             monitoringOptions: MonitoringOptions(
                 playbackID: playbackID
             )
@@ -197,6 +204,7 @@ extension AVPlayerViewController {
                 playbackID: playbackID,
                 playbackOptions: playbackOptions
             ),
+            playbackID: playbackID,
             playbackOptions: playbackOptions,
             monitoringOptions: MonitoringOptions(
                 playbackID: playbackID
@@ -226,6 +234,7 @@ extension AVPlayerViewController {
             playerItem: AVPlayerItem(
                 playbackID: playbackID
             ),
+            playbackID: playbackID,
             monitoringOptions: monitoringOptions
         )
     }
@@ -256,6 +265,7 @@ extension AVPlayerViewController {
                 playbackID: playbackID,
                 playbackOptions: playbackOptions
             ),
+            playbackID: playbackID,
             playbackOptions: playbackOptions,
             monitoringOptions: monitoringOptions
         )
@@ -263,6 +273,7 @@ extension AVPlayerViewController {
 
     internal func prepare(
         playerItem: AVPlayerItem,
+        playbackID: String,
         playbackOptions: PlaybackOptions = PlaybackOptions(),
         monitoringOptions: MonitoringOptions,
         playerSDK: PlayerSDK = .shared
@@ -288,6 +299,7 @@ extension AVPlayerViewController {
         playerSDK.registerPlayerViewController(
             playerViewController: self,
             monitoringOptions: monitoringOptions,
+            playbackID: playbackID,
             requiresReverseProxying: playbackOptions.enableSmartCache,
             usingDRM: usingDRM
         )

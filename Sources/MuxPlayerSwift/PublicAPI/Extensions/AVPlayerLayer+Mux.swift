@@ -15,7 +15,9 @@ extension AVPlayerLayer {
     public convenience init(playbackID: String) {
         self.init()
 
-        let playerItem = AVPlayerItem(playbackID: playbackID)
+        let playerItem = AVPlayerItem(
+            playbackID: playbackID
+        )
 
         let player = AVPlayer(playerItem: playerItem)
 
@@ -27,6 +29,7 @@ extension AVPlayerLayer {
 
         PlayerSDK.shared.monitor.setupMonitoring(
             playerLayer: self,
+            playbackID: playbackID,
             options: monitoringOptions
         )
     }
@@ -62,6 +65,7 @@ extension AVPlayerLayer {
             PlayerSDK.shared.registerPlayerLayer(
                 playerLayer: self,
                 monitoringOptions: monitoringOptions,
+                playbackID: playbackID,
                 requiresReverseProxying: playbackOptions.enableSmartCache,
                 usingDRM: true
             )
@@ -69,6 +73,7 @@ extension AVPlayerLayer {
             PlayerSDK.shared.registerPlayerLayer(
                 playerLayer: self,
                 monitoringOptions: monitoringOptions,
+                playbackID: playbackID,
                 requiresReverseProxying: playbackOptions.enableSmartCache,
                 usingDRM: false
             )
@@ -104,6 +109,7 @@ extension AVPlayerLayer {
         PlayerSDK.shared.registerPlayerLayer(
             playerLayer: self,
             monitoringOptions: monitoringOptions,
+            playbackID: playbackID,
             requiresReverseProxying: playbackOptions.enableSmartCache
         )
     }
@@ -132,6 +138,7 @@ extension AVPlayerLayer {
             playerItem: AVPlayerItem(
                 playbackID: playbackID
             ),
+            playbackID: playbackID,
             monitoringOptions: MonitoringOptions(
                 playbackID: playbackID
             )
@@ -160,6 +167,7 @@ extension AVPlayerLayer {
                 playbackID: playbackID,
                 playbackOptions: playbackOptions
             ),
+            playbackID: playbackID,
             playbackOptions: playbackOptions,
             monitoringOptions: MonitoringOptions(
                 playbackID: playbackID
@@ -188,6 +196,7 @@ extension AVPlayerLayer {
             playerItem: AVPlayerItem(
                 playbackID: playbackID
             ),
+            playbackID: playbackID,
             monitoringOptions: monitoringOptions
         )
     }
@@ -217,6 +226,7 @@ extension AVPlayerLayer {
                 playbackID: playbackID,
                 playbackOptions: playbackOptions
             ),
+            playbackID: playbackID,
             playbackOptions: playbackOptions,
             monitoringOptions: monitoringOptions
         )
@@ -224,6 +234,7 @@ extension AVPlayerLayer {
 
     internal func prepare(
         playerItem: AVPlayerItem,
+        playbackID: String,
         playbackOptions: PlaybackOptions = PlaybackOptions(),
         monitoringOptions: MonitoringOptions,
         playerSDK: PlayerSDK = .shared
@@ -249,6 +260,7 @@ extension AVPlayerLayer {
         playerSDK.registerPlayerLayer(
             playerLayer: self,
             monitoringOptions: monitoringOptions,
+            playbackID: playbackID,
             requiresReverseProxying: playbackOptions.enableSmartCache,
             usingDRM: usingDRM
         )
