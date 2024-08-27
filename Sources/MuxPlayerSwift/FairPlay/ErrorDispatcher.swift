@@ -6,9 +6,14 @@
 import Foundation
 
 protocol ErrorDispatcher {
-    func dispatchError(
-        errorCode: String,
-        errorMessage: String,
-        playerObjectIdentifier: ObjectIdentifier
+    func dispatchApplicationCertificateRequestError(
+        _ error: FairPlaySessionError
     )
+
+    func dispatchLicenseRequestError(
+        _ error: FairPlaySessionError
+    )
+
+
+    
 }
