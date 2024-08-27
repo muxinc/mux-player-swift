@@ -225,7 +225,8 @@ extension AVPlayerLayer {
     internal func prepare(
         playerItem: AVPlayerItem,
         playbackOptions: PlaybackOptions = PlaybackOptions(),
-        monitoringOptions: MonitoringOptions
+        monitoringOptions: MonitoringOptions,
+        playerSDK: PlayerSDK = .shared
     ) {
         if let player {
             player.replaceCurrentItem(
@@ -245,7 +246,7 @@ extension AVPlayerLayer {
             usingDRM = false
         }
 
-        PlayerSDK.shared.registerPlayerLayer(
+        playerSDK.registerPlayerLayer(
             playerLayer: self,
             monitoringOptions: monitoringOptions,
             requiresReverseProxying: playbackOptions.enableSmartCache,

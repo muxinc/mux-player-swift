@@ -264,7 +264,8 @@ extension AVPlayerViewController {
     internal func prepare(
         playerItem: AVPlayerItem,
         playbackOptions: PlaybackOptions = PlaybackOptions(),
-        monitoringOptions: MonitoringOptions
+        monitoringOptions: MonitoringOptions,
+        playerSDK: PlayerSDK = .shared
     ) {
         if let player {
             player.replaceCurrentItem(
@@ -284,7 +285,7 @@ extension AVPlayerViewController {
             usingDRM = false
         }
 
-        PlayerSDK.shared.registerPlayerViewController(
+        playerSDK.registerPlayerViewController(
             playerViewController: self,
             monitoringOptions: monitoringOptions,
             requiresReverseProxying: playbackOptions.enableSmartCache,
