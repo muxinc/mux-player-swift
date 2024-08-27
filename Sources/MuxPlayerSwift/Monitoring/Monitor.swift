@@ -211,13 +211,25 @@ class Monitor: ErrorDispatcher {
     // MARK: - Player Item Tracking
 
     func handleUpdatedCurrentPlayerItem(
-        _ playerItem: AVPlayerItem,
+        _ playerItem: AVPlayerItem?,
         for player: AVPlayer
     ) {
         
     }
 
     // MARK: - Error Dispatch
+
+    func dispatchApplicationCertificateRequestError(
+        _ error: FairPlaySessionError
+    ) {
+
+    }
+
+    func dispatchLicenseRequestError(
+        _ error: FairPlaySessionError
+    ) {
+        
+    }
 
     func dispatchError(
         errorCode: String,
