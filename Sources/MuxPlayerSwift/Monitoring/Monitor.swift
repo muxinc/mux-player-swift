@@ -25,25 +25,25 @@ class Monitor: ErrorDispatcher {
         usingDRM: Bool = false
     ) {
 
-        let monitoredPlayer: MonitoredPlayer
+        let customerData: MUXSDKCustomerData
 
-        if let customerData = options.customerData {
+        if let externallySpecifiedCustomerData = options.customerData {
 
-            let customerDataCopy = MUXSDKCustomerData()
+            let modifiedCustomerData = MUXSDKCustomerData()
 
-            if let customerVideoData = customerData.customerVideoData {
+            if let customerVideoData = externallySpecifiedCustomerData.customerVideoData {
                 let customerVideoDataCopy = MUXSDKCustomerVideoData()
                 customerVideoDataCopy.setQuery(customerVideoData.toQuery())
-                customerDataCopy.customerVideoData = customerVideoData
+                modifiedCustomerData.customerVideoData = customerVideoData
             }
 
-            if let customerViewData = customerData.customerViewData {
+            if let customerViewData = externallySpecifiedCustomerData.customerViewData {
                 let customerViewDataCopy = MUXSDKCustomerViewData()
                 customerViewDataCopy.setQuery(customerViewData.toQuery())
-                customerDataCopy.customerViewData = customerViewData
+                modifiedCustomerData.customerViewData = customerViewData
             }
 
-            if let customerViewerData = customerData.customerViewerData {
+            if let customerViewerData = externallySpecifiedCustomerData.customerViewerData {
                 let customerViewerDataCopy = MUXSDKCustomerViewerData()
                 customerViewerDataCopy.viewerApplicationName = customerViewerData.viewerApplicationName
                 customerViewerDataCopy.viewerDeviceCategory = customerViewerData.viewerDeviceCategory
@@ -51,38 +51,29 @@ class Monitor: ErrorDispatcher {
                 customerViewerDataCopy.viewerDeviceModel = customerViewerData.viewerDeviceModel
                 customerViewerDataCopy.viewerOsFamily = customerViewerData.viewerOsFamily
                 customerViewerDataCopy.viewerOsVersion = customerViewerData.viewerOsVersion
-                customerDataCopy.customerViewerData = customerViewerData
+                modifiedCustomerData.customerViewerData = customerViewerData
             }
 
-            if let customerPlayerData = customerData.customerPlayerData {
+            if let customerPlayerData = externallySpecifiedCustomerData.customerPlayerData {
                 let customerPlayerDataCopy = MUXSDKCustomerPlayerData()
                 customerPlayerDataCopy.setQuery(
                     customerPlayerData.toQuery()
                 )
                 customerPlayerDataCopy.playerSoftwareVersion = SemanticVersion.versionString
                 customerPlayerDataCopy.playerSoftwareName = "MuxPlayerSwiftAVPlayerViewController"
-                customerDataCopy.customerPlayerData = customerPlayerDataCopy
+                modifiedCustomerData.customerPlayerData = customerPlayerDataCopy
             } else {
                 let customerPlayerData = MUXSDKCustomerPlayerData()
                 customerPlayerData.playerSoftwareVersion = SemanticVersion.versionString
                 customerPlayerData.playerSoftwareName = "MuxPlayerSwiftAVPlayerViewController"
-                customerDataCopy.customerPlayerData = customerPlayerData
+                modifiedCustomerData.customerPlayerData = customerPlayerData
             }
 
-            let binding = MUXSDKStats.monitorAVPlayerViewController(
-                playerViewController,
-                withPlayerName: options.playerName,
-                customerData: customerDataCopy
-            )
-
-            monitoredPlayer = MonitoredPlayer(
-                name: options.playerName,
-                binding: binding!
-            )
-
+            customerData = modifiedCustomerData
+            
         } else {
 
-            let customerData = MUXSDKCustomerData()
+            customerData = MUXSDKCustomerData()
             let customerPlayerData = MUXSDKCustomerPlayerData()
             customerPlayerData.playerSoftwareVersion = SemanticVersion.versionString
             customerPlayerData.playerSoftwareName = "MuxPlayerSwiftAVPlayerViewController"
@@ -97,18 +88,21 @@ class Monitor: ErrorDispatcher {
                 customerViewData.viewDrmType = "fairplay"
                 customerData.customerViewData = customerViewData
             }
-
-            let binding = MUXSDKStats.monitorAVPlayerViewController(
-                playerViewController,
-                withPlayerName: options.playerName,
-                customerData: customerData
-            )
-
-            monitoredPlayer = MonitoredPlayer(
-                name: options.playerName,
-                binding: binding!
-            )
         }
+
+        let shouldTrackErrorsAutomatically = !usingDRM
+
+        let binding = MUXSDKStats.monitorAVPlayerViewController(
+            playerViewController,
+            withPlayerName: options.playerName,
+            customerData: customerData,
+            automaticErrorTracking: shouldTrackErrorsAutomatically
+        )
+
+        let monitoredPlayer = MonitoredPlayer(
+            name: options.playerName,
+            binding: binding!
+        )
 
         let objectIdentifier = ObjectIdentifier(playerViewController)
 
@@ -121,41 +115,32 @@ class Monitor: ErrorDispatcher {
         options: MonitoringOptions,
         usingDRM: Bool = false
     ) {
-        let monitoredPlayer: MonitoredPlayer
+        let customerData: MUXSDKCustomerData
 
-        if let customerData = options.customerData {
+        if let externallySpecifiedCustomerData = options.customerData {
 
-            let customerDataCopy = MUXSDKCustomerData()
+            let modifiedCustomerData = MUXSDKCustomerData()
 
-            if let customerPlayerData = customerData.customerPlayerData {
+            if let customerPlayerData = externallySpecifiedCustomerData.customerPlayerData {
                 let customerPlayerDataCopy = MUXSDKCustomerPlayerData()
                 customerPlayerDataCopy.setQuery(
                     customerPlayerData.toQuery()
                 )
                 customerPlayerDataCopy.playerSoftwareVersion = SemanticVersion.versionString
                 customerPlayerData.playerSoftwareName = "MuxPlayerSwiftAVPlayerLayer"
-                customerDataCopy.customerPlayerData = customerPlayerDataCopy
+                modifiedCustomerData.customerPlayerData = customerPlayerDataCopy
             } else {
                 let customerPlayerData = MUXSDKCustomerPlayerData()
                 customerPlayerData.playerSoftwareVersion = SemanticVersion.versionString
                 customerPlayerData.playerSoftwareName = "MuxPlayerSwiftAVPlayerLayer"
-                customerDataCopy.customerPlayerData = customerPlayerData
+                modifiedCustomerData.customerPlayerData = customerPlayerData
             }
 
-            let binding = MUXSDKStats.monitorAVPlayerLayer(
-                playerLayer,
-                withPlayerName: options.playerName,
-                customerData: customerDataCopy
-            )
-
-            monitoredPlayer = MonitoredPlayer(
-                name: options.playerName,
-                binding: binding!
-            )
+            customerData = modifiedCustomerData
 
         } else {
 
-            let customerData = MUXSDKCustomerData()
+            customerData = MUXSDKCustomerData()
             let customerPlayerData = MUXSDKCustomerPlayerData()
             customerPlayerData.playerSoftwareVersion = SemanticVersion.versionString
             customerPlayerData.playerSoftwareName = "MuxPlayerSwiftAVPlayerLayer"
@@ -170,18 +155,21 @@ class Monitor: ErrorDispatcher {
                 customerViewData.viewDrmType = "fairplay"
                 customerData.customerViewData = customerViewData
             }
-
-            let binding = MUXSDKStats.monitorAVPlayerLayer(
-                playerLayer,
-                withPlayerName: options.playerName,
-                customerData: customerData
-            )
-
-            monitoredPlayer = MonitoredPlayer(
-                name: options.playerName,
-                binding: binding!
-            )
         }
+
+        let shouldTrackErrorsAutomatically = !usingDRM
+
+        let binding = MUXSDKStats.monitorAVPlayerLayer(
+            playerLayer,
+            withPlayerName: options.playerName,
+            customerData: customerData,
+            automaticErrorTracking: shouldTrackErrorsAutomatically
+        )
+
+        let monitoredPlayer = MonitoredPlayer(
+            name: options.playerName,
+            binding: binding!
+        )
 
         let objectIdentifier = ObjectIdentifier(playerLayer)
 
