@@ -80,3 +80,36 @@ internal extension AVPlayerItem {
         )
     }
 }
+
+internal extension AVPlayerItem {
+
+    // Extracts Mux playback ID from remote AVAsset, if possible
+    var playbackID: String? {
+        guard let remoteAsset = asset as? AVURLAsset else {
+            return nil
+        }
+
+        guard let components = URLComponents(
+            url: remoteAsset.url,
+            resolvingAgainstBaseURL: false
+        ) else {
+            return nil
+        }
+
+        guard let host = components.host, host.contains("stream.") else {
+            return nil
+        }
+
+        guard components.path.hasSuffix(".m3u8") else {
+            return nil
+        }
+
+        var path = components.path
+
+        path.removeLast(5)
+
+        path.removeFirst(1)
+
+        return path
+    }
+}
