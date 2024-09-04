@@ -20,7 +20,8 @@ class Monitor {
 
     func setupMonitoring(
         playerViewController: AVPlayerViewController,
-        options: MonitoringOptions
+        options: MonitoringOptions,
+        usingDRM: Bool = false
     ) {
 
         let monitoredPlayer: MonitoredPlayer
@@ -90,6 +91,12 @@ class Monitor {
             }
             customerData.customerPlayerData = customerPlayerData
 
+            if usingDRM {
+                let customerViewData = MUXSDKCustomerViewData()
+                customerViewData.viewDrmType = "fairplay"
+                customerData.customerViewData = customerViewData
+            }
+
             let binding = MUXSDKStats.monitorAVPlayerViewController(
                 playerViewController,
                 withPlayerName: options.playerName,
@@ -109,7 +116,8 @@ class Monitor {
 
     func setupMonitoring(
         playerLayer: AVPlayerLayer,
-        options: MonitoringOptions
+        options: MonitoringOptions,
+        usingDRM: Bool = false
     ) {
         let monitoredPlayer: MonitoredPlayer
 
@@ -154,6 +162,12 @@ class Monitor {
                 customerPlayerData.environmentKey = environmentKey
             }
             customerData.customerPlayerData = customerPlayerData
+
+            if usingDRM {
+                let customerViewData = MUXSDKCustomerViewData()
+                customerViewData.viewDrmType = "fairplay"
+                customerData.customerViewData = customerViewData
+            }
 
             let binding = MUXSDKStats.monitorAVPlayerLayer(
                 playerLayer,
