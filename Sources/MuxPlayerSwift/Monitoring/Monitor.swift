@@ -19,9 +19,9 @@ class Monitor: ErrorDispatcher {
 
     var bindings: [ObjectIdentifier: MonitoredPlayer] = [:]
 
-    var playbackIDsToPlayers: [String: ObjectIdentifier] = [:]
+    var playbackIDsToPlayerObjectIdentifier: [String: ObjectIdentifier] = [:]
 
-    var playersToObservedObjectIdentifier: [ObjectIdentifier: ObjectIdentifier] = [:]
+    var playerObjectIdentifiersToBindingReferenceObjectIdentifier: [ObjectIdentifier: ObjectIdentifier] = [:]
 
     let keyValueObservation = KeyValueObservation()
 
@@ -125,7 +125,9 @@ class Monitor: ErrorDispatcher {
         let objectIdentifier = ObjectIdentifier(playerViewController)
 
         bindings[objectIdentifier] = monitoredPlayer
-        playersToObservedObjectIdentifier[ObjectIdentifier(player)] = objectIdentifier
+        playerObjectIdentifiersToBindingReferenceObjectIdentifier[
+            ObjectIdentifier(player)
+        ] = objectIdentifier
 
         if let player = playerViewController.player {
             // TODO: Add a better way to protect against
@@ -250,7 +252,7 @@ class Monitor: ErrorDispatcher {
         let objectIdentifier = ObjectIdentifier(playerLayer)
 
         bindings[objectIdentifier] = monitoredPlayer
-        playersToObservedObjectIdentifier[ObjectIdentifier(player)] = objectIdentifier
+        playerObjectIdentifiersToBindingReferenceObjectIdentifier[ObjectIdentifier(player)] = objectIdentifier
 
         if let player = playerLayer.player {
             // TODO: Add a better way to protect against
@@ -328,11 +330,11 @@ class Monitor: ErrorDispatcher {
         for player: AVPlayer
     ) {
         if let updatedPlaybackID = updatedPlayerItem?.playbackID {
-            playbackIDsToPlayers[updatedPlaybackID] = ObjectIdentifier(player)
+            playbackIDsToPlayerObjectIdentifier[updatedPlaybackID] = ObjectIdentifier(player)
         }
 
         if let previousPlaybackID = previousPlayerItem?.playbackID {
-            playbackIDsToPlayers[previousPlaybackID] = ObjectIdentifier(player)
+            playbackIDsToPlayerObjectIdentifier[previousPlaybackID] = ObjectIdentifier(player)
         }
     }
 
@@ -343,8 +345,8 @@ class Monitor: ErrorDispatcher {
         playbackID: String
     ) {
 
-        if let playerObjectIdentifier = playbackIDsToPlayers[playbackID],
-        let bindingReferenceIdentifier = playersToObservedObjectIdentifier[playerObjectIdentifier],
+        if let playerObjectIdentifier = playbackIDsToPlayerObjectIdentifier[playbackID],
+        let bindingReferenceIdentifier = playerObjectIdentifiersToBindingReferenceObjectIdentifier[playerObjectIdentifier],
         let monitoredPlayer = bindings[bindingReferenceIdentifier] {
             monitoredPlayer.binding.dispatchError(
                 "",
@@ -357,8 +359,8 @@ class Monitor: ErrorDispatcher {
         error: FairPlaySessionError,
         playbackID: String
     ) {
-        if let playerObjectIdentifier = playbackIDsToPlayers[playbackID],
-        let bindingReferenceIdentifier = playersToObservedObjectIdentifier[playerObjectIdentifier],
+        if let playerObjectIdentifier = playbackIDsToPlayerObjectIdentifier[playbackID],
+        let bindingReferenceIdentifier = playerObjectIdentifiersToBindingReferenceObjectIdentifier[playerObjectIdentifier],
         let monitoredPlayer = bindings[bindingReferenceIdentifier] {
             monitoredPlayer.binding.dispatchError(
                 "",
