@@ -21,6 +21,16 @@ class Monitor: ErrorDispatcher {
 
     var playbackIDsToPlayerObjectIdentifier: [String: ObjectIdentifier] = [:]
 
+    /// Either AVPlayerViewController, AVPlayerLayer, or AVPlayer
+    /// may be used to register bindings with Data.
+    /// KVO notices for player updates only have a pointer
+    /// to the AVPlayer instance.
+    ///
+    /// Routing error updates to the right player binding
+    /// requires a series of lookups. This is tedious for
+    /// AVPlayerViewController, AVPlayerLayer and gets easier
+    /// if there's a mapping kept between either of them as
+    /// we go along.
     var playerObjectIdentifiersToBindingReferenceObjectIdentifier: [ObjectIdentifier: ObjectIdentifier] = [:]
 
     let keyValueObservation = KeyValueObservation()
