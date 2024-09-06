@@ -121,22 +121,24 @@ class Monitor: ErrorDispatcher {
                 player
             )
 
-            keyValueObservation.register(
-                player,
-                for: \.error,
-                options: [.new, .old]
-            ) { [weak binding] player, change in
+            if usingDRM {
+                keyValueObservation.register(
+                    player,
+                    for: \.error,
+                    options: [.new, .old]
+                ) { [weak binding] player, change in
 
-                guard let binding else {
-                    return
-                }
+                    guard let binding else {
+                        return
+                    }
 
-                if let error = (change.newValue ?? nil) as? NSError,
-                    ((change.oldValue ?? nil) == nil) {
-                    binding.dispatchError(
-                        "\(error.code)",
-                        withMessage: error.localizedFailureReason
-                    )
+                    if let error = (change.newValue ?? nil) as? NSError,
+                        ((change.oldValue ?? nil) == nil) {
+                        binding.dispatchError(
+                            "\(error.code)",
+                            withMessage: error.localizedFailureReason
+                        )
+                    }
                 }
             }
 
@@ -236,22 +238,24 @@ class Monitor: ErrorDispatcher {
                 player
             )
 
-            keyValueObservation.register(
-                player,
-                for: \.error,
-                options: [.new, .old]
-            ) { [weak binding] player, change in
+            if usingDRM {
+                keyValueObservation.register(
+                    player,
+                    for: \.error,
+                    options: [.new, .old]
+                ) { [weak binding] player, change in
 
-                guard let binding else {
-                    return
-                }
+                    guard let binding else {
+                        return
+                    }
 
-                if let error = (change.newValue ?? nil) as? NSError,
-                    ((change.oldValue ?? nil) == nil) {
-                    binding.dispatchError(
-                        "\(error.code)",
-                        withMessage: error.localizedFailureReason
-                    )
+                    if let error = (change.newValue ?? nil) as? NSError,
+                        ((change.oldValue ?? nil) == nil) {
+                        binding.dispatchError(
+                            "\(error.code)",
+                            withMessage: error.localizedFailureReason
+                        )
+                    }
                 }
             }
 
