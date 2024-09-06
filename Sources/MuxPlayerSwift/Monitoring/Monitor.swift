@@ -125,7 +125,12 @@ class Monitor: ErrorDispatcher {
                 player,
                 for: \.error,
                 options: [.new, .old]
-            ) { player, change in
+            ) { [weak binding] player, change in
+
+                guard let binding else {
+                    return
+                }
+
                 if let error = (change.newValue ?? nil) as? NSError,
                     ((change.oldValue ?? nil) == nil) {
                     binding.dispatchError(
@@ -219,7 +224,12 @@ class Monitor: ErrorDispatcher {
                 player,
                 for: \.error,
                 options: [.new, .old]
-            ) { player, change in
+            ) { [weak binding] player, change in
+
+                guard let binding else {
+                    return
+                }
+
                 if let error = (change.newValue ?? nil) as? NSError,
                     ((change.oldValue ?? nil) == nil) {
                     binding.dispatchError(
