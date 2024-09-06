@@ -19,6 +19,10 @@ class Monitor: ErrorDispatcher {
 
     var bindings: [ObjectIdentifier: MonitoredPlayer] = [:]
 
+    var playersToPlaybackIDs: [ObjectIdentifier: String] = [:]
+
+    var playersToObservedObjectIdentifier: [ObjectIdentifier: ObjectIdentifier] = [:]
+
     let keyValueObservation = KeyValueObservation()
 
     func setupMonitoring(
@@ -27,6 +31,10 @@ class Monitor: ErrorDispatcher {
         options: MonitoringOptions,
         usingDRM: Bool = false
     ) {
+        guard let player = playerViewController.player else {
+            // TODO: Log
+            return
+        }
 
         let customerData: MUXSDKCustomerData
 
@@ -109,12 +117,15 @@ class Monitor: ErrorDispatcher {
         let monitoredPlayer = MonitoredPlayer(
             name: options.playerName,
             binding: binding,
-            playerIdentifier: ObjectIdentifier(playerViewController.player!)
+            playerIdentifier: ObjectIdentifier(
+                player
+            )
         )
 
         let objectIdentifier = ObjectIdentifier(playerViewController)
 
         bindings[objectIdentifier] = monitoredPlayer
+        playersToObservedObjectIdentifier[ObjectIdentifier(player)] = objectIdentifier
 
         if let player = playerViewController.player {
             // TODO: Add a better way to protect against
@@ -168,6 +179,11 @@ class Monitor: ErrorDispatcher {
         options: MonitoringOptions,
         usingDRM: Bool = false
     ) {
+        guard let player = playerLayer.player else {
+            // TODO: Log
+            return
+        }
+
         let customerData: MUXSDKCustomerData
 
         if let externallySpecifiedCustomerData = options.customerData {
@@ -226,12 +242,15 @@ class Monitor: ErrorDispatcher {
         let monitoredPlayer = MonitoredPlayer(
             name: options.playerName,
             binding: binding,
-            playerIdentifier: ObjectIdentifier(playerLayer.player!)
+            playerIdentifier: ObjectIdentifier(
+                player
+            )
         )
 
         let objectIdentifier = ObjectIdentifier(playerLayer)
 
         bindings[objectIdentifier] = monitoredPlayer
+        playersToObservedObjectIdentifier[ObjectIdentifier(player)] = objectIdentifier
 
         if let player = playerLayer.player {
             // TODO: Add a better way to protect against
@@ -308,7 +327,9 @@ class Monitor: ErrorDispatcher {
         updatedPlayerItem: AVPlayerItem?,
         for player: AVPlayer
     ) {
-
+        if let updatedPlaybackID = updatedPlayerItem?.playbackID {
+            self.playersToPlaybackIDs[ObjectIdentifier(player)] = updatedPlaybackID
+        }
     }
 
     // MARK: - Error Dispatch
