@@ -14,6 +14,7 @@ class Monitor: ErrorDispatcher {
     struct MonitoredPlayer {
         var name: String
         var binding: MUXSDKPlayerBinding
+        var playerIdentifier: ObjectIdentifier
     }
 
     var bindings: [ObjectIdentifier: MonitoredPlayer] = [:]
@@ -99,14 +100,41 @@ class Monitor: ErrorDispatcher {
             automaticErrorTracking: shouldTrackErrorsAutomatically
         )
 
+        guard let binding else {
+            return
+        }
+
         let monitoredPlayer = MonitoredPlayer(
             name: options.playerName,
-            binding: binding!
+            binding: binding,
+            playerIdentifier: ObjectIdentifier(playerViewController.player!)
         )
 
         let objectIdentifier = ObjectIdentifier(playerViewController)
 
         bindings[objectIdentifier] = monitoredPlayer
+
+        if let player = playerViewController.player {
+            let observation = player.observe(
+                \.error,
+                 options: [.new, .old]
+            ) { player, observation in
+                if let error = (observation.newValue ?? nil) as? NSError,
+                    ((observation.oldValue ?? nil) == nil) {
+                    binding.dispatchError(
+                        "\(error.code)",
+                        withMessage: error.localizedFailureReason
+                    )
+                }
+            }
+
+            if let existingObservation = playersToObservations[ObjectIdentifier(player)] {
+                existingObservation.invalidate()
+                playersToObservations.removeValue(forKey: ObjectIdentifier(player))
+            }
+
+            playersToObservations[ObjectIdentifier(player)] = observation
+        }
     }
 
     func setupMonitoring(
@@ -166,14 +194,41 @@ class Monitor: ErrorDispatcher {
             automaticErrorTracking: shouldTrackErrorsAutomatically
         )
 
+        guard let binding else {
+            return
+        }
+
         let monitoredPlayer = MonitoredPlayer(
             name: options.playerName,
-            binding: binding!
+            binding: binding,
+            playerIdentifier: ObjectIdentifier(playerLayer.player!)
         )
 
         let objectIdentifier = ObjectIdentifier(playerLayer)
 
         bindings[objectIdentifier] = monitoredPlayer
+
+        if let player = playerLayer.player {
+            let observation = player.observe(
+                \.error,
+                 options: [.new, .old]
+            ) { player, observation in
+                if let error = (observation.newValue ?? nil) as? NSError,
+                    ((observation.oldValue ?? nil) == nil) {
+                    binding.dispatchError(
+                        "\(error.code)",
+                        withMessage: error.localizedFailureReason
+                    )
+                }
+            }
+
+            if let existingObservation = playersToObservations[ObjectIdentifier(player)] {
+                existingObservation.invalidate()
+                playersToObservations.removeValue(forKey: ObjectIdentifier(player))
+            }
+
+            playersToObservations[ObjectIdentifier(player)] = observation
+        }
     }
 
     func tearDownMonitoring(playerViewController: AVPlayerViewController) {
