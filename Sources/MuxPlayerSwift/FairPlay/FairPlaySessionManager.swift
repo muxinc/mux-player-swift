@@ -226,7 +226,7 @@ class DefaultFairPlayStreamingSessionManager<
             guard let data = data,
                   data.count > 0 else {
                 let error = FairPlaySessionError.unexpected(
-                    message: "No cert data with 200 OK respone"
+                    message: "No cert data with 200 OK response"
                 )
                 self.logger.debug(
                     "Applicate certificate request completed with missing data and response code \(responseCode.debugDescription)"
