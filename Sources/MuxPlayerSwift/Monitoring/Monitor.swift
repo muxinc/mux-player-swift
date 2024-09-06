@@ -139,6 +139,22 @@ class Monitor: ErrorDispatcher {
                     )
                 }
             }
+
+            keyValueObservation.register(
+                player,
+                for: \.currentItem,
+                options: [.initial, .new, .old]
+            ) { [weak self] player, change in
+                guard let self else {
+                    return
+                }
+
+                self.handleUpdatedCurrentPlayerItem(
+                    previousPlayerItem: change.oldValue ?? nil,
+                    updatedPlayerItem: change.newValue ?? nil,
+                    for: player
+                )
+            }
         }
     }
 
@@ -238,6 +254,22 @@ class Monitor: ErrorDispatcher {
                     )
                 }
             }
+
+            keyValueObservation.register(
+                player,
+                for: \.currentItem,
+                options: [.initial, .new, .old]
+            ) { [weak self] player, change in
+                guard let self else {
+                    return
+                }
+
+                self.handleUpdatedCurrentPlayerItem(
+                    previousPlayerItem: change.oldValue ?? nil,
+                    updatedPlayerItem: change.newValue ?? nil,
+                    for: player
+                )
+            }
         }
     }
 
@@ -266,7 +298,8 @@ class Monitor: ErrorDispatcher {
     // MARK: - Player Item Tracking
 
     func handleUpdatedCurrentPlayerItem(
-        _ playerItem: AVPlayerItem?,
+        previousPlayerItem:  AVPlayerItem?,
+        updatedPlayerItem: AVPlayerItem?,
         for player: AVPlayer
     ) {
 

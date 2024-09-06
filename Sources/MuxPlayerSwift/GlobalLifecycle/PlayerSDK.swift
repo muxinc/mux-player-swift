@@ -157,21 +157,6 @@ class PlayerSDK {
             usingDRM: usingDRM
         )
 
-        if let player = playerLayer.player {
-            keyValueObservation.register(
-                player,
-                for: \.currentItem,
-                options: [.initial, .new, .old]
-            ) { player, change in
-                if let newValue = change.newValue {
-                    self.monitor.handleUpdatedCurrentPlayerItem(
-                        newValue,
-                        for: player
-                    )
-                }
-            }
-        }
-
         if let player = playerLayer.player, 
         requiresReverseProxying == true {
             keyValueObservation.register(
@@ -201,21 +186,6 @@ class PlayerSDK {
             options: monitoringOptions,
             usingDRM: usingDRM
         )
-
-        if let player = playerViewController.player {
-            keyValueObservation.register(
-                player,
-                for: \.currentItem,
-                options: [.initial, .new, .old]
-            ) { player, change in
-                if let newValue = change.newValue {
-                    self.monitor.handleUpdatedCurrentPlayerItem(
-                        newValue,
-                        for: player
-                    )
-                }
-            }
-        }
 
         if let player = playerViewController.player,
         requiresReverseProxying == true {
