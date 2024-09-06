@@ -19,7 +19,7 @@ class Monitor: ErrorDispatcher {
 
     var bindings: [ObjectIdentifier: MonitoredPlayer] = [:]
 
-    var playersToPlaybackIDs: [ObjectIdentifier: String] = [:]
+    var playbackIDsToPlayers: [String: ObjectIdentifier] = [:]
 
     var playersToObservedObjectIdentifier: [ObjectIdentifier: ObjectIdentifier] = [:]
 
@@ -328,7 +328,11 @@ class Monitor: ErrorDispatcher {
         for player: AVPlayer
     ) {
         if let updatedPlaybackID = updatedPlayerItem?.playbackID {
-            self.playersToPlaybackIDs[ObjectIdentifier(player)] = updatedPlaybackID
+            playbackIDsToPlayers[updatedPlaybackID] = ObjectIdentifier(player)
+        }
+
+        if let previousPlaybackID = previousPlayerItem?.playbackID {
+            playbackIDsToPlayers[previousPlaybackID] = ObjectIdentifier(player)
         }
     }
 
@@ -339,12 +343,29 @@ class Monitor: ErrorDispatcher {
         playbackID: String
     ) {
 
+        if let playerObjectIdentifier = playbackIDsToPlayers[playbackID],
+        let bindingReferenceIdentifier = playersToObservedObjectIdentifier[playerObjectIdentifier],
+        let monitoredPlayer = bindings[bindingReferenceIdentifier] {
+            monitoredPlayer.binding.dispatchError(
+                "",
+                withMessage: ""
+            )
+        }
     }
 
     func dispatchLicenseRequestError(
         error: FairPlaySessionError,
         playbackID: String
     ) {
+        if let playerObjectIdentifier = playbackIDsToPlayers[playbackID],
+        let bindingReferenceIdentifier = playersToObservedObjectIdentifier[playerObjectIdentifier],
+        let monitoredPlayer = bindings[bindingReferenceIdentifier] {
+            monitoredPlayer.binding.dispatchError(
+                "",
+                withMessage: ""
+            )
+        }
+    }
 
     class KeyValueObservation {
         var observations: [ObjectIdentifier: Set<NSKeyValueObservation>] = [:]
