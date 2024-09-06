@@ -19,6 +19,8 @@ class Monitor: ErrorDispatcher {
 
     var bindings: [ObjectIdentifier: MonitoredPlayer] = [:]
 
+    let keyValueObservation = KeyValueObservation()
+
     func setupMonitoring(
         playerViewController: AVPlayerViewController,
         playbackID: String,
