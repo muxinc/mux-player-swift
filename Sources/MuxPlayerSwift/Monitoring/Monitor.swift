@@ -21,6 +21,8 @@ class Monitor: ErrorDispatcher {
 
     var playbackIDsToPlayerObjectIdentifier: [String: ObjectIdentifier] = [:]
 
+    var playbackIDsToFairPlaySessionErrors: [String: FairPlaySessionError] = [:]
+
     /// Either AVPlayerViewController, AVPlayerLayer, or AVPlayer
     /// may be used to register bindings with Data.
     /// KVO notices for player updates only have a pointer
@@ -151,19 +153,22 @@ class Monitor: ErrorDispatcher {
                     player,
                     for: \.error,
                     options: [.new, .old]
-                ) { [weak binding] player, change in
+                ) { [weak binding, weak self] player, change in
 
                     guard let binding else {
                         return
                     }
 
-                    if let error = (change.newValue ?? nil) as? NSError,
-                        ((change.oldValue ?? nil) == nil) {
-                        binding.dispatchError(
-                            "\(error.code)",
-                            withMessage: error.localizedFailureReason
-                        )
+                    guard let self else {
+                        return
                     }
+
+                    self.handleUpdatedPlayerError(
+                        updatedPlayerError: change.newValue ?? nil,
+                        previousPlayerError: change.oldValue ?? nil,
+                        for: player,
+                        using: binding
+                    )
                 }
             }
 
@@ -262,7 +267,9 @@ class Monitor: ErrorDispatcher {
         let objectIdentifier = ObjectIdentifier(playerLayer)
 
         bindings[objectIdentifier] = monitoredPlayer
-        playerObjectIdentifiersToBindingReferenceObjectIdentifier[ObjectIdentifier(player)] = objectIdentifier
+        playerObjectIdentifiersToBindingReferenceObjectIdentifier[
+            ObjectIdentifier(player)
+        ] = objectIdentifier
 
         if let player = playerLayer.player {
             // TODO: Add a better way to protect against
@@ -276,19 +283,22 @@ class Monitor: ErrorDispatcher {
                     player,
                     for: \.error,
                     options: [.new, .old]
-                ) { [weak binding] player, change in
+                ) { [weak binding, weak self] player, change in
 
                     guard let binding else {
                         return
                     }
 
-                    if let error = (change.newValue ?? nil) as? NSError,
-                        ((change.oldValue ?? nil) == nil) {
-                        binding.dispatchError(
-                            "\(error.code)",
-                            withMessage: error.localizedFailureReason
-                        )
+                    guard let self else {
+                        return
                     }
+
+                    self.handleUpdatedPlayerError(
+                        updatedPlayerError: change.newValue ?? nil,
+                        previousPlayerError: change.oldValue ?? nil,
+                        for: player,
+                        using: binding
+                    )
                 }
             }
 
@@ -314,7 +324,19 @@ class Monitor: ErrorDispatcher {
 
         let objectIdentifier = ObjectIdentifier(playerViewController)
 
-        guard let playerName = bindings[objectIdentifier]?.name else { return }
+        guard let playerName = bindings[objectIdentifier]?.name else {
+            return
+        }
+
+        if let player = playerViewController.player {
+            keyValueObservation.unregister(
+                player
+            )
+        } else if let playerObjectIdentifier = bindings[objectIdentifier]?.playerIdentifier {
+            keyValueObservation.unregister(
+                playerObjectIdentifier
+            )
+        }
 
         MUXSDKStats.destroyPlayer(playerName)
 
@@ -325,7 +347,19 @@ class Monitor: ErrorDispatcher {
 
         let objectIdentifier = ObjectIdentifier(playerLayer)
 
-        guard let playerName = bindings[objectIdentifier]?.name else { return }
+        guard let playerName = bindings[objectIdentifier]?.name else {
+            return
+        }
+
+        if let player = playerLayer.player {
+            keyValueObservation.unregister(
+                player
+            )
+        } else if let playerObjectIdentifier = bindings[objectIdentifier]?.playerIdentifier {
+            keyValueObservation.unregister(
+                playerObjectIdentifier
+            )
+        }
 
         MUXSDKStats.destroyPlayer(playerName)
 
@@ -354,29 +388,71 @@ class Monitor: ErrorDispatcher {
         error: FairPlaySessionError,
         playbackID: String
     ) {
-
-        if let playerObjectIdentifier = playbackIDsToPlayerObjectIdentifier[playbackID],
-        let bindingReferenceIdentifier = playerObjectIdentifiersToBindingReferenceObjectIdentifier[playerObjectIdentifier],
-        let monitoredPlayer = bindings[bindingReferenceIdentifier] {
-            monitoredPlayer.binding.dispatchError(
-                "",
-                withMessage: ""
-            )
-        }
+        playbackIDsToFairPlaySessionErrors[playbackID] = error
     }
 
     func dispatchLicenseRequestError(
         error: FairPlaySessionError,
         playbackID: String
     ) {
-        if let playerObjectIdentifier = playbackIDsToPlayerObjectIdentifier[playbackID],
-        let bindingReferenceIdentifier = playerObjectIdentifiersToBindingReferenceObjectIdentifier[playerObjectIdentifier],
-        let monitoredPlayer = bindings[bindingReferenceIdentifier] {
-            monitoredPlayer.binding.dispatchError(
-                "",
-                withMessage: ""
-            )
+        playbackIDsToFairPlaySessionErrors[playbackID] = error
+    }
+
+    func handleUpdatedPlayerError(
+        updatedPlayerError: Error?,
+        previousPlayerError: Error?,
+        for player: AVPlayer,
+        using binding: MUXSDKPlayerBinding
+    ) {
+        if let updatedPlayerError = updatedPlayerError as? NSError,
+        previousPlayerError == nil {
+            if let currentPlayerItem = player.currentItem,
+            let playbackID = currentPlayerItem.playbackID,
+            let fairPlaySessionError = self.playbackIDsToFairPlaySessionErrors[
+                playbackID
+            ] {
+                let enrichedErrorMessage = self.enrichErrorMessageIfNecessary(
+                    playerError: updatedPlayerError,
+                    fairPlaySessionError: fairPlaySessionError
+                )
+
+                binding.dispatchError(
+                    "\(updatedPlayerError.code)",
+                    withMessage: enrichedErrorMessage
+                )
+            } else {
+                binding.dispatchError(
+                    "\(updatedPlayerError.code)",
+                    withMessage: updatedPlayerError.localizedFailureReason
+                )
+            }
+
         }
+    }
+
+    func enrichErrorMessageIfNecessary(
+        playerError: NSError,
+        fairPlaySessionError: FairPlaySessionError
+    ) -> String? {
+
+        if case let FairPlaySessionError.httpFailed(
+            responseStatusCode
+        ) = fairPlaySessionError {
+            switch responseStatusCode {
+            case 400:
+                return "The URL or playback ID was invalid. You may have used an invalid value as a playback ID."
+            case 403:
+                return "The video's secured drm-token has expired."
+            case 404:
+                return "This URL or playback ID does not exist. You may have used an Asset ID or an ID from a different resource."
+            case 412:
+                return "This playback ID may belong to a live stream that is not currently active or an asset that is not ready."
+            default:
+                break
+            }
+        }
+
+        return playerError.localizedFailureReason
     }
 
     class KeyValueObservation {
@@ -410,6 +486,17 @@ class Monitor: ErrorDispatcher {
                     observation.invalidate()
                 }
                 observations.removeValue(forKey: ObjectIdentifier(player))
+            }
+        }
+
+        func unregister(
+            _ objectIdentifier: ObjectIdentifier
+        ) {
+            if let o = observations[objectIdentifier] {
+                o.forEach { observation in
+                    observation.invalidate()
+                }
+                observations.removeValue(forKey: objectIdentifier)
             }
         }
     }
