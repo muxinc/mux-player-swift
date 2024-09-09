@@ -9,6 +9,43 @@ import Foundation
 import MuxCore
 import MUXSDKStats
 
+/// Wrapper around MUXSDKStats
+class PlayerObservationContext {
+    func monitorAVPlayerViewController(
+        _ player: AVPlayerViewController,
+        withPlayerName name: String,
+        customerData: MUXSDKCustomerData,
+        automaticErrorTracking: Bool
+    ) -> MUXSDKPlayerBinding? {
+        MUXSDKStats.monitorAVPlayerViewController(
+            player,
+            withPlayerName: name,
+            customerData: customerData,
+            automaticErrorTracking: automaticErrorTracking
+        )
+    }
+
+    func monitorAVPlayerLayer(
+        _ player: AVPlayerLayer,
+        withPlayerName name: String,
+        customerData: MUXSDKCustomerData,
+        automaticErrorTracking: Bool
+    ) -> MUXSDKPlayerBinding? {
+        MUXSDKStats.monitorAVPlayerLayer(
+            player,
+            withPlayerName: name,
+            customerData: customerData,
+            automaticErrorTracking: automaticErrorTracking
+        )
+    }
+
+    func destroyPlayer(
+        _ name: String
+    ) {
+        MUXSDKStats.destroyPlayer(name)
+    }
+}
+
 class Monitor: ErrorDispatcher {
 
     struct MonitoredPlayer {
@@ -36,6 +73,14 @@ class Monitor: ErrorDispatcher {
     var playerObjectIdentifiersToBindingReferenceObjectIdentifier: [ObjectIdentifier: ObjectIdentifier] = [:]
 
     let keyValueObservation = KeyValueObservation()
+
+    let playerObservationContext: PlayerObservationContext
+
+    init(
+        playerObservationContext: PlayerObservationContext = PlayerObservationContext()
+    ) {
+        self.playerObservationContext = playerObservationContext
+    }
 
     func setupMonitoring(
         playerViewController: AVPlayerViewController,
@@ -115,7 +160,7 @@ class Monitor: ErrorDispatcher {
 
         let shouldTrackErrorsAutomatically = !usingDRM
 
-        let binding = MUXSDKStats.monitorAVPlayerViewController(
+        let binding = playerObservationContext.monitorAVPlayerViewController(
             playerViewController,
             withPlayerName: options.playerName,
             customerData: customerData,
@@ -245,7 +290,7 @@ class Monitor: ErrorDispatcher {
 
         let shouldTrackErrorsAutomatically = !usingDRM
 
-        let binding = MUXSDKStats.monitorAVPlayerLayer(
+        let binding = playerObservationContext.monitorAVPlayerLayer(
             playerLayer,
             withPlayerName: options.playerName,
             customerData: customerData,
@@ -338,7 +383,7 @@ class Monitor: ErrorDispatcher {
             )
         }
 
-        MUXSDKStats.destroyPlayer(playerName)
+        playerObservationContext.destroyPlayer(playerName)
 
         bindings.removeValue(forKey: objectIdentifier)
     }
@@ -361,7 +406,7 @@ class Monitor: ErrorDispatcher {
             )
         }
 
-        MUXSDKStats.destroyPlayer(playerName)
+        playerObservationContext.destroyPlayer(playerName)
 
         bindings.removeValue(forKey: objectIdentifier)
     }
