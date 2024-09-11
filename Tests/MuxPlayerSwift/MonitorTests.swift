@@ -1051,7 +1051,7 @@ class MonitorTests: XCTestCase {
         )
     }
 
-    func testPlayerMonitoringInputsPlayerViewControllerDRM() throws {
+    func testPlayerMonitoringInputs_PlayerViewController_DRM() throws {
         let testPlayerObservationContext = TestPlayerObservationContext()
         let testMonitor = Monitor(
             playerObservationContext: testPlayerObservationContext
@@ -1070,13 +1070,102 @@ class MonitorTests: XCTestCase {
             testPlayerObservationContext.monitorCalls.first
         )
 
+        XCTAssertFalse(monitorCall.automaticErrorTracking)
+
         XCTAssertEqual(
             monitorCall.player,
             playerViewController
         )
+
+        let playerSoftwareName = try XCTUnwrap(
+            monitorCall.customerData.customerPlayerData?.playerSoftwareName
+        )
+
+        XCTAssertEqual(
+            playerSoftwareName,
+            "MuxPlayerSwiftAVPlayerViewController"
+        )
+
+
+        let playerSoftwareVersion = try XCTUnwrap(
+            monitorCall.customerData.customerPlayerData?.playerSoftwareVersion
+        )
+
+        XCTAssertEqual(
+            playerSoftwareVersion,
+            SemanticVersion.versionString
+        )
+
+        // Validate DRM flag
+
+        let viewDRMType = try XCTUnwrap(
+            monitorCall.customerData.customerViewData?.viewDrmType
+        )
+
+        XCTAssertEqual(
+            viewDRMType,
+            "fairplay"
+        )
     }
 
-    func testPlayerMonitoringInputsPlayerLayerDRM() throws {
+    func testPlayerMonitoringInputs_PlayerViewController_DRM_CustomEnvironmentKey() throws {
+        let testPlayerObservationContext = TestPlayerObservationContext()
+        let testMonitor = Monitor(
+            playerObservationContext: testPlayerObservationContext
+        )
+        PlayerSDK.shared.monitor = testMonitor
+
+        let playerViewController = AVPlayerViewController(
+            playbackID: "abc123",
+            playbackOptions: PlaybackOptions(
+                playbackToken: "def456",
+                drmToken: "ghi789"
+            )
+        )
+
+        let monitorCall = try XCTUnwrap(
+            testPlayerObservationContext.monitorCalls.first
+        )
+
+        XCTAssertFalse(monitorCall.automaticErrorTracking)
+
+        XCTAssertEqual(
+            monitorCall.player,
+            playerViewController
+        )
+
+        let playerSoftwareName = try XCTUnwrap(
+            monitorCall.customerData.customerPlayerData?.playerSoftwareName
+        )
+
+        XCTAssertEqual(
+            playerSoftwareName,
+            "MuxPlayerSwiftAVPlayerViewController"
+        )
+
+
+        let playerSoftwareVersion = try XCTUnwrap(
+            monitorCall.customerData.customerPlayerData?.playerSoftwareVersion
+        )
+
+        XCTAssertEqual(
+            playerSoftwareVersion,
+            SemanticVersion.versionString
+        )
+
+        // Validate DRM flag
+
+        let viewDRMType = try XCTUnwrap(
+            monitorCall.customerData.customerViewData?.viewDrmType
+        )
+
+        XCTAssertEqual(
+            viewDRMType,
+            "fairplay"
+        )
+    }
+
+    func testPlayerMonitoringInputs_PlayerLayer_DRM() throws {
         let testPlayerObservationContext = TestPlayerObservationContext()
         let testMonitor = Monitor(
             playerObservationContext: testPlayerObservationContext
@@ -1095,9 +1184,115 @@ class MonitorTests: XCTestCase {
             testPlayerObservationContext.monitorCalls.first
         )
 
+        // Validate player reference
         XCTAssertEqual(
             monitorCall.player,
             playerLayer
+        )
+
+        // Validate automatic error tracking
+        XCTAssertFalse(monitorCall.automaticErrorTracking)
+
+        // Validate customer data fields passed along to Mux Data
+
+        // Validate player software name and version
+        let playerSoftwareName = try XCTUnwrap(
+            monitorCall.customerData.customerPlayerData?.playerSoftwareName
+        )
+        XCTAssertEqual(
+            playerSoftwareName,
+            "MuxPlayerSwiftAVPlayerLayer"
+        )
+
+        let playerSoftwareVersion = try XCTUnwrap(
+            monitorCall.customerData.customerPlayerData?.playerSoftwareVersion
+        )
+        XCTAssertEqual(
+            playerSoftwareVersion,
+            SemanticVersion.versionString
+        )
+
+        // Validate DRM flag
+        let viewDRMType = try XCTUnwrap(
+            monitorCall.customerData.customerViewData?.viewDrmType
+        )
+        XCTAssertEqual(
+            viewDRMType,
+            "fairplay"
+        )
+    }
+
+    func testPlayerMonitoringInputs_PlayerLayer_DRM_CustomEnvironmentKey() throws {
+        let testPlayerObservationContext = TestPlayerObservationContext()
+        let testMonitor = Monitor(
+            playerObservationContext: testPlayerObservationContext
+        )
+        PlayerSDK.shared.monitor = testMonitor
+
+        let playerLayer = AVPlayerLayer(
+            playbackID: "abc123",
+            playbackOptions: PlaybackOptions(
+                playbackToken: "def456",
+                drmToken: "ghi789"
+            ),
+            monitoringOptions: MonitoringOptions(
+                environmentKey: "xyz321",
+                playerName: "test-player-name"
+            )
+        )
+
+        let monitorCall = try XCTUnwrap(
+            testPlayerObservationContext.monitorCalls.first
+        )
+
+        XCTAssertEqual(
+            monitorCall.player,
+            playerLayer
+        )
+
+        XCTAssertEqual(
+            monitorCall.playerName,
+            "test-player-name"
+        )
+
+        XCTAssertFalse(monitorCall.automaticErrorTracking)
+
+        let environmentKey = try XCTUnwrap(
+            monitorCall.customerData.customerPlayerData?.environmentKey
+        )
+        XCTAssertEqual(
+            environmentKey,
+            "xyz321"
+        )
+
+        let playerSoftwareName = try XCTUnwrap(
+            monitorCall.customerData.customerPlayerData?.playerSoftwareName
+        )
+
+        XCTAssertEqual(
+            playerSoftwareName,
+            "MuxPlayerSwiftAVPlayerLayer"
+        )
+
+
+        let playerSoftwareVersion = try XCTUnwrap(
+            monitorCall.customerData.customerPlayerData?.playerSoftwareVersion
+        )
+
+        XCTAssertEqual(
+            playerSoftwareVersion,
+            SemanticVersion.versionString
+        )
+
+        // Validate DRM flag
+
+        let viewDRMType = try XCTUnwrap(
+            monitorCall.customerData.customerViewData?.viewDrmType
+        )
+
+        XCTAssertEqual(
+            viewDRMType,
+            "fairplay"
         )
     }
 
