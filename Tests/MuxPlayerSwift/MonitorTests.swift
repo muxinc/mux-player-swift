@@ -145,6 +145,118 @@ class MonitorTests: XCTestCase {
         PlayerSDK.shared.monitor.bindings.removeAll()
     }
 
+    func validate(
+        context: TestPlayerObservationContext,
+        monitorCallIndex: Int = 0,
+        playerReference: NSObject,
+        automaticErrorTracking: Bool
+    ) {
+        let monitorCall = context.monitorCalls[monitorCallIndex]
+
+        // Validate player reference
+        XCTAssertEqual(
+            monitorCall.player,
+            playerReference
+        )
+
+        // Validate automatic error tracking
+        XCTAssertEqual(
+            monitorCall.automaticErrorTracking,
+            automaticErrorTracking
+        )
+    }
+
+    func validate(
+        context: TestPlayerObservationContext,
+        monitorCallIndex: Int = 0,
+        playerReference: NSObject,
+        automaticErrorTracking: Bool,
+        expectedPlayerSoftwareName: String,
+        expectedPlayerSoftwareVersion: String
+    ) throws {
+        let monitorCall = context.monitorCalls[monitorCallIndex]
+
+        // Validate player reference
+        XCTAssertEqual(
+            monitorCall.player,
+            playerReference
+        )
+
+        // Validate automatic error tracking
+        XCTAssertEqual(
+            monitorCall.automaticErrorTracking,
+            automaticErrorTracking
+        )
+
+        // Validate player software name and version
+        let playerSoftwareName = try XCTUnwrap(
+            monitorCall.customerData.customerPlayerData?.playerSoftwareName
+        )
+        XCTAssertEqual(
+            playerSoftwareName,
+            expectedPlayerSoftwareName
+        )
+
+        let playerSoftwareVersion = try XCTUnwrap(
+            monitorCall.customerData.customerPlayerData?.playerSoftwareVersion
+        )
+        XCTAssertEqual(
+            playerSoftwareVersion,
+            expectedPlayerSoftwareVersion
+        )
+    }
+
+    func validate(
+        context: TestPlayerObservationContext,
+        monitorCallIndex: Int = 0,
+        expectedPlayerName: String
+    ) throws {
+        let monitorCall = context.monitorCalls[monitorCallIndex]
+
+        // Validate player name (used by Mux Data as key)
+        let environmentKey = try XCTUnwrap(
+            monitorCall.customerData.customerPlayerData?.environmentKey
+        )
+        XCTAssertEqual(
+            monitorCall.playerName,
+            expectedPlayerName
+        )
+    }
+
+    func validate(
+        context: TestPlayerObservationContext,
+        monitorCallIndex: Int = 0,
+        expectedEnvironmentKey: String
+    ) throws {
+        let monitorCall = context.monitorCalls[monitorCallIndex]
+
+        // Validate environment key to match custom value
+        let environmentKey = try XCTUnwrap(
+            monitorCall.customerData.customerPlayerData?.environmentKey
+        )
+        XCTAssertEqual(
+            environmentKey,
+            expectedEnvironmentKey
+        )
+    }
+
+    func validate(
+        context: TestPlayerObservationContext,
+        monitorCallIndex: Int = 0,
+        expectedViewDRMType: String
+    ) throws {
+        let monitorCall = context.monitorCalls[monitorCallIndex]
+
+        // Validate DRM type
+        let viewDRMType = try XCTUnwrap(
+            monitorCall.customerData.customerViewData?.viewDrmType
+        )
+        XCTAssertEqual(
+            viewDRMType,
+            "fairplay"
+        )
+    }
+
     func testPlayerViewControllerMonitoringLifecycle() throws {
         PlayerSDK.shared.monitor = Monitor()
 
@@ -855,34 +967,12 @@ class MonitorTests: XCTestCase {
             playbackID: "abc123"
         )
 
-        let monitorCall = try XCTUnwrap(
-            testPlayerObservationContext.monitorCalls.first
-        )
-
-        XCTAssertEqual(
-            monitorCall.player,
-            playerViewController
-        )
-
-        XCTAssertTrue(monitorCall.automaticErrorTracking)
-
-        let playerSoftwareName = try XCTUnwrap(
-            monitorCall.customerData.customerPlayerData?.playerSoftwareName
-        )
-
-        XCTAssertEqual(
-            playerSoftwareName,
-            "MuxPlayerSwiftAVPlayerViewController"
-        )
-
-
-        let playerSoftwareVersion = try XCTUnwrap(
-            monitorCall.customerData.customerPlayerData?.playerSoftwareVersion
-        )
-
-        XCTAssertEqual(
-            playerSoftwareVersion,
-            SemanticVersion.versionString
+        try validate(
+            context: testPlayerObservationContext,
+            playerReference: playerViewController,
+            automaticErrorTracking: true,
+            expectedPlayerSoftwareName: "MuxPlayerSwiftAVPlayerViewController",
+            expectedPlayerSoftwareVersion: SemanticVersion.versionString
         )
     }
 
@@ -901,48 +991,22 @@ class MonitorTests: XCTestCase {
             )
         )
 
-        let monitorCall = try XCTUnwrap(
-            testPlayerObservationContext.monitorCalls.first
+        try validate(
+            context: testPlayerObservationContext,
+            playerReference: playerViewController,
+            automaticErrorTracking: true,
+            expectedPlayerSoftwareName: "MuxPlayerSwiftAVPlayerViewController",
+            expectedPlayerSoftwareVersion: SemanticVersion.versionString
         )
 
-        XCTAssertEqual(
-            monitorCall.player,
-            playerViewController
+        try validate(
+            context: testPlayerObservationContext,
+            expectedPlayerName: "test-player-name"
         )
 
-        XCTAssertEqual(
-            monitorCall.playerName,
-            "test-player-name"
-        )
-
-        XCTAssertTrue(monitorCall.automaticErrorTracking)
-
-        let environmentKey = try XCTUnwrap(
-            monitorCall.customerData.customerPlayerData?.environmentKey
-        )
-
-        XCTAssertEqual(
-            environmentKey,
-            "xyz321"
-        )
-
-        let playerSoftwareName = try XCTUnwrap(
-            monitorCall.customerData.customerPlayerData?.playerSoftwareName
-        )
-
-        XCTAssertEqual(
-            playerSoftwareName,
-            "MuxPlayerSwiftAVPlayerViewController"
-        )
-
-
-        let playerSoftwareVersion = try XCTUnwrap(
-            monitorCall.customerData.customerPlayerData?.playerSoftwareVersion
-        )
-
-        XCTAssertEqual(
-            playerSoftwareVersion,
-            SemanticVersion.versionString
+        try validate(
+            context: testPlayerObservationContext,
+            expectedEnvironmentKey: "xyz321"
         )
     }
 
@@ -957,34 +1021,12 @@ class MonitorTests: XCTestCase {
             playbackID: "abc123"
         )
 
-        let monitorCall = try XCTUnwrap(
-            testPlayerObservationContext.monitorCalls.first
-        )
-
-        XCTAssertEqual(
-            monitorCall.player,
-            playerLayer
-        )
-
-        XCTAssertTrue(monitorCall.automaticErrorTracking)
-
-        let playerSoftwareName = try XCTUnwrap(
-            monitorCall.customerData.customerPlayerData?.playerSoftwareName
-        )
-
-        XCTAssertEqual(
-            playerSoftwareName,
-            "MuxPlayerSwiftAVPlayerLayer"
-        )
-
-
-        let playerSoftwareVersion = try XCTUnwrap(
-            monitorCall.customerData.customerPlayerData?.playerSoftwareVersion
-        )
-
-        XCTAssertEqual(
-            playerSoftwareVersion,
-            SemanticVersion.versionString
+        try validate(
+            context: testPlayerObservationContext,
+            playerReference: playerLayer,
+            automaticErrorTracking: true,
+            expectedPlayerSoftwareName: "MuxPlayerSwiftAVPlayerLayer",
+            expectedPlayerSoftwareVersion: SemanticVersion.versionString
         )
     }
 
@@ -1004,50 +1046,22 @@ class MonitorTests: XCTestCase {
             )
         )
 
-        let monitorCall = try XCTUnwrap(
-            testPlayerObservationContext.monitorCalls.first
+        try validate(
+            context: testPlayerObservationContext,
+            playerReference: playerLayer,
+            automaticErrorTracking: true,
+            expectedPlayerSoftwareName: "MuxPlayerSwiftAVPlayerLayer",
+            expectedPlayerSoftwareVersion: SemanticVersion.versionString
         )
 
-        XCTAssertEqual(
-            monitorCall.player,
-            playerLayer
+        try validate(
+            context: testPlayerObservationContext,
+            expectedPlayerName: "test-player-name"
         )
 
-        XCTAssertEqual(
-            monitorCall.playerName,
-            "test-player-name"
-        )
-
-        XCTAssertTrue(monitorCall.automaticErrorTracking)
-
-        let environmentKey = try XCTUnwrap(
-            monitorCall.customerData.customerPlayerData?.environmentKey
-        )
-
-        XCTAssertEqual(
-            environmentKey,
-            "xyz321"
-        )
-
-        XCTAssertTrue(monitorCall.automaticErrorTracking)
-
-        let playerSoftwareName = try XCTUnwrap(
-            monitorCall.customerData.customerPlayerData?.playerSoftwareName
-        )
-
-        XCTAssertEqual(
-            playerSoftwareName,
-            "MuxPlayerSwiftAVPlayerLayer"
-        )
-
-
-        let playerSoftwareVersion = try XCTUnwrap(
-            monitorCall.customerData.customerPlayerData?.playerSoftwareVersion
-        )
-
-        XCTAssertEqual(
-            playerSoftwareVersion,
-            SemanticVersion.versionString
+        try validate(
+            context: testPlayerObservationContext,
+            expectedEnvironmentKey: "xyz321"
         )
     }
 
@@ -1066,45 +1080,17 @@ class MonitorTests: XCTestCase {
             )
         )
 
-        let monitorCall = try XCTUnwrap(
-            testPlayerObservationContext.monitorCalls.first
+        try validate(
+            context: testPlayerObservationContext,
+            playerReference: playerViewController,
+            automaticErrorTracking: false,
+            expectedPlayerSoftwareName: "MuxPlayerSwiftAVPlayerViewController",
+            expectedPlayerSoftwareVersion: SemanticVersion.versionString
         )
 
-        XCTAssertFalse(monitorCall.automaticErrorTracking)
-
-        XCTAssertEqual(
-            monitorCall.player,
-            playerViewController
-        )
-
-        let playerSoftwareName = try XCTUnwrap(
-            monitorCall.customerData.customerPlayerData?.playerSoftwareName
-        )
-
-        XCTAssertEqual(
-            playerSoftwareName,
-            "MuxPlayerSwiftAVPlayerViewController"
-        )
-
-
-        let playerSoftwareVersion = try XCTUnwrap(
-            monitorCall.customerData.customerPlayerData?.playerSoftwareVersion
-        )
-
-        XCTAssertEqual(
-            playerSoftwareVersion,
-            SemanticVersion.versionString
-        )
-
-        // Validate DRM flag
-
-        let viewDRMType = try XCTUnwrap(
-            monitorCall.customerData.customerViewData?.viewDrmType
-        )
-
-        XCTAssertEqual(
-            viewDRMType,
-            "fairplay"
+        try validate(
+            context: testPlayerObservationContext,
+            expectedViewDRMType: "fairplay"
         )
     }
 
@@ -1120,48 +1106,34 @@ class MonitorTests: XCTestCase {
             playbackOptions: PlaybackOptions(
                 playbackToken: "def456",
                 drmToken: "ghi789"
+            ),
+            monitoringOptions: MonitoringOptions(
+                environmentKey: "xyz321",
+                playerName: "test-player-name"
             )
         )
 
-        let monitorCall = try XCTUnwrap(
-            testPlayerObservationContext.monitorCalls.first
+        try validate(
+            context: testPlayerObservationContext,
+            playerReference: playerViewController,
+            automaticErrorTracking: false,
+            expectedPlayerSoftwareName: "MuxPlayerSwiftAVPlayerViewController",
+            expectedPlayerSoftwareVersion: SemanticVersion.versionString
         )
 
-        XCTAssertFalse(monitorCall.automaticErrorTracking)
-
-        XCTAssertEqual(
-            monitorCall.player,
-            playerViewController
+        try validate(
+            context: testPlayerObservationContext,
+            expectedPlayerName: "test-player-name"
         )
 
-        let playerSoftwareName = try XCTUnwrap(
-            monitorCall.customerData.customerPlayerData?.playerSoftwareName
+        try validate(
+            context: testPlayerObservationContext,
+            expectedEnvironmentKey: "xyz321"
         )
 
-        XCTAssertEqual(
-            playerSoftwareName,
-            "MuxPlayerSwiftAVPlayerViewController"
-        )
-
-
-        let playerSoftwareVersion = try XCTUnwrap(
-            monitorCall.customerData.customerPlayerData?.playerSoftwareVersion
-        )
-
-        XCTAssertEqual(
-            playerSoftwareVersion,
-            SemanticVersion.versionString
-        )
-
-        // Validate DRM flag
-
-        let viewDRMType = try XCTUnwrap(
-            monitorCall.customerData.customerViewData?.viewDrmType
-        )
-
-        XCTAssertEqual(
-            viewDRMType,
-            "fairplay"
+        try validate(
+            context: testPlayerObservationContext,
+            expectedViewDRMType: "fairplay"
         )
     }
 
@@ -1180,45 +1152,17 @@ class MonitorTests: XCTestCase {
             )
         )
 
-        let monitorCall = try XCTUnwrap(
-            testPlayerObservationContext.monitorCalls.first
+        try validate(
+            context: testPlayerObservationContext,
+            playerReference: playerLayer,
+            automaticErrorTracking: false,
+            expectedPlayerSoftwareName: "MuxPlayerSwiftAVPlayerLayer",
+            expectedPlayerSoftwareVersion: SemanticVersion.versionString
         )
 
-        // Validate player reference
-        XCTAssertEqual(
-            monitorCall.player,
-            playerLayer
-        )
-
-        // Validate automatic error tracking
-        XCTAssertFalse(monitorCall.automaticErrorTracking)
-
-        // Validate customer data fields passed along to Mux Data
-
-        // Validate player software name and version
-        let playerSoftwareName = try XCTUnwrap(
-            monitorCall.customerData.customerPlayerData?.playerSoftwareName
-        )
-        XCTAssertEqual(
-            playerSoftwareName,
-            "MuxPlayerSwiftAVPlayerLayer"
-        )
-
-        let playerSoftwareVersion = try XCTUnwrap(
-            monitorCall.customerData.customerPlayerData?.playerSoftwareVersion
-        )
-        XCTAssertEqual(
-            playerSoftwareVersion,
-            SemanticVersion.versionString
-        )
-
-        // Validate DRM flag
-        let viewDRMType = try XCTUnwrap(
-            monitorCall.customerData.customerViewData?.viewDrmType
-        )
-        XCTAssertEqual(
-            viewDRMType,
-            "fairplay"
+        try validate(
+            context: testPlayerObservationContext,
+            expectedViewDRMType: "fairplay"
         )
     }
 
@@ -1241,58 +1185,27 @@ class MonitorTests: XCTestCase {
             )
         )
 
-        let monitorCall = try XCTUnwrap(
-            testPlayerObservationContext.monitorCalls.first
+        try validate(
+            context: testPlayerObservationContext,
+            playerReference: playerLayer,
+            automaticErrorTracking: false,
+            expectedPlayerSoftwareName: "MuxPlayerSwiftAVPlayerLayer",
+            expectedPlayerSoftwareVersion: SemanticVersion.versionString
         )
 
-        XCTAssertEqual(
-            monitorCall.player,
-            playerLayer
+        try validate(
+            context: testPlayerObservationContext,
+            expectedPlayerName: "test-player-name"
         )
 
-        XCTAssertEqual(
-            monitorCall.playerName,
-            "test-player-name"
+        try validate(
+            context: testPlayerObservationContext,
+            expectedEnvironmentKey: "xyz321"
         )
 
-        XCTAssertFalse(monitorCall.automaticErrorTracking)
-
-        let environmentKey = try XCTUnwrap(
-            monitorCall.customerData.customerPlayerData?.environmentKey
-        )
-        XCTAssertEqual(
-            environmentKey,
-            "xyz321"
-        )
-
-        let playerSoftwareName = try XCTUnwrap(
-            monitorCall.customerData.customerPlayerData?.playerSoftwareName
-        )
-
-        XCTAssertEqual(
-            playerSoftwareName,
-            "MuxPlayerSwiftAVPlayerLayer"
-        )
-
-
-        let playerSoftwareVersion = try XCTUnwrap(
-            monitorCall.customerData.customerPlayerData?.playerSoftwareVersion
-        )
-
-        XCTAssertEqual(
-            playerSoftwareVersion,
-            SemanticVersion.versionString
-        )
-
-        // Validate DRM flag
-
-        let viewDRMType = try XCTUnwrap(
-            monitorCall.customerData.customerViewData?.viewDrmType
-        )
-
-        XCTAssertEqual(
-            viewDRMType,
-            "fairplay"
+        try validate(
+            context: testPlayerObservationContext,
+            expectedViewDRMType: "fairplay"
         )
     }
 
