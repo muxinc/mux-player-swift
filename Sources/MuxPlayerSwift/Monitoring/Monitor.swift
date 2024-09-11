@@ -100,36 +100,44 @@ class Monitor: ErrorDispatcher {
             let modifiedCustomerData = MUXSDKCustomerData()
 
             if let customerVideoData = externallySpecifiedCustomerData.customerVideoData {
-                let customerVideoDataCopy = MUXSDKCustomerVideoData()
-                customerVideoDataCopy.setQuery(customerVideoData.toQuery())
-                modifiedCustomerData.customerVideoData = customerVideoData
+                let copiedCustomerVideoDataCopy = MUXSDKCustomerVideoData()
+                copiedCustomerVideoDataCopy.setQuery(customerVideoData.toQuery())
+                modifiedCustomerData.customerVideoData = copiedCustomerVideoDataCopy
             }
 
             if let customerViewData = externallySpecifiedCustomerData.customerViewData {
-                let customerViewDataCopy = MUXSDKCustomerViewData()
-                customerViewDataCopy.setQuery(customerViewData.toQuery())
-                modifiedCustomerData.customerViewData = customerViewData
+                let copiedCustomerViewData = MUXSDKCustomerViewData()
+                copiedCustomerViewData.setQuery(customerViewData.toQuery())
+                modifiedCustomerData.customerViewData = copiedCustomerViewData
             }
 
             if let customerViewerData = externallySpecifiedCustomerData.customerViewerData {
-                let customerViewerDataCopy = MUXSDKCustomerViewerData()
-                customerViewerDataCopy.viewerApplicationName = customerViewerData.viewerApplicationName
-                customerViewerDataCopy.viewerDeviceCategory = customerViewerData.viewerDeviceCategory
-                customerViewerDataCopy.viewerDeviceManufacturer = customerViewerData.viewerDeviceManufacturer
-                customerViewerDataCopy.viewerDeviceModel = customerViewerData.viewerDeviceModel
-                customerViewerDataCopy.viewerOsFamily = customerViewerData.viewerOsFamily
-                customerViewerDataCopy.viewerOsVersion = customerViewerData.viewerOsVersion
+                let copiedCustomerViewerData = MUXSDKCustomerViewerData()
+                copiedCustomerViewerData.viewerApplicationName = customerViewerData.viewerApplicationName
+                copiedCustomerViewerData.viewerDeviceCategory = customerViewerData.viewerDeviceCategory
+                copiedCustomerViewerData.viewerDeviceManufacturer = customerViewerData.viewerDeviceManufacturer
+                copiedCustomerViewerData.viewerDeviceModel = customerViewerData.viewerDeviceModel
+                copiedCustomerViewerData.viewerOsFamily = customerViewerData.viewerOsFamily
+                copiedCustomerViewerData.viewerOsVersion = customerViewerData.viewerOsVersion
                 modifiedCustomerData.customerViewerData = customerViewerData
             }
 
+            if let customData = externallySpecifiedCustomerData.customData {
+                let copiedCustomData = MUXSDKCustomData()
+                copiedCustomData.setQuery(
+                    customData.toQuery()
+                )
+                modifiedCustomerData.customData = copiedCustomData
+            }
+
             if let customerPlayerData = externallySpecifiedCustomerData.customerPlayerData {
-                let customerPlayerDataCopy = MUXSDKCustomerPlayerData()
-                customerPlayerDataCopy.setQuery(
+                let copiedCustomerPlayerData = MUXSDKCustomerPlayerData()
+                copiedCustomerPlayerData.setQuery(
                     customerPlayerData.toQuery()
                 )
-                customerPlayerDataCopy.playerSoftwareVersion = SemanticVersion.versionString
-                customerPlayerDataCopy.playerSoftwareName = "MuxPlayerSwiftAVPlayerViewController"
-                modifiedCustomerData.customerPlayerData = customerPlayerDataCopy
+                copiedCustomerPlayerData.playerSoftwareVersion = SemanticVersion.versionString
+                copiedCustomerPlayerData.playerSoftwareName = "MuxPlayerSwiftAVPlayerViewController"
+                modifiedCustomerData.customerPlayerData = copiedCustomerPlayerData
             } else {
                 let customerPlayerData = MUXSDKCustomerPlayerData()
                 customerPlayerData.playerSoftwareVersion = SemanticVersion.versionString
@@ -252,13 +260,44 @@ class Monitor: ErrorDispatcher {
 
             let modifiedCustomerData = MUXSDKCustomerData()
 
+            if let customerVideoData = externallySpecifiedCustomerData.customerVideoData {
+                let copiedCustomerVideoData = MUXSDKCustomerVideoData()
+                copiedCustomerVideoData.setQuery(customerVideoData.toQuery())
+                modifiedCustomerData.customerVideoData = copiedCustomerVideoData
+            }
+
+            if let customerViewData = externallySpecifiedCustomerData.customerViewData {
+                let copiedCustomerViewData = MUXSDKCustomerViewData()
+                copiedCustomerViewData.setQuery(customerViewData.toQuery())
+                modifiedCustomerData.customerViewData = copiedCustomerViewData
+            }
+
+            if let customerViewerData = externallySpecifiedCustomerData.customerViewerData {
+                let copiedCustomerViewerData = MUXSDKCustomerViewerData()
+                copiedCustomerViewerData.viewerApplicationName = customerViewerData.viewerApplicationName
+                copiedCustomerViewerData.viewerDeviceCategory = customerViewerData.viewerDeviceCategory
+                copiedCustomerViewerData.viewerDeviceManufacturer = customerViewerData.viewerDeviceManufacturer
+                copiedCustomerViewerData.viewerDeviceModel = customerViewerData.viewerDeviceModel
+                copiedCustomerViewerData.viewerOsFamily = customerViewerData.viewerOsFamily
+                copiedCustomerViewerData.viewerOsVersion = customerViewerData.viewerOsVersion
+                modifiedCustomerData.customerViewerData = customerViewerData
+            }
+
+            if let customData = externallySpecifiedCustomerData.customData {
+                let copiedCustomData = MUXSDKCustomData()
+                copiedCustomData.setQuery(
+                    customData.toQuery()
+                )
+                modifiedCustomerData.customData = copiedCustomData
+            }
+
             if let customerPlayerData = externallySpecifiedCustomerData.customerPlayerData {
                 let customerPlayerDataCopy = MUXSDKCustomerPlayerData()
                 customerPlayerDataCopy.setQuery(
                     customerPlayerData.toQuery()
                 )
                 customerPlayerDataCopy.playerSoftwareVersion = SemanticVersion.versionString
-                customerPlayerData.playerSoftwareName = "MuxPlayerSwiftAVPlayerLayer"
+                customerPlayerDataCopy.playerSoftwareName = "MuxPlayerSwiftAVPlayerLayer"
                 modifiedCustomerData.customerPlayerData = customerPlayerDataCopy
             } else {
                 let customerPlayerData = MUXSDKCustomerPlayerData()

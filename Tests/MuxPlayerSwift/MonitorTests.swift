@@ -214,9 +214,6 @@ class MonitorTests: XCTestCase {
         let monitorCall = context.monitorCalls[monitorCallIndex]
 
         // Validate player name (used by Mux Data as key)
-        let environmentKey = try XCTUnwrap(
-            monitorCall.customerData.customerPlayerData?.environmentKey
-        )
         XCTAssertEqual(
             monitorCall.playerName,
             expectedPlayerName
@@ -254,6 +251,113 @@ class MonitorTests: XCTestCase {
         XCTAssertEqual(
             viewDRMType,
             "fairplay"
+        )
+    }
+
+    func validate(
+        context: TestPlayerObservationContext,
+        monitorCallIndex: Int = 0,
+        playerReference: NSObject,
+        providedCustomerData: MUXSDKCustomerData,
+        expectedPlayerSoftwareName: String,
+        expectedPlayerSoftwareVersion: String,
+        expectedEnvironmentKey: String,
+        expectedPlayerName: String,
+        expectedPlayerVersion: String,
+        expectedVideoTitle: String,
+        expectedSessionID: String,
+        expectedViewerApplicationName: String,
+        expectedCustomData1: String
+    ) throws {
+        let monitorCall = context.monitorCalls[monitorCallIndex]
+
+        XCTAssertNotEqual(
+            providedCustomerData,
+            monitorCall.customerData
+        )
+
+        XCTAssertNotEqual(
+            providedCustomerData.customerPlayerData,
+            monitorCall.customerData.customerPlayerData
+        )
+
+        // Validate no DRM type set
+        XCTAssertNil(
+            monitorCall.customerData.customerViewData?.viewDrmType
+        )
+
+        // Validate player software name and version
+        let playerSoftwareName = try XCTUnwrap(
+            monitorCall.customerData.customerPlayerData?.playerSoftwareName
+        )
+        XCTAssertEqual(
+            playerSoftwareName,
+            expectedPlayerSoftwareName
+        )
+
+        let playerSoftwareVersion = try XCTUnwrap(
+            monitorCall.customerData.customerPlayerData?.playerSoftwareVersion
+        )
+        XCTAssertEqual(
+            playerSoftwareVersion,
+            expectedPlayerSoftwareVersion
+        )
+
+        // Validate custom dimensions passed through
+        let environmentKey = try XCTUnwrap(
+            monitorCall.customerData.customerPlayerData?.environmentKey
+        )
+        XCTAssertEqual(
+            environmentKey,
+            expectedEnvironmentKey
+        )
+
+        let playerName = try XCTUnwrap(
+            monitorCall.customerData.customerPlayerData?.playerName
+        )
+        XCTAssertEqual(
+            playerName,
+            expectedPlayerName
+        )
+
+        let playerVersion = try XCTUnwrap(
+            monitorCall.customerData.customerPlayerData?.playerVersion
+        )
+        XCTAssertEqual(
+            playerVersion,
+            expectedPlayerVersion
+        )
+
+        let videoTitle = try XCTUnwrap(
+            monitorCall.customerData.customerVideoData?.videoTitle
+        )
+        XCTAssertEqual(
+            videoTitle,
+            expectedVideoTitle
+        )
+
+        let videoSessionID = try XCTUnwrap(
+            monitorCall.customerData.customerViewData?.viewSessionId
+        )
+        XCTAssertEqual(
+            videoSessionID,
+            expectedSessionID
+        )
+
+        let viewerApplicationName = try XCTUnwrap(
+            monitorCall.customerData.customerViewerData?.viewerApplicationName
+        )
+        XCTAssertEqual(
+            viewerApplicationName,
+            expectedViewerApplicationName
+        )
+
+        let customData1 = try XCTUnwrap(
+            monitorCall.customerData.customData?.customData1
+        )
+        XCTAssertEqual(
+            customData1,
+            expectedCustomData1
         )
     }
 
@@ -1010,6 +1114,66 @@ class MonitorTests: XCTestCase {
         )
     }
 
+    func testPlayerMonitoringInputs_PlayerViewController_NonDRM_CustomCustomerData() throws {
+        let testPlayerObservationContext = TestPlayerObservationContext()
+        let testMonitor = Monitor(
+            playerObservationContext: testPlayerObservationContext
+        )
+        PlayerSDK.shared.monitor = testMonitor
+
+        let customerPlayerData = MUXSDKCustomerPlayerData()
+        customerPlayerData.environmentKey = "wuv654"
+        customerPlayerData.experimentName = "experiment-42"
+        customerPlayerData.playerName = "my-shiny-player"
+        customerPlayerData.playerVersion = "v1.0.0"
+
+        let customerVideoData = MUXSDKCustomerVideoData()
+        customerVideoData.videoTitle = "my-video"
+
+        let customerViewData = MUXSDKCustomerViewData()
+        customerViewData.viewSessionId = "abcdefghi"
+
+        let customData = MUXSDKCustomData()
+        customData.customData1 = "baz"
+
+        let customViewerData = MUXSDKCustomerViewerData()
+        customViewerData.viewerApplicationName = "FooBarApp"
+
+        let customerData = try XCTUnwrap(
+            MUXSDKCustomerData(
+                customerPlayerData: customerPlayerData,
+                videoData: customerVideoData,
+                viewData: customerViewData,
+                customData: customData,
+                viewerData: customViewerData
+            )
+        )
+
+        let playerViewController = AVPlayerViewController(
+            playbackID: "abc123",
+            monitoringOptions: MonitoringOptions(
+                customerData: customerData,
+                playerName: "test-player-name-custom-data"
+            )
+        )
+
+        try validate(
+            context: testPlayerObservationContext,
+            playerReference: playerViewController,
+            providedCustomerData: customerData,
+            expectedPlayerSoftwareName: "MuxPlayerSwiftAVPlayerViewController",
+            expectedPlayerSoftwareVersion: SemanticVersion.versionString,
+            expectedEnvironmentKey: "wuv654",
+            expectedPlayerName: "my-shiny-player",
+            expectedPlayerVersion: "v1.0.0",
+            expectedVideoTitle: "my-video",
+            expectedSessionID: "abcdefghi",
+            expectedViewerApplicationName: "FooBarApp",
+            expectedCustomData1: "baz"
+        )
+
+    }
+
     func testPlayerMonitoringInputs_PlayerLayer_NonDRM() throws {
         let testPlayerObservationContext = TestPlayerObservationContext()
         let testMonitor = Monitor(
@@ -1062,6 +1226,66 @@ class MonitorTests: XCTestCase {
         try validate(
             context: testPlayerObservationContext,
             expectedEnvironmentKey: "xyz321"
+        )
+    }
+
+    func testPlayerMonitoringInputs_PlayerLayer_NonDRM_CustomCustomerData() throws {
+        let testPlayerObservationContext = TestPlayerObservationContext()
+        let testMonitor = Monitor(
+            playerObservationContext: testPlayerObservationContext
+        )
+        PlayerSDK.shared.monitor = testMonitor
+
+        let customerPlayerData = MUXSDKCustomerPlayerData()
+        customerPlayerData.environmentKey = "wuv654"
+        customerPlayerData.experimentName = "experiment-42"
+        customerPlayerData.playerName = "my-shiny-player"
+        customerPlayerData.playerVersion = "v1.0.0"
+
+        let customerVideoData = MUXSDKCustomerVideoData()
+        customerVideoData.videoTitle = "my-video"
+
+        let customerViewData = MUXSDKCustomerViewData()
+        customerViewData.viewSessionId = "abcdefghi"
+
+        let customData = MUXSDKCustomData()
+        customData.customData1 = "baz"
+
+        let customViewerData = MUXSDKCustomerViewerData()
+        customViewerData.viewerApplicationName = "FooBarApp"
+
+        let customerData = try XCTUnwrap(
+            MUXSDKCustomerData(
+                customerPlayerData: customerPlayerData,
+                videoData: customerVideoData,
+                viewData: customerViewData,
+                customData: customData,
+                viewerData: customViewerData
+            )
+        )
+
+        let playerLayer = AVPlayerLayer(
+            playbackID: "abc123",
+            playbackOptions: PlaybackOptions(),
+            monitoringOptions: MonitoringOptions(
+                customerData: customerData,
+                playerName: "test-player-name-custom-data"
+            )
+        )
+
+        try validate(
+            context: testPlayerObservationContext,
+            playerReference: playerLayer,
+            providedCustomerData: customerData,
+            expectedPlayerSoftwareName: "MuxPlayerSwiftAVPlayerLayer",
+            expectedPlayerSoftwareVersion: SemanticVersion.versionString,
+            expectedEnvironmentKey: "wuv654",
+            expectedPlayerName: "my-shiny-player",
+            expectedPlayerVersion: "v1.0.0",
+            expectedVideoTitle: "my-video",
+            expectedSessionID: "abcdefghi",
+            expectedViewerApplicationName: "FooBarApp",
+            expectedCustomData1: "baz"
         )
     }
 
