@@ -106,12 +106,23 @@ extension AVPlayerLayer {
 
         self.player = player
 
-        PlayerSDK.shared.registerPlayerLayer(
-            playerLayer: self,
-            monitoringOptions: monitoringOptions,
-            playbackID: playbackID,
-            requiresReverseProxying: playbackOptions.enableSmartCache
-        )
+        if case PlaybackOptions.PlaybackPolicy.drm(_) = playbackOptions.playbackPolicy {
+            PlayerSDK.shared.registerPlayerLayer(
+                playerLayer: self,
+                monitoringOptions: monitoringOptions,
+                playbackID: playbackID,
+                requiresReverseProxying: playbackOptions.enableSmartCache,
+                usingDRM: true
+            )
+        } else {
+            PlayerSDK.shared.registerPlayerLayer(
+                playerLayer: self,
+                monitoringOptions: monitoringOptions,
+                playbackID: playbackID,
+                requiresReverseProxying: playbackOptions.enableSmartCache,
+                usingDRM: false
+            )
+        }
     }
 
     /// Stops monitoring the player
