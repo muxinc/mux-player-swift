@@ -25,124 +25,39 @@ class PlayerLayerBackedView: UIView {
     }
 }
 
-class TestMonitor: Monitor {
-    var monitoringRegistrations: [(MonitoringOptions, Bool)] = []
-
-    override func setupMonitoring(
-        playerViewController: AVPlayerViewController,
-        playbackID: String,
-        options: MonitoringOptions,
-        usingDRM: Bool = false
-    ) {
-        super.setupMonitoring(
-            playerViewController: playerViewController, 
-            playbackID: playbackID,
-            options: options,
-            usingDRM: usingDRM
-        )
-
-        monitoringRegistrations.append(
-            (options, usingDRM)
-        )
-    }
-
-    override func setupMonitoring(
-        playerLayer: AVPlayerLayer,
-        playbackID: String,
-        options: MonitoringOptions,
-        usingDRM: Bool = false
-    ) {
-        super.setupMonitoring(
-            playerLayer: playerLayer, 
-            playbackID: playbackID,
-            options: options,
-            usingDRM: usingDRM
-        )
-
-        monitoringRegistrations.append(
-            (options, usingDRM)
-        )
-    }
-}
-
-class TestPlayerObservationContext: PlayerObservationContext {
-
-    struct MonitorCall {
-        // AVPlayerViewController or AVPlayerLayer or AVPlayer
-        // Only included to validate pointer equality, for
-        // which NSObject suffices
-        let player: NSObject
-        let playerName: String
-        let customerData: MUXSDKCustomerData
-        let automaticErrorTracking: Bool
-    }
-
-    var monitorCalls: [MonitorCall] = []
-
-    override func monitorAVPlayerViewController(
-        _ player: AVPlayerViewController,
-        withPlayerName name: String,
-        customerData: MUXSDKCustomerData,
-        automaticErrorTracking: Bool
-    ) -> MUXSDKPlayerBinding? {
-        
-        monitorCalls.append(
-            MonitorCall(
-                player: player,
-                playerName: name,
-                customerData: customerData,
-                automaticErrorTracking: automaticErrorTracking
-            )
-        )
-
-        // In its current state this test class is only
-        // useful for validating Mux Data inputs.
-        //
-        // This needs to return a non-nil value in order to
-        // validate side effects in this SDK.
-        return nil
-    }
-
-    override func monitorAVPlayerLayer(
-        _ player: AVPlayerLayer,
-        withPlayerName name: String,
-        customerData: MUXSDKCustomerData,
-        automaticErrorTracking: Bool
-    ) -> MUXSDKPlayerBinding? {
-
-        monitorCalls.append(
-            MonitorCall(
-                player: player,
-                playerName: name,
-                customerData: customerData,
-                automaticErrorTracking: automaticErrorTracking
-            )
-        )
-
-        // In its current state this test class is only
-        // useful for validating Mux Data inputs.
-        //
-        // This needs to return a non-nil value in order to
-        // validate side effects in this SDK.
-        return nil
-//        return MUXSDKPlayerBinding(
-//            name: "",
-//            andSoftware: ""
-//        )
-    }
-
-    override func destroyPlayer(
-        _ name: String
-    ) {
-
-    }
-}
-
 class MonitorTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
         PlayerSDK.shared.monitor.bindings.removeAll()
+    }
+
+    func validate(
+        monitor: Monitor,
+        player: AVPlayer,
+        expectedKVORegistrationsCountForPlayer: Int = 1,
+        expectedTotalKVORegistrations: Int = 1
+    ) throws {
+
+        XCTAssertEqual(
+            monitor
+                .keyValueObservation
+                .observations
+                .count,
+            expectedTotalKVORegistrations
+        )
+
+        let observations = try XCTUnwrap(
+            monitor
+                .keyValueObservation
+                .observations[
+                    ObjectIdentifier(player)
+                ]
+        )
+        XCTAssertEqual(
+            observations.count,
+            expectedKVORegistrationsCountForPlayer
+        )
     }
 
     func validate(
@@ -520,40 +435,20 @@ class MonitorTests: XCTestCase {
         testMonitor.monitoringRegistrations.removeAll()
     }
 
-    func testInitializedPlayerViewControllerKVORegistrationNonDRM() throws {
+    func testInitializedPlayerViewController_KVORegistration_NonDRM() throws {
         PlayerSDK.shared.monitor = Monitor()
 
         let playerViewController = AVPlayerViewController(
             playbackID: "abc123"
         )
 
-        XCTAssertEqual(
-            PlayerSDK
-                .shared
-                .monitor
-                .keyValueObservation
-                .observations
-                .count,
-            1
-        )
-
         let player = try XCTUnwrap(
             playerViewController.player
         )
 
-        let observations = try XCTUnwrap(
-            PlayerSDK
-                .shared
-                .monitor
-                .keyValueObservation
-                .observations[
-                    ObjectIdentifier(player)
-                ]
-        )
-
-        XCTAssertEqual(
-            observations.count,
-            1
+        try validate(
+            monitor: PlayerSDK.shared.monitor,
+            player: player
         )
 
         let playerViewControllerObjectIdentifier = try XCTUnwrap(
@@ -585,40 +480,20 @@ class MonitorTests: XCTestCase {
         )
     }
 
-    func testInitializedPlayerLayerKVORegistrationNonDRM() throws {
+    func testInitializedPlayerLayer_KVORegistration_NonDRM() throws {
         PlayerSDK.shared.monitor = Monitor()
 
         let playerLayer = AVPlayerLayer(
             playbackID: "abc123"
         )
 
-        XCTAssertEqual(
-            PlayerSDK
-                .shared
-                .monitor
-                .keyValueObservation
-                .observations
-                .count,
-            1
-        )
-
         let player = try XCTUnwrap(
             playerLayer.player
         )
 
-        let observations = try XCTUnwrap(
-            PlayerSDK
-                .shared
-                .monitor
-                .keyValueObservation
-                .observations[
-                    ObjectIdentifier(player)
-                ]
-        )
-
-        XCTAssertEqual(
-            observations.count,
-            1
+        try validate(
+            monitor: PlayerSDK.shared.monitor,
+            player: player
         )
 
         let playerLayerObjectIdentifier = try XCTUnwrap(
@@ -650,7 +525,7 @@ class MonitorTests: XCTestCase {
         )
     }
 
-    func testPreexistingPlayerViewControllerKVORegistrationNonDRM() throws {
+    func testPreexistingPlayerViewController_KVORegistration_NonDRM() throws {
         PlayerSDK.shared.monitor = Monitor()
 
         let playerViewController = AVPlayerViewController()
@@ -658,33 +533,13 @@ class MonitorTests: XCTestCase {
             playbackID: "abc123"
         )
 
-        XCTAssertEqual(
-            PlayerSDK
-                .shared
-                .monitor
-                .keyValueObservation
-                .observations
-                .count,
-            1
-        )
-
         let player = try XCTUnwrap(
             playerViewController.player
         )
 
-        let observations = try XCTUnwrap(
-            PlayerSDK
-                .shared
-                .monitor
-                .keyValueObservation
-                .observations[
-                    ObjectIdentifier(player)
-                ]
-        )
-
-        XCTAssertEqual(
-            observations.count,
-            1
+        try validate(
+            monitor: PlayerSDK.shared.monitor,
+            player: player
         )
 
         let playerViewControllerObjectIdentifier = try XCTUnwrap(
@@ -716,7 +571,7 @@ class MonitorTests: XCTestCase {
         )
     }
 
-    func testPreexistingPlayerLayerKVORegistrationNonDRM() throws {
+    func testPreexistingPlayerLayer_KVORegistration_NonDRM() throws {
         PlayerSDK.shared.monitor = Monitor()
 
         let playerLayer = AVPlayerLayer()
@@ -724,33 +579,13 @@ class MonitorTests: XCTestCase {
             playbackID: "abc123"
         )
 
-        XCTAssertEqual(
-            PlayerSDK
-                .shared
-                .monitor
-                .keyValueObservation
-                .observations
-                .count,
-            1
-        )
-
         let player = try XCTUnwrap(
             playerLayer.player
         )
 
-        let observations = try XCTUnwrap(
-            PlayerSDK
-                .shared
-                .monitor
-                .keyValueObservation
-                .observations[
-                    ObjectIdentifier(player)
-                ]
-        )
-
-        XCTAssertEqual(
-            observations.count,
-            1
+        try validate(
+            monitor: PlayerSDK.shared.monitor,
+            player: player
         )
 
         let playerLayerObjectIdentifier = try XCTUnwrap(
@@ -782,7 +617,7 @@ class MonitorTests: XCTestCase {
         )
     }
 
-    func testInitializedPlayerViewControllerKVORegistrationDRM() throws {
+    func testInitializedPlayerViewController_KVORegistration_DRM() throws {
         PlayerSDK.shared.monitor = Monitor()
 
         let playerViewController = AVPlayerViewController(
@@ -793,33 +628,14 @@ class MonitorTests: XCTestCase {
             )
         )
 
-        XCTAssertEqual(
-            PlayerSDK
-                .shared
-                .monitor
-                .keyValueObservation
-                .observations
-                .count,
-            1
-        )
-
         let player = try XCTUnwrap(
             playerViewController.player
         )
 
-        let observations = try XCTUnwrap(
-            PlayerSDK
-                .shared
-                .monitor
-                .keyValueObservation
-                .observations[
-                    ObjectIdentifier(player)
-                ]
-        )
-
-        XCTAssertEqual(
-            observations.count,
-            2
+        try validate(
+            monitor: PlayerSDK.shared.monitor,
+            player: player,
+            expectedKVORegistrationsCountForPlayer: 2
         )
 
         let playerViewControllerObjectIdentifier = try XCTUnwrap(
@@ -851,7 +667,7 @@ class MonitorTests: XCTestCase {
         )
     }
 
-    func testInitializedPlayerLayerKVORegistrationDRM() throws {
+    func testInitializedPlayerLayer_KVORegistration_DRM() throws {
         PlayerSDK.shared.monitor = Monitor()
 
         let playerLayer = AVPlayerLayer(
@@ -862,33 +678,14 @@ class MonitorTests: XCTestCase {
             )
         )
 
-        XCTAssertEqual(
-            PlayerSDK
-                .shared
-                .monitor
-                .keyValueObservation
-                .observations
-                .count,
-            1
-        )
-
         let player = try XCTUnwrap(
             playerLayer.player
         )
 
-        let observations = try XCTUnwrap(
-            PlayerSDK
-                .shared
-                .monitor
-                .keyValueObservation
-                .observations[
-                    ObjectIdentifier(player)
-                ]
-        )
-
-        XCTAssertEqual(
-            observations.count,
-            2
+        try validate(
+            monitor: PlayerSDK.shared.monitor,
+            player: player,
+            expectedKVORegistrationsCountForPlayer: 2
         )
 
         let playerLayerObjectIdentifier = try XCTUnwrap(
@@ -920,7 +717,7 @@ class MonitorTests: XCTestCase {
         )
     }
 
-    func testPreexistingPlayerViewControllerKVORegistrationDRM() throws {
+    func testPreexistingPlayerViewController_KVORegistration_DRM() throws {
         PlayerSDK.shared.monitor = Monitor()
 
         let playerViewController = AVPlayerViewController()
@@ -932,33 +729,14 @@ class MonitorTests: XCTestCase {
             )
         )
 
-        XCTAssertEqual(
-            PlayerSDK
-                .shared
-                .monitor
-                .keyValueObservation
-                .observations
-                .count,
-            1
-        )
-
         let player = try XCTUnwrap(
             playerViewController.player
         )
 
-        let observations = try XCTUnwrap(
-            PlayerSDK
-                .shared
-                .monitor
-                .keyValueObservation
-                .observations[
-                    ObjectIdentifier(player)
-                ]
-        )
-
-        XCTAssertEqual(
-            observations.count,
-            2
+        try validate(
+            monitor: PlayerSDK.shared.monitor,
+            player: player,
+            expectedKVORegistrationsCountForPlayer: 2
         )
 
         let playerViewControllerObjectIdentifier = try XCTUnwrap(
@@ -990,7 +768,7 @@ class MonitorTests: XCTestCase {
         )
     }
 
-    func testPreexistingPlayerLayerKVORegistrationDRM() throws {
+    func testPreexistingPlayerLayer_KVORegistration_DRM() throws {
         PlayerSDK.shared.monitor = Monitor()
 
         let playerLayer = AVPlayerLayer()
@@ -1002,33 +780,14 @@ class MonitorTests: XCTestCase {
             )
         )
 
-        XCTAssertEqual(
-            PlayerSDK
-                .shared
-                .monitor
-                .keyValueObservation
-                .observations
-                .count,
-            1
-        )
-
         let player = try XCTUnwrap(
             playerLayer.player
         )
 
-        let observations = try XCTUnwrap(
-            PlayerSDK
-                .shared
-                .monitor
-                .keyValueObservation
-                .observations[
-                    ObjectIdentifier(player)
-                ]
-        )
-
-        XCTAssertEqual(
-            observations.count,
-            2
+        try validate(
+            monitor: PlayerSDK.shared.monitor,
+            player: player,
+            expectedKVORegistrationsCountForPlayer: 2
         )
 
         let playerLayerObjectIdentifier = try XCTUnwrap(
@@ -1171,7 +930,6 @@ class MonitorTests: XCTestCase {
             expectedViewerApplicationName: "FooBarApp",
             expectedCustomData1: "baz"
         )
-
     }
 
     func testPlayerMonitoringInputs_PlayerLayer_NonDRM() throws {
@@ -1361,6 +1119,69 @@ class MonitorTests: XCTestCase {
         )
     }
 
+    func testPlayerMonitoringInputs_PlayerViewController_DRM_CustomCustomerData() throws {
+        let testPlayerObservationContext = TestPlayerObservationContext()
+        let testMonitor = Monitor(
+            playerObservationContext: testPlayerObservationContext
+        )
+        PlayerSDK.shared.monitor = testMonitor
+
+        let customerPlayerData = MUXSDKCustomerPlayerData()
+        customerPlayerData.environmentKey = "wuv654"
+        customerPlayerData.experimentName = "experiment-42"
+        customerPlayerData.playerName = "my-shiny-player"
+        customerPlayerData.playerVersion = "v1.0.0"
+
+        let customerVideoData = MUXSDKCustomerVideoData()
+        customerVideoData.videoTitle = "my-video"
+
+        let customerViewData = MUXSDKCustomerViewData()
+        customerViewData.viewSessionId = "abcdefghi"
+
+        let customData = MUXSDKCustomData()
+        customData.customData1 = "baz"
+
+        let customViewerData = MUXSDKCustomerViewerData()
+        customViewerData.viewerApplicationName = "FooBarApp"
+
+        let customerData = try XCTUnwrap(
+            MUXSDKCustomerData(
+                customerPlayerData: customerPlayerData,
+                videoData: customerVideoData,
+                viewData: customerViewData,
+                customData: customData,
+                viewerData: customViewerData
+            )
+        )
+
+        let playerViewController = AVPlayerViewController(
+            playbackID: "abc123",
+            playbackOptions: PlaybackOptions(
+                playbackToken: "def456",
+                drmToken: "ghi789"
+            ),
+            monitoringOptions: MonitoringOptions(
+                customerData: customerData,
+                playerName: "test-player-name-custom-data"
+            )
+        )
+
+        try validate(
+            context: testPlayerObservationContext,
+            playerReference: playerViewController,
+            providedCustomerData: customerData,
+            expectedPlayerSoftwareName: "MuxPlayerSwiftAVPlayerViewController",
+            expectedPlayerSoftwareVersion: SemanticVersion.versionString,
+            expectedEnvironmentKey: "wuv654",
+            expectedPlayerName: "my-shiny-player",
+            expectedPlayerVersion: "v1.0.0",
+            expectedVideoTitle: "my-video",
+            expectedSessionID: "abcdefghi",
+            expectedViewerApplicationName: "FooBarApp",
+            expectedCustomData1: "baz"
+        )
+    }
+
     func testPlayerMonitoringInputs_PlayerLayer_DRM() throws {
         let testPlayerObservationContext = TestPlayerObservationContext()
         let testMonitor = Monitor(
@@ -1430,6 +1251,69 @@ class MonitorTests: XCTestCase {
         try validate(
             context: testPlayerObservationContext,
             expectedViewDRMType: "fairplay"
+        )
+    }
+
+    func testPlayerMonitoringInputs_PlayerLayer_DRM_CustomCustomerData() throws {
+        let testPlayerObservationContext = TestPlayerObservationContext()
+        let testMonitor = Monitor(
+            playerObservationContext: testPlayerObservationContext
+        )
+        PlayerSDK.shared.monitor = testMonitor
+
+        let customerPlayerData = MUXSDKCustomerPlayerData()
+        customerPlayerData.environmentKey = "wuv654"
+        customerPlayerData.experimentName = "experiment-42"
+        customerPlayerData.playerName = "my-shiny-player"
+        customerPlayerData.playerVersion = "v1.0.0"
+
+        let customerVideoData = MUXSDKCustomerVideoData()
+        customerVideoData.videoTitle = "my-video"
+
+        let customerViewData = MUXSDKCustomerViewData()
+        customerViewData.viewSessionId = "abcdefghi"
+
+        let customData = MUXSDKCustomData()
+        customData.customData1 = "baz"
+
+        let customViewerData = MUXSDKCustomerViewerData()
+        customViewerData.viewerApplicationName = "FooBarApp"
+
+        let customerData = try XCTUnwrap(
+            MUXSDKCustomerData(
+                customerPlayerData: customerPlayerData,
+                videoData: customerVideoData,
+                viewData: customerViewData,
+                customData: customData,
+                viewerData: customViewerData
+            )
+        )
+
+        let playerLayer = AVPlayerLayer(
+            playbackID: "abc123",
+            playbackOptions: PlaybackOptions(
+                playbackToken: "def456",
+                drmToken: "ghi789"
+            ),
+            monitoringOptions: MonitoringOptions(
+                customerData: customerData,
+                playerName: "test-player-name-custom-data"
+            )
+        )
+
+        try validate(
+            context: testPlayerObservationContext,
+            playerReference: playerLayer,
+            providedCustomerData: customerData,
+            expectedPlayerSoftwareName: "MuxPlayerSwiftAVPlayerLayer",
+            expectedPlayerSoftwareVersion: SemanticVersion.versionString,
+            expectedEnvironmentKey: "wuv654",
+            expectedPlayerName: "my-shiny-player",
+            expectedPlayerVersion: "v1.0.0",
+            expectedVideoTitle: "my-video",
+            expectedSessionID: "abcdefghi",
+            expectedViewerApplicationName: "FooBarApp",
+            expectedCustomData1: "baz"
         )
     }
 
