@@ -526,7 +526,7 @@ class Monitor: ErrorDispatcher {
             case 400:
                 return "The URL or playback ID was invalid. You may have used an invalid value as a playback ID."
             case 403:
-                return "The video's secured drm-token has expired."
+                return "The video's secured drm-token is not authorized for this request. It may be expired or a token for another resource."
             case 404:
                 return "This URL or playback ID does not exist. You may have used an Asset ID or an ID from a different resource."
             case 412:
