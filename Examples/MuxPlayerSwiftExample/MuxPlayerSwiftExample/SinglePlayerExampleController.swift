@@ -100,6 +100,8 @@ class SinglePlayerExampleController: UIViewController {
         super.viewDidLoad()
 
         view.backgroundColor = .black
+        view.accessibilityLabel = "A single player example that uses AVPlayerViewController"
+        view.accessibilityIdentifier = "SinglePlayerView"
 
         let maximumResolutionsMenu = UIMenu(
             title: "Set Maximum Resolution",
