@@ -1,0 +1,24 @@
+{
+  "configurations" : [
+    {
+      "id" : "3007B2FC-0024-43DA-94F6-B50D2335DA68",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "testTimeoutsEnabled" : true
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:MuxPlayerSwiftExample.xcodeproj",
+        "identifier" : "193228D62ACF6AC900966FE1",
+        "name" : "MuxPlayerSwiftExampleUITests"
+      }
+    }
+  ],
+  "version" : 1
+}

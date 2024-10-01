@@ -20,20 +20,96 @@ final class MuxPlayerSwiftExampleUITests: XCTestCase {
         // Put teardown code here. This method is called after the invocation of each test method in the class.
     }
 
-    func testExample() throws {
-        // UI tests must launch the application that they test.
-        let app = XCUIApplication()
-        app.launch()
+    func launchAndWaitUntilInForeground(
+        application: XCUIApplication
+    ) throws {
+        application.launchEnvironment = [
+            "ENV_KEY": "qr9665qr78dac0hqld9bjofps",
+            "PLAYBACK_ID": "qxb01i6T202018GFS02vp9RIe01icTcDCjVzQpmaB00CUisJ4"
+        ]
+        application.launch()
 
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
+        let isRunningInForeground = application.wait(
+            for: .runningForeground,
+            timeout: 5.0
+        )
+
+        guard isRunningInForeground else {
+            XCTFail("Failed to launch application")
+            return
+        }
     }
 
-    func testLaunchPerformance() throws {
-        if #available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 7.0, *) {
-            // This measures how long it takes to launch your application.
-            measure(metrics: [XCTApplicationLaunchMetric()]) {
-                XCUIApplication().launch()
-            }
+    func tapCell(
+        cellIdentifier: String,
+        waitFor viewIdentifier: String,
+        application: XCUIApplication
+    ) throws {
+        let cellElement = application.cells.element(
+            matching: .cell,
+            identifier: cellIdentifier
+        )
+
+        guard cellElement.exists else {
+            XCTFail("Failed to find cell element: \(cellIdentifier)")
+            return
         }
+
+        cellElement.tap()
+
+        let viewElement = application.descendants(
+            matching: .any
+        ).element(
+            matching: .any,
+            identifier: viewIdentifier
+        )
+
+        let isViewElementOnScreen = viewElement.waitForExistence(
+            timeout: 150.0
+        )
+
+        guard isViewElementOnScreen else {
+            XCTFail("Failed to navigate to view element: \(viewIdentifier)")
+            return
+        }
+
+        let isUnknown = application.wait(
+            for: .unknown,
+            timeout: 25.0
+        )
+
+        guard !isUnknown else {
+            XCTFail("Application interrupted while playing video")
+            return
+        }
+    }
+
+
+    func testVideoOnDemandPlayerViewController() throws {
+        let application = XCUIApplication()
+
+        try launchAndWaitUntilInForeground(
+            application: application
+        )
+
+        try tapCell(
+            cellIdentifier: "SinglePlayerExample",
+            waitFor: "SinglePlayerView",
+            application: application
+        )
+    }
+
+    func testVideoOnDemandPlayerLayer() throws {
+        let application = XCUIApplication()
+
+        try launchAndWaitUntilInForeground(
+            application: application
+        )
+
+        try tapCell(
+            cellIdentifier: "SinglePlayerLayerExample",
+            waitFor: "SinglePlayerLayerView",
+            application: application
+        )
     }
 }
