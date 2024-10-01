@@ -106,6 +106,8 @@ class SinglePlayerLayerExampleViewController: UIViewController {
         super.viewDidLoad()
 
         playerView.backgroundColor = .black
+        view.accessibilityLabel = "A single player example that uses AVPlayerLayer"
+        view.accessibilityIdentifier = "SinglePlayerLayerView"
 
         playerView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(playerView)

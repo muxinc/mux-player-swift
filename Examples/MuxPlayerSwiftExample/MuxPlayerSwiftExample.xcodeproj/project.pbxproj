@@ -53,6 +53,7 @@
 		193228D72ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MuxPlayerSwiftExampleUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		193228DB2ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MuxPlayerSwiftExampleUITests.swift; sourceTree = "<group>"; };
 		193228DD2ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MuxPlayerSwiftExampleUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		193D52E82CAC78C0004F20AA /* MuxPlayerSwiftExample.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = MuxPlayerSwiftExample.xctestplan; sourceTree = "<group>"; };
 		1966C52F2BEB4740005486D5 /* ProcessInfo+EnvironmentVariables.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ProcessInfo+EnvironmentVariables.swift"; sourceTree = "<group>"; };
 		19DD16AE2BEC010400F4DF4F /* SinglePlayerExampleController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SinglePlayerExampleController.swift; sourceTree = "<group>"; };
 		19DD16B02BEC028C00F4DF4F /* SmartCacheExampleViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartCacheExampleViewController.swift; sourceTree = "<group>"; };
@@ -89,6 +90,7 @@
 		193228AE2ACF6AC700966FE1 = {
 			isa = PBXGroup;
 			children = (
+				193D52E82CAC78C0004F20AA /* MuxPlayerSwiftExample.xctestplan */,
 				193228B92ACF6AC700966FE1 /* MuxPlayerSwiftExample */,
 				193228D02ACF6AC900966FE1 /* MuxPlayerSwiftExampleTests */,
 				193228DA2ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITests */,
