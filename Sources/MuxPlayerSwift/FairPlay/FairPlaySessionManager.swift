@@ -90,7 +90,8 @@ class DefaultFairPlayStreamingSessionManager<
 
     var playbackOptionsByPlaybackID: [String: PlaybackOptions] = [:]
     let contentKeySession: ContentKeySession
-    
+    let errorDispatcher: (any ErrorDispatcher)
+
     #if DEBUG
     var logger: Logger = Logger(
         OSLog(
@@ -142,12 +143,17 @@ class DefaultFairPlayStreamingSessionManager<
             logger.debug(
                 "Invalid FairPlay certificate domain \(rootDomain, privacy: .auto(mask: .hash))"
             )
+            let error = FairPlaySessionError.unexpected(
+                message: "Invalid certificate domain"
+            )
             requestCompletion(
                 Result.failure(
-                    FairPlaySessionError.unexpected(
-                        message: "Invalid certificate domain"
-                    )
+                    error
                 )
+            )
+            errorDispatcher.dispatchApplicationCertificateRequestError(
+                error: error,
+                playbackID: playbackID
             )
             return
         }
@@ -187,9 +193,14 @@ class DefaultFairPlayStreamingSessionManager<
                 self.logger.debug(
                     "Applicate certificate request failed with error: \(error.localizedDescription)"
                 )
+                let error = FairPlaySessionError.because(cause: error)
                 requestCompletion(Result.failure(
-                    FairPlaySessionError.because(cause: error)
+                    error
                 ))
+                self.errorDispatcher.dispatchApplicationCertificateRequestError(
+                    error: error,
+                    playbackID: playbackID
+                )
                 return
             }
             // error case: I/O finished with non-successful response
@@ -197,27 +208,37 @@ class DefaultFairPlayStreamingSessionManager<
                 self.logger.debug(
                     "Applicate certificate request failed with response code: \(String(describing: responseCode))"
                 )
+                let error = FairPlaySessionError.httpFailed(
+                    responseStatusCode: responseCode ?? 0
+                )
                 requestCompletion(
                     Result.failure(
-                        FairPlaySessionError.httpFailed(
-                            responseStatusCode: responseCode ?? 0
-                        )
+                        error
                     )
+                )
+                self.errorDispatcher.dispatchApplicationCertificateRequestError(
+                    error: error,
+                    playbackID: playbackID
                 )
                 return
             }
             // this edge case (200 with invalid data) is possible from our DRM vendor
             guard let data = data,
                   data.count > 0 else {
+                let error = FairPlaySessionError.unexpected(
+                    message: "No cert data with 200 OK response"
+                )
                 self.logger.debug(
                     "Applicate certificate request completed with missing data and response code \(responseCode.debugDescription)"
                 )
                 requestCompletion(
                     Result.failure(
-                        FairPlaySessionError.unexpected(
-                            message: "No cert data with 200 OK respone"
-                        )
+                        error
                     )
+                )
+                self.errorDispatcher.dispatchApplicationCertificateRequestError(
+                    error: error,
+                    playbackID: playbackID
                 )
                 return
             }
@@ -245,12 +266,17 @@ class DefaultFairPlayStreamingSessionManager<
             drmToken: drmToken,
             licenseHostSuffix: rootDomain
         ).url else {
+            let error = FairPlaySessionError.unexpected(
+                message: "Invalid FairPlay license domain"
+            )
             requestCompletion(
                 Result.failure(
-                    FairPlaySessionError.unexpected(
-                        message: "Invalid FairPlay license domain"
-                    )
+                    error
                 )
+            )
+            errorDispatcher.dispatchLicenseRequestError(
+                error: error,
+                playbackID: playbackID
             )
             return
         }
@@ -273,9 +299,14 @@ class DefaultFairPlayStreamingSessionManager<
                 self.logger.debug(
                     "URL Session Task Failed: \(error.localizedDescription)"
                 )
+                let error = FairPlaySessionError.because(cause: error)
                 requestCompletion(Result.failure(
-                    FairPlaySessionError.because(cause: error)
+                    error
                 ))
+                self.errorDispatcher.dispatchLicenseRequestError(
+                    error: error,
+                    playbackID: playbackID
+                )
                 return
             }
             
@@ -294,11 +325,17 @@ class DefaultFairPlayStreamingSessionManager<
                 self.logger.debug(
                     "CKC request failed: \(String(describing: responseCode))"
                 )
+                let error = FairPlaySessionError.httpFailed(
+                    responseStatusCode: responseCode ?? 0
+                )
                 requestCompletion(Result.failure(
-                    FairPlaySessionError.httpFailed(
-                        responseStatusCode: responseCode ?? 0
-                    )
+                    error
                 ))
+                self.errorDispatcher.dispatchLicenseRequestError(
+                    error: error,
+                    playbackID: playbackID
+                )
+
                 return
             }
             // strange edge case: 200 with no response body
@@ -307,10 +344,15 @@ class DefaultFairPlayStreamingSessionManager<
             guard let data = data,
                   data.count > 0
             else {
+                let error = FairPlaySessionError.unexpected(message: "No license data with 200 response")
                 self.logger.debug("No CKC data despite server returning success")
                 requestCompletion(Result.failure(
-                    FairPlaySessionError.unexpected(message: "No license data with 200 response")
+                    error
                 ))
+                self.errorDispatcher.dispatchLicenseRequestError(
+                    error: error,
+                    playbackID: playbackID
+                )
                 return
             }
             
@@ -349,10 +391,12 @@ class DefaultFairPlayStreamingSessionManager<
 
     init(
         contentKeySession: ContentKeySession,
-        urlSession: URLSession
+        urlSession: URLSession,
+        errorDispatcher: any ErrorDispatcher
     ) {
         self.contentKeySession = contentKeySession
         self.urlSession = urlSession
+        self.errorDispatcher = errorDispatcher
     }
 }
 

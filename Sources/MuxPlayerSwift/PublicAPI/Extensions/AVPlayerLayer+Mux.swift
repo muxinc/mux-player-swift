@@ -15,7 +15,9 @@ extension AVPlayerLayer {
     public convenience init(playbackID: String) {
         self.init()
 
-        let playerItem = AVPlayerItem(playbackID: playbackID)
+        let playerItem = AVPlayerItem(
+            playbackID: playbackID
+        )
 
         let player = AVPlayer(playerItem: playerItem)
 
@@ -27,6 +29,7 @@ extension AVPlayerLayer {
 
         PlayerSDK.shared.monitor.setupMonitoring(
             playerLayer: self,
+            playbackID: playbackID,
             options: monitoringOptions
         )
     }
@@ -62,6 +65,7 @@ extension AVPlayerLayer {
             PlayerSDK.shared.registerPlayerLayer(
                 playerLayer: self,
                 monitoringOptions: monitoringOptions,
+                playbackID: playbackID,
                 requiresReverseProxying: playbackOptions.enableSmartCache,
                 usingDRM: true
             )
@@ -69,6 +73,7 @@ extension AVPlayerLayer {
             PlayerSDK.shared.registerPlayerLayer(
                 playerLayer: self,
                 monitoringOptions: monitoringOptions,
+                playbackID: playbackID,
                 requiresReverseProxying: playbackOptions.enableSmartCache,
                 usingDRM: false
             )
@@ -101,11 +106,23 @@ extension AVPlayerLayer {
 
         self.player = player
 
-        PlayerSDK.shared.registerPlayerLayer(
-            playerLayer: self,
-            monitoringOptions: monitoringOptions,
-            requiresReverseProxying: playbackOptions.enableSmartCache
-        )
+        if case PlaybackOptions.PlaybackPolicy.drm(_) = playbackOptions.playbackPolicy {
+            PlayerSDK.shared.registerPlayerLayer(
+                playerLayer: self,
+                monitoringOptions: monitoringOptions,
+                playbackID: playbackID,
+                requiresReverseProxying: playbackOptions.enableSmartCache,
+                usingDRM: true
+            )
+        } else {
+            PlayerSDK.shared.registerPlayerLayer(
+                playerLayer: self,
+                monitoringOptions: monitoringOptions,
+                playbackID: playbackID,
+                requiresReverseProxying: playbackOptions.enableSmartCache,
+                usingDRM: false
+            )
+        }
     }
 
     /// Stops monitoring the player
@@ -132,6 +149,7 @@ extension AVPlayerLayer {
             playerItem: AVPlayerItem(
                 playbackID: playbackID
             ),
+            playbackID: playbackID,
             monitoringOptions: MonitoringOptions(
                 playbackID: playbackID
             )
@@ -160,6 +178,7 @@ extension AVPlayerLayer {
                 playbackID: playbackID,
                 playbackOptions: playbackOptions
             ),
+            playbackID: playbackID,
             playbackOptions: playbackOptions,
             monitoringOptions: MonitoringOptions(
                 playbackID: playbackID
@@ -188,6 +207,7 @@ extension AVPlayerLayer {
             playerItem: AVPlayerItem(
                 playbackID: playbackID
             ),
+            playbackID: playbackID,
             monitoringOptions: monitoringOptions
         )
     }
@@ -217,6 +237,7 @@ extension AVPlayerLayer {
                 playbackID: playbackID,
                 playbackOptions: playbackOptions
             ),
+            playbackID: playbackID,
             playbackOptions: playbackOptions,
             monitoringOptions: monitoringOptions
         )
@@ -224,8 +245,10 @@ extension AVPlayerLayer {
 
     internal func prepare(
         playerItem: AVPlayerItem,
+        playbackID: String,
         playbackOptions: PlaybackOptions = PlaybackOptions(),
-        monitoringOptions: MonitoringOptions
+        monitoringOptions: MonitoringOptions,
+        playerSDK: PlayerSDK = .shared
     ) {
         if let player {
             player.replaceCurrentItem(
@@ -245,9 +268,10 @@ extension AVPlayerLayer {
             usingDRM = false
         }
 
-        PlayerSDK.shared.registerPlayerLayer(
+        playerSDK.registerPlayerLayer(
             playerLayer: self,
             monitoringOptions: monitoringOptions,
+            playbackID: playbackID,
             requiresReverseProxying: playbackOptions.enableSmartCache,
             usingDRM: usingDRM
         )

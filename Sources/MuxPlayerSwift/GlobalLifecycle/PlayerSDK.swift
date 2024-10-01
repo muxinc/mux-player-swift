@@ -28,32 +28,39 @@ class PlayerSDK {
     let fairPlaySessionManager: FairPlayStreamingSessionManager
 
     convenience init() {
+        let monitor = Monitor()
+
         #if targetEnvironment(simulator)
         self.init(
             fairPlayStreamingSessionManager: DefaultFairPlayStreamingSessionManager(
                 contentKeySession: AVContentKeySession(keySystem: .clearKey),
-                urlSession: .shared
-            )
+                urlSession: .shared,
+                errorDispatcher: monitor
+            ),
+            monitor: monitor
         )
         #else
         let sessionManager = DefaultFairPlayStreamingSessionManager(
             contentKeySession: AVContentKeySession(keySystem: .fairPlayStreaming),
-            urlSession: .shared
+            urlSession: .shared,
+            errorDispatcher: monitor
         )
         sessionManager.sessionDelegate = ContentKeySessionDelegate(
             sessionManager: sessionManager
         )
         self.init(
-            fairPlayStreamingSessionManager: sessionManager
+            fairPlayStreamingSessionManager: sessionManager,
+            monitor: monitor
         )
         #endif
     }
 
     init(
-        fairPlayStreamingSessionManager: FairPlayStreamingSessionManager
+        fairPlayStreamingSessionManager: FairPlayStreamingSessionManager,
+        monitor: Monitor
     ) {
-        self.monitor = Monitor()
         self.fairPlaySessionManager = fairPlayStreamingSessionManager
+        self.monitor = monitor
 
         #if DEBUG
         self.abrLogger = Logger(
@@ -135,6 +142,7 @@ class PlayerSDK {
     func registerPlayerLayer(
         playerLayer: AVPlayerLayer,
         monitoringOptions: MonitoringOptions,
+        playbackID: String,
         requiresReverseProxying: Bool = false,
         usingDRM: Bool = false
     ) {
@@ -144,6 +152,7 @@ class PlayerSDK {
 
         monitor.setupMonitoring(
             playerLayer: playerLayer,
+            playbackID: playbackID,
             options: monitoringOptions,
             usingDRM: usingDRM
         )
@@ -163,6 +172,7 @@ class PlayerSDK {
     func registerPlayerViewController(
         playerViewController: AVPlayerViewController,
         monitoringOptions: MonitoringOptions,
+        playbackID: String,
         requiresReverseProxying: Bool = false,
         usingDRM: Bool = false
     ) {
@@ -172,6 +182,7 @@ class PlayerSDK {
 
         monitor.setupMonitoring(
             playerViewController: playerViewController,
+            playbackID: playbackID,
             options: monitoringOptions,
             usingDRM: usingDRM
         )
@@ -224,7 +235,7 @@ class PlayerSDK {
     }
 
     class KeyValueObservation {
-        var observations: [ObjectIdentifier: NSKeyValueObservation] = [:]
+        var observations: [ObjectIdentifier: Set<NSKeyValueObservation>] = [:]
 
         func register<Value>(
             _ player: AVPlayer,
@@ -232,39 +243,29 @@ class PlayerSDK {
             options: NSKeyValueObservingOptions,
             changeHandler: @escaping (AVPlayer, NSKeyValueObservedChange<Value>) -> Void
         ) {
-            let observation = player.observe(keyPath,
-                                             options: options,
-                                             changeHandler: changeHandler
+            let observation = player.observe(
+                keyPath,
+                options: options,
+                changeHandler: changeHandler
             )
-            observations[ObjectIdentifier(player)] = observation
+
+            if var o = observations[ObjectIdentifier(player)] {
+                o.insert(observation)
+                observations[ObjectIdentifier(player)] = o
+            } else {
+                observations[ObjectIdentifier(player)] = Set(arrayLiteral: observation)
+            }
         }
 
         func unregister(
             _ player: AVPlayer
         ) {
-            if let observation = observations[ObjectIdentifier(player)] {
-                observation.invalidate()
+            if let o = observations[ObjectIdentifier(player)] {
+                o.forEach { observation in
+                    observation.invalidate()
+                }
                 observations.removeValue(forKey: ObjectIdentifier(player))
             }
         }
-    }
-}
-
-// MARK extension for observations for DRM
-extension PlayerSDK {
-    func observePlayerForDRM(_ player: AVPlayer) {
-        keyValueObservation.register(
-            player,
-            for: \AVPlayer.currentItem,
-            options: [.old, .new]
-        ) { player, change in
-            if let oldAsset = change.oldValue??.asset as? AVURLAsset {
-                PlayerSDK.shared.fairPlaySessionManager.removeContentKeyRecipient(oldAsset)
-            }
-        }
-    }
-    
-    func stopObservingPlayerForDrm(_ player: AVPlayer) {
-        keyValueObservation.unregister(player)
     }
 }

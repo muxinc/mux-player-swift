@@ -483,4 +483,22 @@ final class PlaybackURLTests: XCTestCase {
             })
         )
     }
+
+    func testPlaybackIDExtraction() throws {
+        let playerItem = AVPlayerItem(playbackID: "abc123")
+
+        XCTAssertEqual(playerItem.playbackID, "abc123")
+
+        let customDomainPlayerItem = AVPlayerItem(
+            playbackID: "def456",
+            playbackOptions: PlaybackOptions(
+                customDomain: "media.example.com"
+            )
+        )
+
+        XCTAssertEqual(
+            customDomainPlayerItem.playbackID,
+            "def456"
+        )
+    }
 }
