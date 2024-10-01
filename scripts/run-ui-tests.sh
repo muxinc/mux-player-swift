@@ -27,6 +27,8 @@ echo "▸ Resolve Package Dependencies"
 
 xcodebuild -resolvePackageDependencies
 
+cd Examples/MuxPlayerSwiftExample
+
 echo "▸ Available Schemes"
 
 xcodebuild -list -json
@@ -36,5 +38,5 @@ echo "▸ Test ${SCHEME}"
 xcodebuild clean test \
 	-scheme $SCHEME \
 	-destination 'platform=iOS Simulator,OS=18.0,name=iPhone 16' \
-	-sdk iphonesimulator17.0 \
+	-sdk iphonesimulator18.0 \
   | xcbeautify
