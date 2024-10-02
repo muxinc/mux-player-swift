@@ -27,6 +27,8 @@ echo "▸ Resolve Package Dependencies"
 
 xcodebuild -resolvePackageDependencies
 
+cd Examples/MuxPlayerSwiftExample
+
 echo "▸ Available Schemes"
 
 xcodebuild -list -json
