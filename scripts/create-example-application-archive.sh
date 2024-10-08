@@ -69,4 +69,4 @@ echo "▸ Exporting example application archive"
 xcodebuild -exportArchive \
 		   -archivePath $EXAMPLE_APPLICATION_ARCHIVE_PATH \
 		   -exportPath "$PWD" \
-		   -exportOptionsPlist "$PWD/ExportOptions.plist"
+		   -exportOptionsPlist "$PWD/ExportOptions.plist" | xcbeautify
