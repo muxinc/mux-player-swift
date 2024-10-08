@@ -3,9 +3,12 @@
 set -euo pipefail
 
 readonly XCODE=$(xcodebuild -version | grep Xcode | cut -d " " -f2)
-readonly BUILD_DIR=$PWD/.build
+readonly BUILD_DIR="${PWD}/Examples/MuxPlayerSwiftExample/.build"
 readonly EXAMPLE_APPLICATION_ARCHIVE_NAME=MuxPlayerSwiftExample
-readonly EXAMPLE_APPLICATION_ARCHIVE_PATH="$PWD/Examples/MuxPlayerSwiftExample/.build/${EXAMPLE_APPLICATION_ARCHIVE_NAME}.xcarchive"
+readonly EXAMPLE_APPLICATION_ARCHIVE_PATH="${PWD}/Examples/MuxPlayerSwiftExample/.build/${EXAMPLE_APPLICATION_ARCHIVE_NAME}.xcarchive"
+readonly EXAMPLE_APPLICATION_EXPORT_PATH="${PWD}/Examples/MuxPlayerSwiftExample"
+readonly EXPORT_OPTIONS_PLIST_NAME="ExportOptions"
+readonly EXPORT_OPTIONS_PLIST_PATH="${EXAMPLE_APPLICATION_EXPORT_PATH}/${EXPORT_OPTIONS_PLIST_NAME}.plist"
 
 if [ $# -ne 1 ]; then
     echo "▸ Usage: $0 SCHEME"
@@ -32,20 +35,19 @@ xcodebuild -resolvePackageDependencies
 
 cd Examples/MuxPlayerSwiftExample
 
-rm -Rf $BUILD_DIR
+rm -Rf "$BUILD_DIR"
 
 echo "▸ Available Schemes: $(xcodebuild -list -project FrameworkProject/MuxStatsGoogleIMAPlugin/MuxStatsGoogleIMAPlugin.xcodeproj)"
 
-echo "▸ Creating build directory at ${BUILD_DIR}"
-
-mkdir -p $BUILD_DIR
-
 echo "▸ Creating example application archive"
+
+mkdir -p "$BUILD_DIR"
 
 xcodebuild clean archive -project MuxPlayerSwiftExample.xcodeproj \
 		  		 	     -scheme $SCHEME \
 		  		 	     -destination generic/platform=iOS \
-				         -archivePath $EXAMPLE_APPLICATION_ARCHIVE_PATH | xcbeautify
+				         -archivePath $EXAMPLE_APPLICATION_ARCHIVE_PATH \
+				         CODE_SIGNING_REQUIRED=YES | xcbeautify
 
 if [[ $? == 0 ]]; then
     echo "▸ Successfully created archive at ${EXAMPLE_APPLICATION_ARCHIVE_PATH}"
@@ -56,17 +58,31 @@ fi
 
 echo "▸ Creating export options plist"
 
-plutil -create xml1 ExportOptions.plist
+rm -rf "${EXPORT_OPTIONS_PLIST_PATH}"
 
-/usr/libexec/PlistBuddy -c "Add method string ad-hoc" ExportOptions.plist 
+plutil -create xml1 "${EXPORT_OPTIONS_PLIST_PATH}"
 
-/usr/libexec/PlistBuddy -c "Add teamID string XX95P4Y787" ExportOptions.plist
+/usr/libexec/PlistBuddy -c "Add method string debugging" "${EXPORT_OPTIONS_PLIST_PATH}"
 
-echo "▸ Created export options plist: $(cat ExportOptions.plist)"
+/usr/libexec/PlistBuddy -c "Add teamID string XX95P4Y787" "${EXPORT_OPTIONS_PLIST_PATH}"
 
-echo "▸ Exporting example application archive"
+/usr/libexec/PlistBuddy -c "Add thinning string <none>" "${EXPORT_OPTIONS_PLIST_PATH}"
 
-xcodebuild -exportArchive \
+/usr/libexec/PlistBuddy -c "Add compileBitcode bool false" "${EXPORT_OPTIONS_PLIST_PATH}"
+
+echo "▸ Created export options plist: $(cat $EXPORT_OPTIONS_PLIST_PATH)"
+
+echo "▸ Exporting example application archive to ${EXAMPLE_APPLICATION_EXPORT_PATH}"
+
+xcodebuild -verbose \
+		   -exportArchive \
 		   -archivePath $EXAMPLE_APPLICATION_ARCHIVE_PATH \
-		   -exportPath "$PWD" \
-		   -exportOptionsPlist "$PWD/ExportOptions.plist" | xcbeautify
+		   -exportPath $EXAMPLE_APPLICATION_EXPORT_PATH \
+		   -exportOptionsPlist "$PWD/ExportOptions.plist"
+
+if [[ $? == 0 ]]; then
+    echo "▸ Successfully exported archive at ${EXAMPLE_APPLICATION_EXPORT_PATH}"
+else
+    echo -e "\033[1;31m ERROR: Failed to export archive to ${EXAMPLE_APPLICATION_EXPORT_PATH} \033[0m"
+    exit 1
+fi
