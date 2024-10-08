@@ -5,6 +5,7 @@ set -euo pipefail
 readonly XCODE=$(xcodebuild -version | grep Xcode | cut -d " " -f2)
 readonly BUILD_DIR=$PWD/.build
 readonly EXAMPLE_APPLICATION_ARCHIVE_NAME=MuxPlayerSwiftExample
+readonly EXAMPLE_APPLICATION_ARCHIVE_PATH="$PWD/Examples/MuxPlayerSwiftExample/.build/${EXAMPLE_APPLICATION_ARCHIVE_NAME}.xcarchive"
 
 if [ $# -ne 1 ]; then
     echo "▸ Usage: $0 SCHEME"
@@ -44,12 +45,12 @@ echo "▸ Creating example application archive"
 xcodebuild clean archive -project MuxPlayerSwiftExample.xcodeproj \
 		  		 	     -scheme $SCHEME \
 		  		 	     -destination generic/platform=iOS \
-				         -archivePath "$BUILD_DIR/${EXAMPLE_APPLICATION_ARCHIVE_NAME}.archive" | xcbeautify
+				         -archivePath $EXAMPLE_APPLICATION_ARCHIVE_PATH | xcbeautify
 
 if [[ $? == 0 ]]; then
-    echo "▸ Successfully created ${EXAMPLE_APPLICATION_ARCHIVE_NAME} archive at ${BUILD_DIR}"
+    echo "▸ Successfully created archive at ${EXAMPLE_APPLICATION_ARCHIVE_PATH}"
 else
-    echo -e "\033[1;31m ERROR: Failed to create ${EXAMPLE_APPLICATION_ARCHIVE_NAME} archive \033[0m"
+    echo -e "\033[1;31m ERROR: Failed to create archive at ${EXAMPLE_APPLICATION_ARCHIVE_PATH} \033[0m"
     exit 1
 fi
 
@@ -66,7 +67,6 @@ echo "▸ Created export options plist: $(cat ExportOptions.plist)"
 echo "▸ Exporting example application archive"
 
 xcodebuild -exportArchive \
-		   -archivePath "$BUILD_DIR/${EXAMPLE_APPLICATION_ARCHIVE_NAME}.archive" \
+		   -archivePath $EXAMPLE_APPLICATION_ARCHIVE_PATH \
 		   -exportPath "$PWD" \
 		   -exportOptionsPlist "$PWD/ExportOptions.plist"
-
