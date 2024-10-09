@@ -43,6 +43,7 @@ xcodebuild clean archive -project MuxPlayerSwiftExample.xcodeproj \
 		  		 	     -scheme $SCHEME \
 		  		 	     -destination generic/platform=iOS \
 				         -archivePath $EXAMPLE_APPLICATION_ARCHIVE_PATH \
+				         -allowProvisioningUpdates \
 				         CODE_SIGNING_REQUIRED=YES | xcbeautify
 
 if [[ $? == 0 ]]; then
