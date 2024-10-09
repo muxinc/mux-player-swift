@@ -74,10 +74,10 @@ echo "▸ Created export options plist: $(cat $EXPORT_OPTIONS_PLIST_PATH)"
 
 echo "▸ Exporting example application archive to ${EXAMPLE_APPLICATION_EXPORT_PATH}"
 
-# If this step is failing and rvm is installed locally then run: rvm use system
-# Xcode 15 ipatool requires system ruby to export an archive
-# To confirm this check IDEDistribution distribution logs (.xcdistributionlogs) 
-# to see if there is a sqlite installation error.
+# If exportArchive is failing and rvm is installed locally then run: rvm use system
+# Xcode 15 ipatool requires system ruby to export an archive.
+# To confirm this: run xcodebuild with -verbose flag and check IDEDistribution 
+# distribution logs (.xcdistributionlogs) to see if there is a sqlite installation error.
 
 xcodebuild -verbose \
 		   -exportArchive \
