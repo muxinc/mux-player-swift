@@ -6,7 +6,7 @@ steps:
     label: ":xcode_simulator: Unit Test Pass"
   - wait
   - command: "./scripts/run-ui-tests.sh MuxPlayerSwiftExample"
-    label: ":xcode_simulator: Baseline Unit Test Pass"
+    label: ":xcode_simulator: UI Test Pass"
   - wait
   - command: "./scripts/create-example-application-archive.sh MuxPlayerSwiftExample"
     label: ":xcode: Export Test Application Archive"
