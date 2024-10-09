@@ -8,7 +8,7 @@ steps:
   - command: "./scripts/run-ui-tests.sh MuxPlayerSwiftExample"
     label: ":xcode_simulator: Baseline Unit Test Pass"
   - wait
-  - command: "./scripts/create-example-application-archive.sh"
+  - command: "./scripts/create-example-application-archive.sh MuxPlayerSwiftExample"
     label: ":xcode: Export Test Application Archive"
     artifact_paths:
       - "./Examples/MuxPlayerSwiftExample/MuxPlayerSwiftExample.ipa"
