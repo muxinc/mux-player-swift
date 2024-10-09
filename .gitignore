@@ -41,6 +41,11 @@ DerivedData/
 *.dSYM.zip
 *.dSYM
 
+## App export
+**/Packaging.log
+**/DistributionSummary.plist
+**/ExportOptions.plist
+
 ## Playgrounds
 timeline.xctimeline
 playground.xcworkspace
