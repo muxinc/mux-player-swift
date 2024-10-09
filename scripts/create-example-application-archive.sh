@@ -3,7 +3,6 @@
 set -euo pipefail
 
 readonly XCODE=$(xcodebuild -version | grep Xcode | cut -d " " -f2)
-readonly BUILD_DIR="${PWD}/Examples/MuxPlayerSwiftExample/.build"
 readonly EXAMPLE_APPLICATION_ARCHIVE_NAME=MuxPlayerSwiftExample
 readonly EXAMPLE_APPLICATION_ARCHIVE_PATH="${PWD}/Examples/MuxPlayerSwiftExample/.build/${EXAMPLE_APPLICATION_ARCHIVE_NAME}.xcarchive"
 readonly EXAMPLE_APPLICATION_EXPORT_PATH="${PWD}/Examples/MuxPlayerSwiftExample"
@@ -35,13 +34,10 @@ xcodebuild -resolvePackageDependencies
 
 cd Examples/MuxPlayerSwiftExample
 
-rm -Rf "$BUILD_DIR"
 
 echo "▸ Available Schemes: $(xcodebuild -list -project FrameworkProject/MuxStatsGoogleIMAPlugin/MuxStatsGoogleIMAPlugin.xcodeproj)"
 
 echo "▸ Creating example application archive"
-
-mkdir -p "$BUILD_DIR"
 
 xcodebuild clean archive -project MuxPlayerSwiftExample.xcodeproj \
 		  		 	     -scheme $SCHEME \
@@ -83,7 +79,7 @@ xcodebuild -verbose \
 		   -exportArchive \
 		   -archivePath $EXAMPLE_APPLICATION_ARCHIVE_PATH \
 		   -exportPath $EXAMPLE_APPLICATION_EXPORT_PATH \
-		   -exportOptionsPlist "$PWD/ExportOptions.plist"
+		   -exportOptionsPlist $EXPORT_OPTIONS_PLIST_PATH
 
 if [[ $? == 0 ]]; then
     echo "▸ Successfully exported archive at ${EXAMPLE_APPLICATION_EXPORT_PATH}"
