@@ -16,6 +16,8 @@ if [ ! -f MuxPlayerSwiftExample.ipa ]; then
     echo -e "\033[1;31m ERROR: application archive not found \033[0m"
 fi
 
+which buildkite-vault-secrets
+
 # TODO: Fetch these
 export SAUCE_USERNAME=""
 export SAUCE_ACCESS_KEY=""
