@@ -8,8 +8,13 @@ then
     exit 1
 fi
 
-readonly APPLICATION_PAYLOAD_PATH="${PWD}/Examples/MuxPlayerSwiftExample/MuxPlayerSwiftExample.ipa"
 readonly APPLICATION_NAME="MuxPlayerSwiftExample.ipa"
+# TODO: make this an argument
+readonly APPLICATION_PAYLOAD_PATH="Examples/MuxPlayerSwiftExample/${APPLICATION_NAME}"
+
+if [ ! -f MuxPlayerSwiftExample.ipa ]; then
+    echo -e "\033[1;31m ERROR: application archive not found \033[0m"
+fi
 
 # TODO: Fetch these
 export SAUCE_USERNAME=""

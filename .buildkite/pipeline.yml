@@ -15,5 +15,5 @@ steps:
       - "./Examples/MuxPlayerSwiftExample/Packaging.log"
       - "./Examples/MuxPlayerSwiftExample/DistributionSummary.plist"
   - wait
-  - command: "./scripts/upload-example-application-to-sauce-labs.sh"
+  - command: "buildkite-agent artifact download \"Examples/MuxPlayerSwiftExample/MuxPlayerSwiftExample.ipa\" \"$PWD\" && ./scripts/upload-example-application-to-sauce-labs.sh"
     label: ":saucelabs: Upload Test Application to Sauce Labs App Storage"
