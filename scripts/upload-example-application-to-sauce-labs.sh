@@ -36,6 +36,10 @@ echo "▸ Deploying tests to Sauce Labs"
 
 echo "▸ Sauce Labs config: $(cat $PWD/.sauce/config.yml)"
 
+# re-exported so saucectl CLI can use them
+export SAUCE_USERNAME=$BUILDKITE_MAC_STADIUM_SAUCE_USERNAME
+export SAUCE_ACCESS_KEY=$BUILDKITE_MAC_STADIUM_SAUCE_ACCESS_KEY
+
 saucectl run -c "${PWD}/.sauce/config.yml"
 
 if [[ $? == 0 ]]; then
