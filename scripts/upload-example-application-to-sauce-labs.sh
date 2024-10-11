@@ -39,8 +39,8 @@ fi
 
 echo "▸ Deploying tests to Sauce Labs"
 
-sed -i '' -e "s/INSERT-TEST-APP-FILE-ID-HERE/${app_file_id}/g" .sauce/config.yml
-sed -i '' -e "s/INSERT-APP-FILE-ID-HERE/${app_file_id}/g" .sauce/config.yml
+# sed -i '' -e "s/INSERT-TEST-APP-FILE-ID-HERE/${app_file_id}/g" $PWD/.sauce/config.yml
+# sed -i '' -e "s/INSERT-APP-FILE-ID-HERE/${app_file_id}/g" $PWD/.sauce/config.yml
 
 echo "▸ Sauce Labs config: $(cat $PWD/.sauce/config.yml)"
 
