@@ -20,7 +20,7 @@ fi
 
 echo "▸ Uploading test application to Sauce Labs App Storage"
 
-curl -v -u "$BUILDKITE_MAC_STADIUM_SAUCE_USERNAME:$BUILDKITE_MAC_STADIUM_SAUCE_ACCESS_KEY" --location \
+curl -u "$BUILDKITE_MAC_STADIUM_SAUCE_USERNAME:$BUILDKITE_MAC_STADIUM_SAUCE_ACCESS_KEY" --location \
 --request POST 'https://api.us-west-1.saucelabs.com/v1/storage/upload' \
 --form "payload=@\"${APPLICATION_PAYLOAD_PATH}\"" \
 --form "name=\"${APPLICATION_NAME}\""
