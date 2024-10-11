@@ -14,7 +14,7 @@ steps:
       - "./Examples/MuxPlayerSwiftExample/MuxPlayerSwiftExample.ipa"
       - "./Examples/MuxPlayerSwiftExample/Packaging.log"
       - "./Examples/MuxPlayerSwiftExample/DistributionSummary.plist"
-      - "MuxPlayerSwiftExampleUITests-Runner.ipa"
+      - "./Examples/MuxPlayerSwiftExample/MuxPlayerSwiftExampleUITests-Runner.ipa"
   - wait
-  - command: "buildkite-agent artifact download \"Examples/MuxPlayerSwiftExample/MuxPlayerSwiftExample.ipa\" \"$PWD\" && ./scripts/upload-example-application-to-sauce-labs.sh"
+  - command: "buildkite-agent artifact download \"Examples/MuxPlayerSwiftExample/MuxPlayerSwiftExample.ipa\" \"$PWD\" && buildkite-agent artifact download \"Examples/MuxPlayerSwiftExample/MuxPlayerSwiftExampleUITests-Runner.ipa\" \"$PWD\" && ./scripts/upload-example-application-to-sauce-labs.sh"
     label: ":saucelabs: Upload Test Application to Sauce Labs App Storage"
