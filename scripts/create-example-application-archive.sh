@@ -108,5 +108,7 @@ cp -r "$(find $PWD/Build -name 'MuxPlayerSwiftExampleUITests-Runner.app')" $PWD/
 
 zip -ry MuxPlayerSwiftExampleUITests-Runner.ipa Payload
 
+ls -la
+
 
 
