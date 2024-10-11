@@ -40,7 +40,7 @@ echo "▸ Sauce Labs config: $(cat $PWD/.sauce/config.yml)"
 export SAUCE_USERNAME=$BUILDKITE_MAC_STADIUM_SAUCE_USERNAME
 export SAUCE_ACCESS_KEY=$BUILDKITE_MAC_STADIUM_SAUCE_ACCESS_KEY
 
-saucectl run -c "${PWD}/.sauce/config.yml"
+saucectl run -c "$PWD/.sauce/config.yml"
 
 if [[ $? == 0 ]]; then
     echo "▸ Successfully deployed Sauce Labs tests"
