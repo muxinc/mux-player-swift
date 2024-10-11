@@ -1,5 +1,7 @@
 apiVersion: v1alpha
 kind: xcuitest
+sauce:
+  region: us-west-1
 xcuitest:
   app: ./Examples/MuxPlayerSwiftExample.ipa
   testApp: ./Examples/MuxPlayerSwiftExample.ipa
