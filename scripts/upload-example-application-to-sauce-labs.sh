@@ -20,21 +20,24 @@ fi
 export SAUCE_USERNAME=$BUILDKITE_MAC_STADIUM_SAUCE_USERNAME
 export SAUCE_ACCESS_KEY=$BUILDKITE_MAC_STADIUM_SAUCE_ACCESS_KEY
 
-# echo "▸ Uploading test application to Sauce Labs App Storage"
+echo "▸ Uploading test application to Sauce Labs App Storage"
 
-# curl -v -u "$SAUCE_USER_NAME:$SAUCE_ACCESS_KEY" --location \
-# --request POST 'https://api.us-west-1.saucelabs.com/v1/storage/upload' \
-# --form "payload=@\"${APPLICATION_PAYLOAD_PATH}\"" \
-# --form "name=\"${APPLICATION_NAME}\""
+app_file_id= curl -s -u "$SAUCE_USER_NAME:$SAUCE_ACCESS_KEY" --location \
+--request POST 'https://api.us-west-1.saucelabs.com/v1/storage/upload' \
+--form "payload=@\"${APPLICATION_PAYLOAD_PATH}\"" \
+--form "name=\"${APPLICATION_NAME}\"" | jq `.item.id`
 
-# if [[ $? == 0 ]]; then
-#     echo "▸ Successfully uploaded to Sauce Labs application storage"
-# else
-#     echo -e "\033[1;31m ERROR: Failed to upload to Sauce Labs application storage. Check for valid credentials. \033[0m"
-#     exit 1
-# fi
+if [[ $? == 0 ]]; then
+    echo "▸ Successfully uploaded to Sauce Labs application storage. File ID: $app_file_id"
+else
+    echo -e "\033[1;31m ERROR: Failed to upload to Sauce Labs application storage. Check for valid credentials. \033[0m"
+    exit 1
+fi
 
 echo "▸ Deploying tests to Sauce Labs"
+
+sed -i '' "s/${app_file_id}/INSERT-TEST-APP-FILE-ID-HERE/g" $PWD/.sauce/config.yml
+sed -i '' "s/${app_file_id}/INSERT-APP-FILE-ID-HERE/g" $PWD/.sauce/config.yml
 
 echo "▸ Sauce Labs config: $(cat $PWD/.sauce/config.yml)"
 
