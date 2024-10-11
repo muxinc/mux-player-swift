@@ -9,7 +9,7 @@ steps:
     label: ":xcode_simulator: UI Test Pass"
   - wait
   - command: "./scripts/create-example-application-archive.sh MuxPlayerSwiftExample"
-    label: ":xcode: Export Test Application Archive"
+    label: ":xcode: Export Test Application and Test Runner Archives"
     artifact_paths:
       - "./Examples/MuxPlayerSwiftExample/MuxPlayerSwiftExample.ipa"
       - "./Examples/MuxPlayerSwiftExample/Packaging.log"
