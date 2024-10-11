@@ -2,6 +2,9 @@ agents:
   queue: "macOS-Monterey-12-4"
 
 steps:
+  - command: echo user $${SAUCE_USERNAME} 
+  - command: echo key $${SAUCE_ACCESS_KEY} 
+
   - command: "./scripts/create-example-application-archive.sh MuxPlayerSwiftExample"
     label: ":xcode: Export Test Application Archive"
     artifact_paths:
