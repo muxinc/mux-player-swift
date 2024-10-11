@@ -25,6 +25,13 @@ curl -v -u "$SAUCE_USERNAME:$SAUCE_ACCESS_KEY" --location \
 --form "payload=@\"${APPLICATION_PAYLOAD_PATH}\"" \
 --form "name=\"${APPLICATION_NAME}\""
 
+if [[ $? == 0 ]]; then
+    echo "▸ Successfully uploaded to Sauce Labs application storage"
+else
+    echo -e "\033[1;31m ERROR: Failed to upload to Sauce Labs application storage. Check for valid credentials. \033[0m"
+    exit 1
+fi
+
 echo "▸ Deploying tests to Sauce Labs"
 
 echo "▸ Sauce Labs config: $(cat $PWD/.sauce/config.yml)"
