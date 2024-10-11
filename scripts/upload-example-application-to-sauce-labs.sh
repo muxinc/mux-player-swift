@@ -12,13 +12,9 @@ readonly APPLICATION_NAME="MuxPlayerSwiftExample.ipa"
 # TODO: make this an argument
 readonly APPLICATION_PAYLOAD_PATH="Examples/MuxPlayerSwiftExample/${APPLICATION_NAME}"
 
-if [ ! -f MuxPlayerSwiftExample.ipa ]; then
+if [ ! -f $APPLICATION_PAYLOAD_PATH ]; then
     echo -e "\033[1;31m ERROR: application archive not found \033[0m"
 fi
-
-echo $BUILDKITE_HOOKS_PATH
-
-ls -ls $BUILDKITE_HOOKS_PATH
 
 # TODO: Fetch these
 export SAUCE_USERNAME=""
@@ -41,4 +37,13 @@ curl --resolve '*:80:127.0.0.1' --resolve '*:443:127.0.0.1' 'https://api.us-west
 
 echo "▸ Deploying tests to Sauce Labs"
 
+echo "▸ Sauce Labs config: $(cat $PWD/.sauce/config.yml)"
+
 saucectl run -c "${PWD}/.sauce/config.yml"
+
+if [[ $? == 0 ]]; then
+    echo "▸ Successfully deployed Sauce Labs tests"
+else
+    echo -e "\033[1;31m ERROR: Failed to deploy Sauce Labs tests \033[0m"
+    exit 1
+fi

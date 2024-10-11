@@ -35,7 +35,7 @@ xcodebuild -resolvePackageDependencies
 cd Examples/MuxPlayerSwiftExample
 
 
-echo "▸ Available Schemes: $(xcodebuild -list -project FrameworkProject/MuxStatsGoogleIMAPlugin/MuxStatsGoogleIMAPlugin.xcodeproj)"
+echo "▸ Available Schemes: $(xcodebuild -list -project MuxPlayerSwiftExample.xcodeproj)"
 
 echo "▸ Creating example application archive"
 
@@ -76,11 +76,10 @@ echo "▸ Exporting example application archive to ${EXAMPLE_APPLICATION_EXPORT_
 # To confirm this: run xcodebuild with -verbose flag and check IDEDistribution 
 # distribution logs (.xcdistributionlogs) to see if there is a sqlite installation error.
 
-xcodebuild -verbose \
-		   -exportArchive \
+xcodebuild -exportArchive \
 		   -archivePath $EXAMPLE_APPLICATION_ARCHIVE_PATH \
 		   -exportPath $EXAMPLE_APPLICATION_EXPORT_PATH \
-		   -exportOptionsPlist $EXPORT_OPTIONS_PLIST_PATH
+		   -exportOptionsPlist $EXPORT_OPTIONS_PLIST_PATH | xcbeautify
 
 if [[ $? == 0 ]]; then
     echo "▸ Successfully exported archive at ${EXAMPLE_APPLICATION_EXPORT_PATH}"
