@@ -3,8 +3,8 @@ kind: xcuitest
 sauce:
   region: us-west-1
 xcuitest:
-  app: storage:386d543f-3ac4-414d-8690-9ed383f600e2
-  testApp:  storage:386d543f-3ac4-414d-8690-9ed383f600e2
+  app: storage:5ee37f66-eaa1-40d8-b0e8-514ceb7ae123
+  testApp:  storage:5ee37f66-eaa1-40d8-b0e8-514ceb7ae123
 
 suites:
   - name: "example application xcuitest"
