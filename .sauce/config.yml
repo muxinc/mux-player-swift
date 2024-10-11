@@ -4,6 +4,7 @@ sauce:
   region: us-west-1
 xcuitest:
   app: storage:386d543f-3ac4-414d-8690-9ed383f600e2
+  testApp:  storage:386d543f-3ac4-414d-8690-9ed383f600e2
 
 suites:
   - name: "example application xcuitest"
