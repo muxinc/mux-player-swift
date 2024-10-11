@@ -3,8 +3,8 @@ kind: xcuitest
 sauce:
   region: us-west-1
 xcuitest:
-  app: storage:INSERT-FILE-ID-HERE
-  testApp:  storage:INSERT-FILE-ID-HERE
+  app: storage:INSERT-APP-FILE-ID-HERE
+  testApp: storage:INSERT-TEST-APP-FILE-ID-HERE
 
 suites:
   - name: "example application xcuitest"
