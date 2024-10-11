@@ -87,3 +87,26 @@ else
     echo -e "\033[1;31m ERROR: Failed to export archive to ${EXAMPLE_APPLICATION_EXPORT_PATH} \033[0m"
     exit 1
 fi
+
+echo "▸ Creating example application test runner archive"
+
+xcodebuild build-for-testing  -project MuxPlayerSwiftExample.xcodeproj \
+							  -scheme MuxPlayerSwiftExample \
+							  -destination generic/platform=iOS \
+							  -derivedDataPath $PWD/Build | xcbeautify
+
+if [[ $? == 0 ]]; then
+    echo "▸ Successfully created test runner archive."
+else
+    echo -e "\033[1;31m ERROR: Failed to create test runner archive. \033[0m"
+    exit 1
+fi
+
+mkdir -p $PWD/Payload
+
+cp -r "$(find $PWD/Build -name 'MuxPlayerSwiftExampleUITests-Runner.app')" $PWD/Payload
+
+zip -ry MuxPlayerSwiftExampleUITests-Runner.ipa Payload
+
+
+
