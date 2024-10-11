@@ -4,7 +4,7 @@ sauce:
   region: us-west-1
 xcuitest:
   app: storage:filename=MuxPlayerSwiftExample.ipa
-  testApp: MuxPlayerSwiftExampleUITests-Runner.ipa
+  testApp: Examples/MuxPlayerSwiftExample/MuxPlayerSwiftExampleUITests-Runner.ipa
 
 suites:
   - name: "example application xcuitest"
