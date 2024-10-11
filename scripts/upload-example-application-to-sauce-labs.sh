@@ -8,6 +8,12 @@ then
     exit 1
 fi
 
+if ! command -v jq &> /dev/null
+then
+    echo -e "\033[1;31m ERROR: jq could not be found please install it... \033[0m"
+    exit 1
+fi
+
 readonly APPLICATION_NAME="MuxPlayerSwiftExample.ipa"
 # TODO: make this an argument
 readonly APPLICATION_PAYLOAD_PATH="Examples/MuxPlayerSwiftExample/${APPLICATION_NAME}"
