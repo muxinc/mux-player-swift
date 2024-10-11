@@ -2,6 +2,8 @@
 
 set -euo pipefail
 
+npm update -g saucectl
+
 if ! command -v saucectl &> /dev/null
 then
     echo -e "\033[1;31m ERROR: saucectl could not be found please install it... \033[0m"
@@ -43,6 +45,8 @@ echo "▸ Deploying tests to Sauce Labs"
 # sed -i '' -e "s/INSERT-APP-FILE-ID-HERE/${app_file_id}/g" $PWD/.sauce/config.yml
 
 echo "▸ Sauce Labs config: $(cat $PWD/.sauce/config.yml)"
+
+echo "▸ Using saucectl CLI version $(saucectl -v)"
 
 saucectl run -c "$PWD/.sauce/config.yml"
 
