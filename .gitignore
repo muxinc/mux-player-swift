@@ -41,6 +41,14 @@ DerivedData/
 *.dSYM.zip
 *.dSYM
 
+## App export
+**/Packaging.log
+**/DistributionSummary.plist
+**/ExportOptions.plist
+
+## Sauce Labs Test Packaging
+**/Payload
+
 ## Playgrounds
 timeline.xctimeline
 playground.xcworkspace

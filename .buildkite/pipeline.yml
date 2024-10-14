@@ -6,4 +6,15 @@ steps:
     label: ":xcode_simulator: Unit Test Pass"
   - wait
   - command: "./scripts/run-ui-tests.sh MuxPlayerSwiftExample"
-    label: ":xcode_simulator: Baseline Unit Test Pass"
+    label: ":xcode_simulator: UI Test Pass"
+  - wait
+  - command: "./scripts/create-example-application-archive.sh MuxPlayerSwiftExample"
+    label: ":xcode: Export Test Application and Test Runner Archives"
+    artifact_paths:
+      - "./Examples/MuxPlayerSwiftExample/MuxPlayerSwiftExample.ipa"
+      - "./Examples/MuxPlayerSwiftExample/Packaging.log"
+      - "./Examples/MuxPlayerSwiftExample/DistributionSummary.plist"
+      - "./Examples/MuxPlayerSwiftExample/MuxPlayerSwiftExampleUITests-Runner.ipa"
+  - wait
+  - command: "echo $BUILDKITE_HOOKS_PATH && ls -ls $BUILDKITE_HOOKS_PATH && buildkite-agent artifact download \"Examples/MuxPlayerSwiftExample/MuxPlayerSwiftExample.ipa\" \"$PWD\" && buildkite-agent artifact download \"Examples/MuxPlayerSwiftExample/MuxPlayerSwiftExampleUITests-Runner.ipa\" \"$PWD\" && ./scripts/upload-example-application-to-sauce-labs.sh"
+    label: ":saucelabs: Upload Test Application to Sauce Labs App Storage"
