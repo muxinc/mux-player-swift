@@ -2,12 +2,15 @@
 
 set -euo pipefail
 
+readonly EXPORT_OPTIONS_TEAM_ID="XX95P4Y787"
+
 readonly XCODE=$(xcodebuild -version | grep Xcode | cut -d " " -f2)
 readonly EXAMPLE_APPLICATION_ARCHIVE_NAME=MuxPlayerSwiftExample
 readonly EXAMPLE_APPLICATION_ARCHIVE_PATH="${PWD}/Examples/MuxPlayerSwiftExample/.build/${EXAMPLE_APPLICATION_ARCHIVE_NAME}.xcarchive"
 readonly EXAMPLE_APPLICATION_EXPORT_PATH="${PWD}/Examples/MuxPlayerSwiftExample"
 readonly EXPORT_OPTIONS_PLIST_NAME="ExportOptions"
 readonly EXPORT_OPTIONS_PLIST_PATH="${EXAMPLE_APPLICATION_EXPORT_PATH}/${EXPORT_OPTIONS_PLIST_NAME}.plist"
+readonly PROJECT_DIR="${PWD}/Examples/MuxPlayerSwiftExample/MuxPlayerSwiftExample.xcodeproj"
 
 if [ $# -ne 1 ]; then
     echo "▸ Usage: $0 SCHEME"
@@ -22,11 +25,19 @@ then
     exit 1
 fi
 
+echo "▸ Current Xcode Path:"
+
+xcode-select -p
+
 echo "▸ Using Xcode Version: ${XCODE}"
 
-echo "▸ Available Xcode SDKs"
+echo "▸ Using Swift Toolchain Version:"
 
-xcodebuild -showsdks
+swift --version DEVELOPER_DIR=$(xcode-select -p)
+
+echo "▸ Available Xcode SDKs:"
+
+xcodebuild -showsdks -json
 
 echo "▸ Resolve Package Dependencies"
 
@@ -34,12 +45,13 @@ xcodebuild -resolvePackageDependencies
 
 cd Examples/MuxPlayerSwiftExample
 
+echo "▸ Available Schemes:"
 
-echo "▸ Available Schemes: $(xcodebuild -list -project MuxPlayerSwiftExample.xcodeproj)"
+xcodebuild -list -json -project $PROJECT_DIR
 
 echo "▸ Creating example application archive"
 
-xcodebuild clean archive -project MuxPlayerSwiftExample.xcodeproj \
+xcodebuild clean archive -project $PROJECT_DIR \
 		  		 	     -scheme $SCHEME \
 		  		 	     -destination generic/platform=iOS \
 				         -archivePath $EXAMPLE_APPLICATION_ARCHIVE_PATH \
@@ -61,7 +73,7 @@ plutil -create xml1 "${EXPORT_OPTIONS_PLIST_PATH}"
 
 /usr/libexec/PlistBuddy -c "Add method string debugging" "${EXPORT_OPTIONS_PLIST_PATH}"
 
-/usr/libexec/PlistBuddy -c "Add teamID string XX95P4Y787" "${EXPORT_OPTIONS_PLIST_PATH}"
+/usr/libexec/PlistBuddy -c "Add teamID string ${EXPORT_OPTIONS_TEAM_ID}" "${EXPORT_OPTIONS_PLIST_PATH}"
 
 /usr/libexec/PlistBuddy -c "Add thinning string <none>" "${EXPORT_OPTIONS_PLIST_PATH}"
 
@@ -90,8 +102,8 @@ fi
 
 echo "▸ Creating example application test runner archive"
 
-xcodebuild build-for-testing  -project MuxPlayerSwiftExample.xcodeproj \
-							  -scheme MuxPlayerSwiftExample \
+xcodebuild build-for-testing  -project $PROJECT_DIR \
+							  -scheme $SCHEME \
 							  -destination generic/platform=iOS \
 							  -derivedDataPath $PWD/Build | xcbeautify
 
@@ -106,7 +118,7 @@ mkdir -p $PWD/Payload
 
 cp -r "$(find $PWD/Build -name 'MuxPlayerSwiftExampleUITests-Runner.app')" $PWD/Payload
 
-zip -ry MuxPlayerSwiftExampleUITests-Runner.ipa Payload
+zip -ry "${SCHEME}UITests-Runner.ipa" Payload
 
 echo "▸ Created example application test runner archive at $PWD/MuxPlayerSwiftExampleUITests-Runner.ipa"
 

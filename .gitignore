@@ -46,6 +46,9 @@ DerivedData/
 **/DistributionSummary.plist
 **/ExportOptions.plist
 
+## Sauce Labs Test Packaging
+**/Payload
+
 ## Playgrounds
 timeline.xctimeline
 playground.xcworkspace
