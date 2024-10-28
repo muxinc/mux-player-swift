@@ -79,9 +79,12 @@ public enum SingleRenditionResolutionTier {
 /// Available for all video on-demand assets.
 public struct InstantClipping: Equatable {
 
-    let noInstantClipping: Bool
     var assetStartTimeInSeconds: UInt?
     var assetEndTimeInSeconds: UInt?
+
+    var noInstantClipping: Bool {
+        return self.assetStartTimeInSeconds == nil && self.assetEndTimeInSeconds == nil
+    }
 
     /// Omits instant clipping when loading a playback ID.
     public static let none = InstantClipping()
@@ -89,7 +92,6 @@ public struct InstantClipping: Equatable {
     init() {
         self.assetStartTimeInSeconds = nil
         self.assetEndTimeInSeconds = nil
-        self.noInstantClipping = true
     }
 
     /// Streams a clip whose starting time are based on
@@ -123,7 +125,6 @@ public struct InstantClipping: Equatable {
     ) {
         self.assetStartTimeInSeconds = assetStartTimeInSeconds
         self.assetEndTimeInSeconds = assetEndTimeInSeconds
-        self.noInstantClipping = false
     }
 
     /// Streams a clip whose starting time is based on
@@ -139,7 +140,6 @@ public struct InstantClipping: Equatable {
     ) {
         self.assetStartTimeInSeconds = assetStartTimeInSeconds
         self.assetEndTimeInSeconds = nil
-        self.noInstantClipping = false
     }
 
     /// Streams a clip with an ending time based on the
@@ -154,7 +154,6 @@ public struct InstantClipping: Equatable {
     ) {
         self.assetStartTimeInSeconds = nil
         self.assetEndTimeInSeconds = assetEndTimeInSeconds
-        self.noInstantClipping = false
     }
 }
 
