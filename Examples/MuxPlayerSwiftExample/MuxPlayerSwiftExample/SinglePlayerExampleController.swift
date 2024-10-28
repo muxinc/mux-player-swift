@@ -64,48 +64,30 @@ class SinglePlayerExampleController: UIViewController {
         }
     }
 
-    var assetStartTimeInSeconds: UInt? {
+    var assetStartTimeInSeconds: Double = .nan {
         didSet {
             preparePlayerViewController()
         }
     }
 
 
-    var assetEndTimeInSeconds: UInt? {
+    var assetEndTimeInSeconds: Double = .nan {
         didSet {
             preparePlayerViewController()
         }
     }
 
     func preparePlayerViewController() {
-
-        let instantClipping: InstantClipping
-
-        switch (assetStartTimeInSeconds, assetEndTimeInSeconds) {
-            case (.none, .none):
-                instantClipping = .none
-            case (.some(let clipStartTime), .none):
-                instantClipping = InstantClipping(
-                    assetStartTimeInSeconds: clipStartTime
-                )
-            case (.none, .some(let clipEndTime)):
-                instantClipping = InstantClipping(
-                    assetEndTimeInSeconds: clipEndTime
-                )
-            case (.some(let clipStartTime), .some(let clipEndTime)):
-                instantClipping = InstantClipping(
-                    assetStartTimeInSeconds: clipStartTime,
-                    assetEndTimeInSeconds: clipEndTime
-                )
-        }
-
         playerViewController.prepare(
             playbackID: playbackID,
             playbackOptions: PlaybackOptions(
                 maximumResolutionTier: maximumResolutionTier,
                 minimumResolutionTier: minimumResolutionTier,
                 renditionOrder: renditionOrder,
-                clipping: instantClipping
+                clipping: InstantClipping(
+                    assetStartTimeInSeconds: assetStartTimeInSeconds,
+                    assetEndTimeInSeconds: assetEndTimeInSeconds
+                )
             ),
             monitoringOptions: monitoringOptions
         )
@@ -332,11 +314,11 @@ class SinglePlayerExampleController: UIViewController {
                 handler: { action in
                     if let text = (action.sender as? UITextField)?.text {
                         self.assetStartTimeInSeconds = (
-                            try? UInt(
+                            try? Double(
                                 text,
                                 format: .number
                             )
-                        ) ?? nil
+                        ) ?? .nan
                     }
                 }
             )
@@ -350,11 +332,11 @@ class SinglePlayerExampleController: UIViewController {
                 handler: { action in
                     if let text = (action.sender as? UITextField)?.text {
                         self.assetEndTimeInSeconds = (
-                            try? UInt(
+                            try? Double(
                                 text,
                                 format: .number
                             )
-                        ) ?? nil
+                        ) ?? .nan
                     }
                 }
             )

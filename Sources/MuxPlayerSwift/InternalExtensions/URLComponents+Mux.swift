@@ -60,20 +60,20 @@ internal extension URLComponents {
             }
 
             if publicPlaybackOptions.instantClipping.noInstantClipping == false {
-                if let assetStartTimeInSeconds = publicPlaybackOptions.instantClipping.assetStartTimeInSeconds {
+                if !publicPlaybackOptions.instantClipping.assetStartTimeInSeconds.isNaN {
                     queryItems.append(
                         URLQueryItem(
                             name: "asset_start_time",
-                            value: assetStartTimeInSeconds.description
+                            value: publicPlaybackOptions.instantClipping.assetStartTimeInSeconds.description
                         )
                     )
                 }
 
-                if let assetEndTimeInSeconds = publicPlaybackOptions.instantClipping.assetEndTimeInSeconds {
+                if !publicPlaybackOptions.instantClipping.assetEndTimeInSeconds.isNaN {
                     queryItems.append(
                         URLQueryItem(
                             name: "asset_end_time",
-                            value: assetEndTimeInSeconds.description
+                            value: publicPlaybackOptions.instantClipping.assetEndTimeInSeconds.description
                         )
                     )
                 }

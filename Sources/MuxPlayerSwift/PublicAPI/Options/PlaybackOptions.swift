@@ -79,19 +79,19 @@ public enum SingleRenditionResolutionTier {
 /// Available for all video on-demand assets.
 public struct InstantClipping: Equatable {
 
-    var assetStartTimeInSeconds: UInt?
-    var assetEndTimeInSeconds: UInt?
+    var assetStartTimeInSeconds: Double
+    var assetEndTimeInSeconds: Double
 
     var noInstantClipping: Bool {
-        return self.assetStartTimeInSeconds == nil && self.assetEndTimeInSeconds == nil
+        return self.assetStartTimeInSeconds.isNaN && self.assetEndTimeInSeconds.isNaN
     }
 
     /// Omits instant clipping when loading a playback ID.
     public static let none = InstantClipping()
 
     init() {
-        self.assetStartTimeInSeconds = nil
-        self.assetEndTimeInSeconds = nil
+        self.assetStartTimeInSeconds = .nan
+        self.assetEndTimeInSeconds = .nan
     }
 
     /// Streams a clip whose starting time are based on
@@ -120,8 +120,8 @@ public struct InstantClipping: Equatable {
     ///   - assetEndTimeInSeconds: the ending time of
     ///   the clip relative to the asset time
     public init(
-        assetStartTimeInSeconds: UInt,
-        assetEndTimeInSeconds: UInt
+        assetStartTimeInSeconds: Double,
+        assetEndTimeInSeconds: Double
     ) {
         self.assetStartTimeInSeconds = assetStartTimeInSeconds
         self.assetEndTimeInSeconds = assetEndTimeInSeconds
@@ -136,10 +136,10 @@ public struct InstantClipping: Equatable {
     ///   - assetStartTimeInSeconds: the starting time
     ///   of the clip relative to the asset time
     public init(
-        assetStartTimeInSeconds: UInt
+        assetStartTimeInSeconds: Double
     ) {
         self.assetStartTimeInSeconds = assetStartTimeInSeconds
-        self.assetEndTimeInSeconds = nil
+        self.assetEndTimeInSeconds = .nan
     }
 
     /// Streams a clip with an ending time based on the
@@ -150,9 +150,9 @@ public struct InstantClipping: Equatable {
     ///   - assetEndTimeInSeconds: the ending time
     ///   of the clip relative to the asset time
     public init(
-        assetEndTimeInSeconds: UInt
+        assetEndTimeInSeconds: Double
     ) {
-        self.assetStartTimeInSeconds = nil
+        self.assetStartTimeInSeconds = .nan
         self.assetEndTimeInSeconds = assetEndTimeInSeconds
     }
 }
