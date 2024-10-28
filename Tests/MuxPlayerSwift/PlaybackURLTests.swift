@@ -501,4 +501,98 @@ final class PlaybackURLTests: XCTestCase {
             "def456"
         )
     }
+
+    func testClippingAssetStartTime() throws {
+        let item = AVPlayerItem(
+            playbackID: "abc123",
+            playbackOptions: PlaybackOptions(
+                clipping: .init(
+                    assetStartTimeInSeconds: 12
+                )
+            )
+        )
+
+        let url = try XCTUnwrap(
+            (item.asset as? AVURLAsset)?.url,
+            "Expected player item with URL"
+        )
+
+        let queryItems = try XCTUnwrap(
+            URLComponents(
+                url: url,
+                resolvingAgainstBaseURL: false
+            )?.queryItems
+        )
+
+        XCTAssertNotNil(
+            queryItems.first(where: {
+                $0.name == "asset_start_time"
+            })
+        )
+    }
+
+    func testClippingAssetEndTime() throws {
+        let item = AVPlayerItem(
+            playbackID: "abc123",
+            playbackOptions: PlaybackOptions(
+                clipping: .init(
+                    assetEndTimeInSeconds: 20
+                )
+            )
+        )
+
+        let url = try XCTUnwrap(
+            (item.asset as? AVURLAsset)?.url,
+            "Expected player item with URL"
+        )
+
+        let queryItems = try XCTUnwrap(
+            URLComponents(
+                url: url,
+                resolvingAgainstBaseURL: false
+            )?.queryItems
+        )
+
+        XCTAssertNotNil(
+            queryItems.first(where: {
+                $0.name == "asset_end_time"
+            })
+        )
+    }
+
+    func testClippingAssetStartAndEndTime() throws {
+        let item = AVPlayerItem(
+            playbackID: "abc123",
+            playbackOptions: PlaybackOptions(
+                clipping: .init(
+                    assetStartTimeInSeconds: 12,
+                    assetEndTimeInSeconds: 20
+                )
+            )
+        )
+
+        let url = try XCTUnwrap(
+            (item.asset as? AVURLAsset)?.url,
+            "Expected player item with URL"
+        )
+
+        let queryItems = try XCTUnwrap(
+            URLComponents(
+                url: url,
+                resolvingAgainstBaseURL: false
+            )?.queryItems
+        )
+
+        XCTAssertNotNil(
+            queryItems.first(where: {
+                $0.name == "asset_start_time"
+            })
+        )
+
+        XCTAssertNotNil(
+            queryItems.first(where: {
+                $0.name == "asset_end_time"
+            })
+        )
+    }
 }

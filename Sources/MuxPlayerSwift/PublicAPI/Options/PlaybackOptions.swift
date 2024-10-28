@@ -75,6 +75,88 @@ public enum SingleRenditionResolutionTier {
     case only2160p
 }
 
+/// Creates an instant clip of an asset without re-encoding.
+/// Available for all video on-demand assets.
+public struct InstantClipping: Equatable {
+
+    var assetStartTimeInSeconds: Double
+    var assetEndTimeInSeconds: Double
+
+    var noInstantClipping: Bool {
+        return self.assetStartTimeInSeconds.isNaN && self.assetEndTimeInSeconds.isNaN
+    }
+
+    /// Omits instant clipping when loading a playback ID.
+    public static let none = InstantClipping()
+
+    init() {
+        self.assetStartTimeInSeconds = .nan
+        self.assetEndTimeInSeconds = .nan
+    }
+
+    /// Streams a clip whose starting time are based on
+    /// the relative time of the asset.
+    ///
+    /// A few extra seconds of video may be included in the
+    /// clip. Example:
+    ///
+    /// ```swift
+    /// let instantClipping = InstantClipping(
+    ///     assetStartTimeInSeconds: 10,
+    ///     assetEndTimeInSeconds: 20
+    /// )
+    /// ```
+    ///
+    /// Will stream a clip that starts about 10 seconds
+    /// after your asset starts or a little earlier, and
+    /// finishes approximately 10 more seconds after that.
+    ///
+    /// Clips an asset based on its relative time. A few
+    /// extra seconds of video may be included in the clip.
+    ///
+    /// - Parameters:
+    ///   - assetStartTimeInSeconds: the starting time
+    ///   of the clip relative to the asset time
+    ///   - assetEndTimeInSeconds: the ending time of
+    ///   the clip relative to the asset time
+    public init(
+        assetStartTimeInSeconds: Double,
+        assetEndTimeInSeconds: Double
+    ) {
+        self.assetStartTimeInSeconds = assetStartTimeInSeconds
+        self.assetEndTimeInSeconds = assetEndTimeInSeconds
+    }
+
+    /// Streams a clip whose starting time is based on
+    /// the supplied relative asset start time or a few seconds
+    /// earlier. The clip ends at the same time as the
+    /// original asset.
+    ///
+    /// - Parameters:
+    ///   - assetStartTimeInSeconds: the starting time
+    ///   of the clip relative to the asset time
+    public init(
+        assetStartTimeInSeconds: Double
+    ) {
+        self.assetStartTimeInSeconds = assetStartTimeInSeconds
+        self.assetEndTimeInSeconds = .nan
+    }
+
+    /// Streams a clip with an ending time based on the
+    /// supplied relative asset end time. The clip has the
+    /// same start time as the original asset.
+    ///
+    /// - Parameters:
+    ///   - assetEndTimeInSeconds: the ending time
+    ///   of the clip relative to the asset time
+    public init(
+        assetEndTimeInSeconds: Double
+    ) {
+        self.assetStartTimeInSeconds = .nan
+        self.assetEndTimeInSeconds = assetEndTimeInSeconds
+    }
+}
+
 extension MaxResolutionTier {
     var queryValue: String {
         switch self {
@@ -134,6 +216,8 @@ public struct PlaybackOptions {
         var renditionOrder: RenditionOrder
 
         var useRedundantStreams: Bool
+
+        var instantClipping: InstantClipping
     }
 
     struct SignedPlaybackOptions {
@@ -180,7 +264,35 @@ extension PlaybackOptions {
                 maximumResolutionTier: maximumResolutionTier,
                 minimumResolutionTier: minimumResolutionTier,
                 renditionOrder: renditionOrder,
-                useRedundantStreams: true
+                useRedundantStreams: true,
+                instantClipping: .none
+            )
+        )
+        self.enableSmartCache = false
+    }
+
+    /// Initializes playback options for a public playback ID
+    /// - Parameters:
+    ///   - maximumResolutionTier: maximum resolution of the
+    ///   video the player will download
+    ///   - minimumResolutionTier: maximum resolution of the
+    ///   video the player will download
+    ///   - renditionOrder: ordering of available renditions
+    ///   presented to the player
+    ///   - clipping:
+    public init(
+        maximumResolutionTier: MaxResolutionTier = .default,
+        minimumResolutionTier: MinResolutionTier = .default,
+        renditionOrder: RenditionOrder = .default,
+        clipping: InstantClipping
+    ) {
+        self.playbackPolicy = .public(
+            PublicPlaybackOptions(
+                maximumResolutionTier: maximumResolutionTier,
+                minimumResolutionTier: minimumResolutionTier,
+                renditionOrder: renditionOrder,
+                useRedundantStreams: true,
+                instantClipping: clipping
             )
         )
         self.enableSmartCache = false
@@ -230,7 +342,8 @@ extension PlaybackOptions {
                     maximumResolutionTier: .upTo720p,
                     minimumResolutionTier: .atLeast720p,
                     renditionOrder: renditionOrder,
-                    useRedundantStreams: true
+                    useRedundantStreams: true,
+                    instantClipping: .none
                 )
             )
         case .only1080p:
@@ -239,7 +352,8 @@ extension PlaybackOptions {
                     maximumResolutionTier: .upTo1080p,
                     minimumResolutionTier: .atLeast1080p,
                     renditionOrder: renditionOrder,
-                    useRedundantStreams: true
+                    useRedundantStreams: true,
+                    instantClipping: .none
                 )
             )
         case .only1440p:
@@ -248,7 +362,8 @@ extension PlaybackOptions {
                     maximumResolutionTier: .upTo1440p,
                     minimumResolutionTier: .atLeast1440p,
                     renditionOrder: renditionOrder,
-                    useRedundantStreams: true
+                    useRedundantStreams: true,
+                    instantClipping: .none
                 )
             )
         case .only2160p:
@@ -257,7 +372,8 @@ extension PlaybackOptions {
                     maximumResolutionTier: .upTo2160p,
                     minimumResolutionTier: .atLeast2160p,
                     renditionOrder: renditionOrder,
-                    useRedundantStreams: true
+                    useRedundantStreams: true,
+                    instantClipping: .none
                 )
             )
         }
@@ -267,7 +383,7 @@ extension PlaybackOptions {
     /// Initializes playback options for a public
     /// playback ID
     /// - Parameters:
-    ///   ///   - customDomain: custom playback domain, custom domains
+    ///   - customDomain: custom playback domain, custom domains
     ///   need to be configured as described [here](https://docs.mux.com/guides/video/use-a-custom-domain-for-streaming#use-your-own-domain-for-delivering-videos-and-images) first.
     ///   The custom domain argument must have the format:
     ///   media.example.com.
@@ -293,7 +409,8 @@ extension PlaybackOptions {
                 maximumResolutionTier: maximumResolutionTier,
                 minimumResolutionTier: minimumResolutionTier,
                 renditionOrder: renditionOrder,
-                useRedundantStreams: true
+                useRedundantStreams: true,
+                instantClipping: .none
             )
         )
         self.enableSmartCache = false

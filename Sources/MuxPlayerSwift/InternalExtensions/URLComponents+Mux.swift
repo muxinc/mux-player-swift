@@ -59,6 +59,26 @@ internal extension URLComponents {
                 )
             }
 
+            if publicPlaybackOptions.instantClipping.noInstantClipping == false {
+                if !publicPlaybackOptions.instantClipping.assetStartTimeInSeconds.isNaN {
+                    queryItems.append(
+                        URLQueryItem(
+                            name: "asset_start_time",
+                            value: publicPlaybackOptions.instantClipping.assetStartTimeInSeconds.description
+                        )
+                    )
+                }
+
+                if !publicPlaybackOptions.instantClipping.assetEndTimeInSeconds.isNaN {
+                    queryItems.append(
+                        URLQueryItem(
+                            name: "asset_end_time",
+                            value: publicPlaybackOptions.instantClipping.assetEndTimeInSeconds.description
+                        )
+                    )
+                }
+            }
+
             self.queryItems = queryItems
 
         } else if case PlaybackOptions.PlaybackPolicy.signed(let signedPlaybackOptions) = playbackOptions.playbackPolicy {
