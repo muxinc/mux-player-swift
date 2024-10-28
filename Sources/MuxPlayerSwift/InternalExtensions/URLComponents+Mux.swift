@@ -60,6 +60,15 @@ internal extension URLComponents {
             }
 
             if publicPlaybackOptions.instantClipping.noInstantClipping == false {
+                if !publicPlaybackOptions.instantClipping.assetStartTimeInSeconds.isNaN &&
+                    !publicPlaybackOptions.instantClipping.assetEndTimeInSeconds.isNaN &&
+                    publicPlaybackOptions.instantClipping.assetStartTimeInSeconds > publicPlaybackOptions.instantClipping.assetEndTimeInSeconds
+                {
+                    PlayerSDK.shared.externalLogger.warning(
+                        "Requesting instant clip whose relative asset end time is before the relative asset start time."
+                    )
+                }
+
                 if !publicPlaybackOptions.instantClipping.assetStartTimeInSeconds.isNaN {
                     queryItems.append(
                         URLQueryItem(

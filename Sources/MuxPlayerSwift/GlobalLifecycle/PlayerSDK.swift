@@ -21,6 +21,8 @@ class PlayerSDK {
 
     var abrLogger: Logger
 
+    var externalLogger: Logger
+
     let reverseProxyServer: ReverseProxyServer
 
     let keyValueObservation = KeyValueObservation()
@@ -84,6 +86,12 @@ class PlayerSDK {
         )
         #endif
 
+        self.externalLogger = Logger(
+            OSLog(
+                subsystem: "com.mux.player",
+                category: "External"
+            )
+        )
         self.reverseProxyServer = ReverseProxyServer()
     }
 
