@@ -78,7 +78,7 @@ internal extension URLComponents {
                     )
                 }
 
-                if !publicPlaybackOptions.instantClipping.assetStartTimeInSeconds.isNaN {
+                if !publicPlaybackOptions.instantClipping.programStartTimeEpochInSeconds.isNaN {
                     queryItems.append(
                         URLQueryItem(
                             name: "program_start_time",
@@ -87,7 +87,7 @@ internal extension URLComponents {
                     )
                 }
 
-                if !publicPlaybackOptions.instantClipping.assetEndTimeInSeconds.isNaN {
+                if !publicPlaybackOptions.instantClipping.programEndTimeEpochInSeconds.isNaN {
                     queryItems.append(
                         URLQueryItem(
                             name: "program_end_time",
