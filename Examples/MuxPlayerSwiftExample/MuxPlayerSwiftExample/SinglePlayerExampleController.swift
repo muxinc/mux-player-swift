@@ -77,6 +77,18 @@ class SinglePlayerExampleController: UIViewController {
         }
     }
 
+    var programStartTimeInSeconds: Double = .nan {
+        didSet {
+            preparePlayerViewController()
+        }
+    }
+
+    var programEndTimeInSeconds: Double = .nan {
+        didSet {
+            preparePlayerViewController()
+        }
+    }
+
     func preparePlayerViewController() {
         playerViewController.prepare(
             playbackID: playbackID,
@@ -343,6 +355,44 @@ class SinglePlayerExampleController: UIViewController {
         )
         assetEndTimeTextField.keyboardType = .decimalPad
         assetEndTimeTextField.placeholder = "Clip ending time if desired"
+
+        let programStartTimeTextField = UITextField(
+            frame: .zero,
+            primaryAction: UIAction(
+                handler: { action in
+                    if let text = (action.sender as? UITextField)?.text {
+                        self.programStartTimeInSeconds = (
+                            try? Double(
+                                text,
+                                format: .number
+                            )
+                        ) ?? .nan
+                    }
+                }
+            )
+        )
+
+        programStartTimeTextField.keyboardType = .decimalPad
+        programStartTimeTextField.placeholder = "Clip ending program date and time if desired"
+
+        let programEndTimeTextField = UITextField(
+            frame: .zero,
+            primaryAction: UIAction(
+                handler: { action in
+                    if let text = (action.sender as? UITextField)?.text {
+                        self.programEndTimeInSeconds = (
+                            try? Double(
+                                text,
+                                format: .number
+                            )
+                        ) ?? .nan
+                    }
+                }
+            )
+        )
+
+        programEndTimeTextField.keyboardType = .decimalPad
+        programEndTimeTextField.placeholder = "Clip ending program date and time if desired"
 
         let stackView = UIStackView(
             arrangedSubviews: [
