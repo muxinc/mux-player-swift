@@ -86,7 +86,10 @@ public struct InstantClipping: Equatable {
     var programEndTimeEpochInSeconds: Double
 
     var noInstantClipping: Bool {
-        return self.assetStartTimeInSeconds.isNaN && self.assetEndTimeInSeconds.isNaN
+        return self.assetStartTimeInSeconds.isNaN &&
+        self.assetEndTimeInSeconds.isNaN &&
+        self.programStartTimeEpochInSeconds.isNaN &&
+        self.programEndTimeEpochInSeconds.isNaN
     }
 
     /// Omits instant clipping when loading a playback ID.
