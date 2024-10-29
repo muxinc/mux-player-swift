@@ -77,6 +77,24 @@ internal extension URLComponents {
                         )
                     )
                 }
+
+                if !publicPlaybackOptions.instantClipping.assetStartTimeInSeconds.isNaN {
+                    queryItems.append(
+                        URLQueryItem(
+                            name: "program_start_time",
+                            value: publicPlaybackOptions.instantClipping.programStartTimeEpochInSeconds.description
+                        )
+                    )
+                }
+
+                if !publicPlaybackOptions.instantClipping.assetEndTimeInSeconds.isNaN {
+                    queryItems.append(
+                        URLQueryItem(
+                            name: "program_end_time",
+                            value: publicPlaybackOptions.instantClipping.programEndTimeEpochInSeconds.description
+                        )
+                    )
+                }
             }
 
             self.queryItems = queryItems
