@@ -1,8 +1,9 @@
 #! /bin/bash
 
 # TODO - Add this section to the mac mini buildkite env
-readonly SAUCE_USERNAME=${BUILDKITE_MAC_STADIUM_SAUCE_USERNAME}
-readonly SAUCE_ACCESS_KEY=${BUILDKITE_MAC_STADIUM_SAUCE_ACCESS_KEY}
+echo "username ${BUILDKITE_MAC_STADIUM_SAUCE_USERNAME}"
+export SAUCE_USERNAME=${BUILDKITE_MAC_STADIUM_SAUCE_USERNAME}
+export SAUCE_ACCESS_KEY=${BUILDKITE_MAC_STADIUM_SAUCE_ACCESS_KEY}
 
 brew tap saucelabs/saucectl
 brew install saucectl
