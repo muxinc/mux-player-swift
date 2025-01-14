@@ -18,7 +18,8 @@ xcuitest:
 suites:
   - name: "Mux Player Swift test automation - All tests"
     devices:
-    - platformVersion: '18'
+    - name: .*
+      platformVersion: '18'
       options:
         carrierConnectivity: false
         deviceType: ANY
@@ -28,7 +29,8 @@ suites:
       class:
         - MuxPlayerSwiftExampleUITests.MuxPlayerSwiftExampleUITests
     devices:
-    - platformVersion: '18'
+    - name: .*
+      platformVersion: '18'
       options:
         carrierConnectivity: false
         deviceType: ANY
