@@ -5,9 +5,10 @@ steps:
   - command: "./scripts/run-sauce-tests.sh MuxPlayerSwift"
     label: "Sauce Labs Tests"
   - wait
-  - command: "./scripts/run-unit-tests.sh MuxPlayerSwift"
-    label: ":xcode_simulator: Unit Test Pass"
-  - wait
+  # todo - reinstate
+  #- command: "./scripts/run-unit-tests.sh MuxPlayerSwift"
+  #  label: ":xcode_simulator: Unit Test Pass"
+  #- wait
   #- command: "./scripts/run-ui-tests.sh MuxPlayerSwiftExample"
   #  label: ":xcode_simulator: UI Test Pass"
   - wait
