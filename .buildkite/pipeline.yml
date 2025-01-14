@@ -4,6 +4,7 @@ agents:
 steps:
   - command: "./scripts/run-sauce-tests.sh MuxPlayerSwift"
     label: "Sauce Labs Tests"
+  - wait
   - command: "./scripts/run-unit-tests.sh MuxPlayerSwift"
     label: ":xcode_simulator: Unit Test Pass"
   - wait
