@@ -8,7 +8,7 @@ sauce:
       - AVPlayer
       - Apple
     # CI should set this via cmd flag
-    build: Local Build
+    build: Local CLI
 xcuitest:
   app: Examples/MuxPlayerSwiftExample/MuxPlayerSwiftExample.ipa
   appDescription: Mux Player Swift example application
