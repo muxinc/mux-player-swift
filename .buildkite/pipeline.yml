@@ -10,9 +10,8 @@ steps:
   #  label: ":xcode_simulator: UI Test Pass"
   #- wait
   
-  # it turns out that this script already tries to do `sacuectl run`, but the config was incorrect
   - command: "./scripts/create-example-application-archive.sh MuxPlayerSwiftExample"
-    label: ":xcode: Upload to Sauce and run UI Tests"
+    label: ":xcode: Export Test Application and Test Runner Archives"
     artifact_paths:
       - "./Examples/MuxPlayerSwiftExample/MuxPlayerSwiftExample.ipa"
       - "./Examples/MuxPlayerSwiftExample/Packaging.log"
@@ -20,4 +19,4 @@ steps:
       - "./Examples/MuxPlayerSwiftExample/MuxPlayerSwiftExampleUITests-Runner.ipa"
   - wait
   - command: "echo $BUILDKITE_HOOKS_PATH && ls -ls $BUILDKITE_HOOKS_PATH && buildkite-agent artifact download \"Examples/MuxPlayerSwiftExample/MuxPlayerSwiftExample.ipa\" \"$PWD\" && buildkite-agent artifact download \"Examples/MuxPlayerSwiftExample/MuxPlayerSwiftExampleUITests-Runner.ipa\" \"$PWD\" && ./scripts/upload-example-application-to-sauce-labs.sh"
-    label: ":saucelabs: Upload Test Application to Sauce Labs App Storage"
+    label: ":saucelabs: Upload to Sauce Labs and Run tests"
