@@ -2,11 +2,13 @@ agents:
   queue: "macOS-Monterey-12-4"
 
 steps:
+  - command: "./scripts/run-sauce-tests.sh MuxPlayerSwift"
+    label: "Sauce Labs Tests"
   - command: "./scripts/run-unit-tests.sh MuxPlayerSwift"
     label: ":xcode_simulator: Unit Test Pass"
   - wait
-  - command: "./scripts/run-ui-tests.sh MuxPlayerSwiftExample"
-    label: ":xcode_simulator: UI Test Pass"
+  #- command: "./scripts/run-ui-tests.sh MuxPlayerSwiftExample"
+  #  label: ":xcode_simulator: UI Test Pass"
   - wait
   - command: "./scripts/create-example-application-archive.sh MuxPlayerSwiftExample"
     label: ":xcode: Export Test Application and Test Runner Archives"
