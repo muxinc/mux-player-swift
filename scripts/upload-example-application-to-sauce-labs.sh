@@ -26,21 +26,23 @@ fi
 export SAUCE_USERNAME=$BUILDKITE_MAC_STADIUM_SAUCE_USERNAME
 export SAUCE_ACCESS_KEY=$BUILDKITE_MAC_STADIUM_SAUCE_ACCESS_KEY
 
-echo "▸ Uploading test application to Sauce Labs App Storage"
+# saucectl does these parts for us, we don't need to curl anything
+#echo "▸ Uploading test application to Sauce Labs App Storage"
 
-curl -u "$SAUCE_USERNAME:$SAUCE_ACCESS_KEY" --location --request POST 'https://api.us-west-1.saucelabs.com/v1/storage/upload' --form "payload=@\"${APPLICATION_PAYLOAD_PATH}\"" --form "name=\"${APPLICATION_NAME}\""
+#curl -u "$SAUCE_USERNAME:$SAUCE_ACCESS_KEY" --location --request POST 'https://api.us-west-1.saucelabs.com/v1/storage/upload' --form "payload=@\"${APPLICATION_PAYLOAD_PATH}\"" --form "name=\"${APPLICATION_NAME}\""
 
-if [[ $? == 0 ]]; then
-    echo "▸ Successfully uploaded to Sauce Labs application storage."
-else
-    echo -e "\033[1;31m ERROR: Failed to upload to Sauce Labs application storage. Check for valid credentials. \033[0m"
-    exit 1
-fi
+#if [[ $? == 0 ]]; then
+#    echo "▸ Successfully uploaded to Sauce Labs application storage."
+#else
+#    echo -e "\033[1;31m ERROR: Failed to upload to Sauce Labs application storage. Check for valid credentials. \033[0m"
+#    exit 1
+#fi
 
-echo "▸ Deploying tests to Sauce Labs"
+#echo "▸ Deploying tests to Sauce Labs"
 
-echo "▸ Sauce Labs config: $(cat $PWD/.sauce/config.yml)"
+#echo "▸ Sauce Labs config: $(cat $PWD/.sauce/config.yml)"
 
+echo "▸ Deploying app and tests to Sauce Labs"
 saucectl run -c "$PWD/.sauce/config.yml"
 
 if [[ $? == 0 ]]; then
