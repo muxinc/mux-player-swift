@@ -10,9 +10,9 @@ steps:
   #  label: ":xcode_simulator: UI Test Pass"
   #- wait
   
-  # it turns out that this script already tries to run sacuectl, but it wasn't well-configured
+  # it turns out that this script already tries to do `sacuectl run`, but the config was incorrect
   - command: "./scripts/create-example-application-archive.sh MuxPlayerSwiftExample"
-    label: ":xcode: Export Test Application and Test Runner Archives"
+    label: ":xcode: Upload to Sauce and run UI Tests"
     artifact_paths:
       - "./Examples/MuxPlayerSwiftExample/MuxPlayerSwiftExample.ipa"
       - "./Examples/MuxPlayerSwiftExample/Packaging.log"

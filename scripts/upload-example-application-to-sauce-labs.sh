@@ -40,9 +40,9 @@ export SAUCE_ACCESS_KEY=$BUILDKITE_MAC_STADIUM_SAUCE_ACCESS_KEY
 
 #echo "▸ Deploying tests to Sauce Labs"
 
-#echo "▸ Sauce Labs config: $(cat $PWD/.sauce/config.yml)"
 
-echo "▸ Deploying app and tests to Sauce Labs"
+echo "▸ Deploying app and Testing with Sauce"
+echo "▸ Sauce Labs config: $(cat $PWD/.sauce/config.yml)"
 saucectl run -c "$PWD/.sauce/config.yml"
 
 if [[ $? == 0 ]]; then
