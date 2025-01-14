@@ -10,7 +10,6 @@ sauce:
     # CI should set this via cmd flag
     build: Local Build
 xcuitest:
-  #app: storage:filename=MuxPlayerSwiftExample.ipa
   app: Examples/MuxPlayerSwiftExample/MuxPlayerSwiftExample.ipa
   appDescription: Mux Player Swift example application
   testApp: Examples/MuxPlayerSwiftExample/MuxPlayerSwiftExampleUITests-Runner.ipa
@@ -20,10 +19,10 @@ suites:
   - name: "Mux Player Swift test automation - All tests"
     devices:
     - name: "iPhone.*"
-      platformVersion: 16
+      platformVersion: '18'
       options:
         carrierConnectivity: false
-        deviceType: PHONE
+        deviceType: ANY
         private: false 
   - name: "Mux Player Swift test automation - specific classes"
     testOptions:
@@ -31,8 +30,8 @@ suites:
         - MuxPlayerSwiftExampleUITests.MuxPlayerSwiftExampleUITests
     devices:
     - name: "iPhone.*"
-      platformVersion: 16
+      platformVersion: '18'
       options:
         carrierConnectivity: false
-        deviceType: PHONE
+        deviceType: ANY
         private: false 
