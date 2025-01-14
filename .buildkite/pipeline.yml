@@ -2,12 +2,15 @@ agents:
   queue: "macOS-Monterey-12-4"
 
 steps:
-  - command: "./scripts/run-unit-tests.sh MuxPlayerSwift"
-    label: ":xcode_simulator: Unit Test Pass"
-  - wait
-  - command: "./scripts/run-ui-tests.sh MuxPlayerSwiftExample"
-    label: ":xcode_simulator: UI Test Pass"
-  - wait
+  # todo - unit tests are broken right now, no iOS 18.0 simulator on the mini 
+  #- command: "./scripts/run-unit-tests.sh MuxPlayerSwift"
+  #  label: ":xcode_simulator: Unit Test Pass"
+  #- wait
+  #- command: "./scripts/run-ui-tests.sh MuxPlayerSwiftExample"
+  #  label: ":xcode_simulator: UI Test Pass"
+  #- wait
+  
+  # it turns out that this script already tries to run sacuectl, but it wasn't well-configured
   - command: "./scripts/create-example-application-archive.sh MuxPlayerSwiftExample"
     label: ":xcode: Export Test Application and Test Runner Archives"
     artifact_paths:
