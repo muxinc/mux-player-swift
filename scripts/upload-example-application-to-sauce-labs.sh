@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -euo pipefail
+set -eo pipefail
 
 if ! command -v saucectl &> /dev/null
 then
@@ -23,22 +23,22 @@ if [ ! -f $APPLICATION_PAYLOAD_PATH ]; then
 fi
 
 # re-exported so saucectl CLI can use them
-if [ -z $BUILDKITE_MAC_STADIUM_SAUCE_USERNAME]; then
+if [ -z $BUILDKITE_MAC_STADIUM_SAUCE_USERNAME ]; then
   export SAUCE_USERNAME=$BUILDKITE_MAC_STADIUM_SAUCE_USERNAME
 fi
-if [ -z $BUILDKITE_MAC_STADIUM_SAUCE_ACCESS_KEY]; then
+if [ -z $BUILDKITE_MAC_STADIUM_SAUCE_ACCESS_KEY ]; then
   export SAUCE_ACCESS_KEY=$BUILDKITE_MAC_STADIUM_SAUCE_ACCESS_KEY
 fi
 
-if [ -z $BUILDKITE_BRANCH ]; then
-  export BUILD_LABEL=${BUILDKITE_BRANCH}
-else 
-  export BUILD_LABEL="Local CLI build"
-fi
+export BUILD_LABEL=${BUILDKITE_BRANCH}
 
 echo "▸ Deploying app and Testing with Sauce"
 echo "▸ Sauce Labs config: $(cat $PWD/.sauce/config.yml)"
-saucectl run -c "$PWD/.sauce/config.yml" --build ${BUILD_LABEL}
+if [ -z $BUILDKITE_BUILD ]; then
+  saucectl run -c "$PWD/.sauce/config.yml" --build "Local build"
+else
+  saucectl run -c "$PWD/.sauce/config.yml" --build "build #${BUILD_LABEL}"
+fi
 
 if [[ $? == 0 ]]; then
     echo "▸ Successfully deployed Sauce Labs tests"
