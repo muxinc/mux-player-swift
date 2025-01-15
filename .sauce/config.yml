@@ -24,14 +24,4 @@ suites:
         carrierConnectivity: false
         deviceType: ANY
         private: false 
-  - name: "Mux Player Swift test automation - specific classes"
-    testOptions:
-      class:
-        - MuxPlayerSwiftExampleUITests.MuxPlayerSwiftExampleUITests
-    devices:
-    - name: .*
-      platformVersion: '18'
-      options:
-        carrierConnectivity: false
-        deviceType: ANY
-        private: false 
+
