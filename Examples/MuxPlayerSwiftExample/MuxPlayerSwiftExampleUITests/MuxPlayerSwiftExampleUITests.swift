@@ -112,4 +112,18 @@ final class MuxPlayerSwiftExampleUITests: XCTestCase {
             application: application
         )
     }
+
+    func testVideoOnDemandPlayerLayerAgain() throws {
+        let application = XCUIApplication()
+
+        try launchAndWaitUntilInForeground(
+            application: application
+        )
+
+        try tapCell(
+            cellIdentifier: "SinglePlayerLayerExample",
+            waitFor: "SinglePlayerLayerView",
+            application: application
+        )
+    }
 }
