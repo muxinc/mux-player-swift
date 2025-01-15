@@ -30,7 +30,7 @@ export BUILD_LABEL=$(git rev-parse --short HEAD)
 
 echo "▸ Deploying app and Testing with Sauce"
 echo "▸ Sauce Labs config: $(cat $PWD/.sauce/config.yml)"
-if [ -z $BUILDKITE_BUILD ]; then
+if [ -z $BUILD_LABEL ]; then
   saucectl run -c "$PWD/.sauce/config.yml" --build "Local build"
 else
   saucectl run -c "$PWD/.sauce/config.yml" --build "build #${BUILD_LABEL}"
