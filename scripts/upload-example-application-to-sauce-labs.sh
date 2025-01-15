@@ -26,7 +26,7 @@ fi
 export SAUCE_USERNAME=$BUILDKITE_MAC_STADIUM_SAUCE_USERNAME
 export SAUCE_ACCESS_KEY=$BUILDKITE_MAC_STADIUM_SAUCE_ACCESS_KEY
 
-export BUILD_LABEL=${BUILDKITE_BRANCH}
+export BUILD_LABEL=$(git rev-parse --short HEAD)
 
 echo "▸ Deploying app and Testing with Sauce"
 echo "▸ Sauce Labs config: $(cat $PWD/.sauce/config.yml)"
