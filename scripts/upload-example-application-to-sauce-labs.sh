@@ -23,22 +23,12 @@ if [ ! -f $APPLICATION_PAYLOAD_PATH ]; then
 fi
 
 # re-exported so saucectl CLI can use them
-export SAUCE_USERNAME=$BUILDKITE_MAC_STADIUM_SAUCE_USERNAME
-export SAUCE_ACCESS_KEY=$BUILDKITE_MAC_STADIUM_SAUCE_ACCESS_KEY
-
-# saucectl does these parts for us, we don't need to curl anything
-#echo "▸ Uploading test application to Sauce Labs App Storage"
-
-#curl -u "$SAUCE_USERNAME:$SAUCE_ACCESS_KEY" --location --request POST 'https://api.us-west-1.saucelabs.com/v1/storage/upload' --form "payload=@\"${APPLICATION_PAYLOAD_PATH}\"" --form "name=\"${APPLICATION_NAME}\""
-
-#if [[ $? == 0 ]]; then
-#    echo "▸ Successfully uploaded to Sauce Labs application storage."
-#else
-#    echo -e "\033[1;31m ERROR: Failed to upload to Sauce Labs application storage. Check for valid credentials. \033[0m"
-#    exit 1
-#fi
-
-#echo "▸ Deploying tests to Sauce Labs"
+if [ -z $BUILDKITE_MAC_STADIUM_SAUCE_USERNAME]; then
+  export SAUCE_USERNAME=$BUILDKITE_MAC_STADIUM_SAUCE_USERNAME
+fi
+if [ -z $BUILDKITE_MAC_STADIUM_SAUCE_ACCESS_KEY]; then
+  export SAUCE_ACCESS_KEY=$BUILDKITE_MAC_STADIUM_SAUCE_ACCESS_KEY
+fi
 
 if [ -z $BUILDKITE_BRANCH ]; then
   export BUILD_LABEL=${BUILDKITE_BRANCH}
