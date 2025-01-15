@@ -33,7 +33,7 @@ echo "▸ Sauce Labs config: $(cat $PWD/.sauce/config.yml)"
 if [ -z $BUILD_LABEL ]; then
   saucectl run -c "$PWD/.sauce/config.yml" --build "Local build"
 else
-  saucectl run -c "$PWD/.sauce/config.yml" --build "build #${BUILD_LABEL}"
+  saucectl run -c "$PWD/.sauce/config.yml" --build "commit ${BUILD_LABEL}"
 fi
 
 if [[ $? == 0 ]]; then
