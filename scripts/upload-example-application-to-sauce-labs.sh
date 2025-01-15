@@ -40,10 +40,15 @@ export SAUCE_ACCESS_KEY=$BUILDKITE_MAC_STADIUM_SAUCE_ACCESS_KEY
 
 #echo "▸ Deploying tests to Sauce Labs"
 
+if [ -z $BUILDKITE_BRANCH ]; then
+  export BUILD_LABEL=${BUILDKITE_BRANCH}
+else 
+  export BUILD_LABEL="Local CLI build"
+fi
 
 echo "▸ Deploying app and Testing with Sauce"
 echo "▸ Sauce Labs config: $(cat $PWD/.sauce/config.yml)"
-saucectl run -c "$PWD/.sauce/config.yml"
+saucectl run -c "$PWD/.sauce/config.yml" --build ${BUILD_LABEL}
 
 if [[ $? == 0 ]]; then
     echo "▸ Successfully deployed Sauce Labs tests"
