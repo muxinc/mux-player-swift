@@ -5,6 +5,12 @@ steps:
   - command: "./scripts/run-unit-tests.sh MuxPlayerSwift"
     label: ":xcode_simulator: Unit Test Pass"
   - wait
+  - command: "./scripts/run-ui-tests.sh MuxPlayerSwiftExample"
+    label: ":xcode_simulator: UI Test Pass on Simulator"
+  - wait
+  - command: "echo $BUILDKITE_HOOKS_PATH && ls -ls $BUILDKITE_HOOKS_PATH && buildkite-agent artifact download \"Examples/MuxPlayerSwiftExample/MuxPlayerSwiftExample.ipa\" \"$PWD\" && buildkite-agent artifact download \"Examples/MuxPlayerSwiftExample/MuxPlayerSwiftExampleUITests-Runner.ipa\" \"$PWD\" && ./scripts/upload-example-application-to-sauce-labs.sh"
+    label: ":saucelabs: UI Tests Pass on Real Device"
+  - wait
   - command: "./scripts/create-example-application-archive.sh MuxPlayerSwiftExample"
     label: ":xcode: Export Test Application and Test Runner Archives"
     artifact_paths:
@@ -12,6 +18,4 @@ steps:
       - "./Examples/MuxPlayerSwiftExample/Packaging.log"
       - "./Examples/MuxPlayerSwiftExample/DistributionSummary.plist"
       - "./Examples/MuxPlayerSwiftExample/MuxPlayerSwiftExampleUITests-Runner.ipa"
-  - wait
-  - command: "echo $BUILDKITE_HOOKS_PATH && ls -ls $BUILDKITE_HOOKS_PATH && buildkite-agent artifact download \"Examples/MuxPlayerSwiftExample/MuxPlayerSwiftExample.ipa\" \"$PWD\" && buildkite-agent artifact download \"Examples/MuxPlayerSwiftExample/MuxPlayerSwiftExampleUITests-Runner.ipa\" \"$PWD\" && ./scripts/upload-example-application-to-sauce-labs.sh"
-    label: ":saucelabs: Upload to Sauce Labs and Run tests"
+
