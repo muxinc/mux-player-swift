@@ -2,21 +2,26 @@ apiVersion: v1alpha
 kind: xcuitest
 sauce:
   region: us-west-1
+  metadata:
+    tags:
+      - Data
+      - AVPlayer
+      - Apple
+    # CI should set this via cmd flag
+    build: Local CLI
 xcuitest:
-  app: storage:filename=MuxPlayerSwiftExample.ipa
+  app: Examples/MuxPlayerSwiftExample/MuxPlayerSwiftExample.ipa
   appDescription: Mux Player Swift example application
   testApp: Examples/MuxPlayerSwiftExample/MuxPlayerSwiftExampleUITests-Runner.ipa
   testAppDescription: Mux Player Swift test application for user interface testing
 
 suites:
-  - name: "example application xcuitest"
-    testOptions:
-      class:
-        - MUXSDKStatsExampleSPMUITests.MUXSDKStatsExampleSPMUITests
+  - name: "Mux Player Swift test automation - All tests"
     devices:
-      - name: "iPhone 15"
-        platformVersion: "18.0"
-        options:
-          carrierConnectivity: false
-          deviceType: PHONE
-          private: false
+    - name: .*
+      platformVersion: '18'
+      options:
+        carrierConnectivity: false
+        deviceType: ANY
+        private: false 
+
