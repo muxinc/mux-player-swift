@@ -16,9 +16,11 @@ class SinglePlayerExampleController: UIViewController {
 
     // MARK: Player View Controller
 
-    lazy var playerViewController = AVPlayerViewController(
-        playbackID: playbackID
-    )
+    // TODO: aw christ
+    lazy var playerViewController = AVPlayerViewController()
+//    lazy var playerViewController = AVPlayerViewController(
+//        playbackID: playbackID
+//    )
 
     // MARK: Mux Data Monitoring Parameters
 
@@ -398,6 +400,7 @@ class SinglePlayerExampleController: UIViewController {
             title: "Play Video",
             primaryAction: UIAction(
                 handler: { _ in
+                    self.preparePlayerViewController()
                     self.displayPlayerViewController()
                 }
             )
