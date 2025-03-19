@@ -13,7 +13,8 @@ internal enum PlaybackURLConstants {
     static let reverseProxyPort = Int(1234)
 }
 
-internal extension AVPlayerItem {
+// TODO: not a public API. this extension has been modified. It has been hackily refactored to fit your proof-of-concept
+public extension AVPlayerItem {
 
     // Initializes a player item with a playback URL that
     // references your Mux Video at the supplied playback ID.
@@ -26,7 +27,15 @@ internal extension AVPlayerItem {
     // - Parameter playbackID: playback ID of the Mux Asset
     // you'd like to play
     convenience init(playbackID: String) {
+        guard let playbackURL = URLComponents(
+           playbackID: playbackID,
+           playbackOptions: PlaybackOptions()
+       ).url else {
+           preconditionFailure("Invalid playback URL components")
+       }
+        
         self.init(
+            playbackURL: playbackURL,
             playbackID: playbackID,
             playbackOptions: PlaybackOptions(),
             playerSDK: .shared
@@ -44,27 +53,31 @@ internal extension AVPlayerItem {
         playbackID: String,
         playbackOptions: PlaybackOptions
     ) {
-        self.init(
-            playbackID: playbackID,
-            playbackOptions: playbackOptions,
-            playerSDK: .shared
-        )
-    }
-
-    convenience init(
-        playbackID: String,
-        playbackOptions: PlaybackOptions,
-        playerSDK: PlayerSDK
-    ) {
-        // Create a new `AVAsset` that has been prepared
-        // for playback
-        guard let playbackURL = URLComponents(
+         guard let playbackURL = URLComponents(
             playbackID: playbackID,
             playbackOptions: playbackOptions
         ).url else {
             preconditionFailure("Invalid playback URL components")
         }
 
+        self.init(
+            playbackURL: playbackURL,
+            playbackID: playbackID,
+            playbackOptions: playbackOptions,
+            playerSDK: .shared
+        )
+    }
+    
+    
+    internal convenience init(
+        playbackURL: URL,
+        playbackID: String,
+        playbackOptions: PlaybackOptions,
+        playerSDK: PlayerSDK
+    ) {
+        // Create a new `AVAsset` that has been prepared
+        // for playback
+       
         let asset = AVURLAsset(
             url: playbackURL
         )
@@ -81,7 +94,7 @@ internal extension AVPlayerItem {
     }
 }
 
-internal extension AVPlayerItem {
+public extension AVPlayerItem {
 
     // Extracts Mux playback ID from remote AVAsset, if possible
     var playbackID: String? {

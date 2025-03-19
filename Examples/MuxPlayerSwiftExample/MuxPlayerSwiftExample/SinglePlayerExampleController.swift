@@ -9,6 +9,7 @@ import SwiftUI
 import UIKit
 
 import MuxPlayerSwift
+import MuxCore
 
 // Single player example
 class SinglePlayerExampleController: UIViewController {
@@ -35,7 +36,8 @@ class SinglePlayerExampleController: UIViewController {
             )
         } else {
             MonitoringOptions(
-                playbackID: playbackID
+                //playbackID: "just-a-monitoring-placeholder"
+                customerData: MUXSDKCustomerData(), playerName: "shortform-demo-\(UUID().uuidString)"
             )
         }
     }
@@ -44,6 +46,11 @@ class SinglePlayerExampleController: UIViewController {
 
     var playbackID: String {
         ProcessInfo.processInfo.playbackID ?? "qxb01i6T202018GFS02vp9RIe01icTcDCjVzQpmaB00CUisJ4"
+    }
+    
+    var url: String {
+        "http://localhost:3000/av-muxed-media.m3u8"
+        //ProcessInfo.processInfo.playbackID ?? "qxb01i6T202018GFS02vp9RIe01icTcDCjVzQpmaB00CUisJ4"
     }
 
     var minimumResolutionTier: MinResolutionTier = .default {
