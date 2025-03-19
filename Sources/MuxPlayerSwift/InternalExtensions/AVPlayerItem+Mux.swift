@@ -68,6 +68,19 @@ public extension AVPlayerItem {
         )
     }
     
+    //TODO: something to make sure the item is prepared? only if this becomes the real api
+    convenience init(
+        url: URL,
+        playbackID: String,
+        playbackOptions: PlaybackOptions
+    ) {
+        self.init(
+            playbackURL: url,
+            playbackID: playbackID,
+            playbackOptions: playbackOptions,
+            playerSDK: .shared
+        )
+    }
     
     internal convenience init(
         playbackURL: URL,

@@ -45,7 +45,8 @@ class SinglePlayerExampleController: UIViewController {
     // MARK: Mux Video Playback Parameters
 
     var playbackID: String {
-        ProcessInfo.processInfo.playbackID ?? "qxb01i6T202018GFS02vp9RIe01icTcDCjVzQpmaB00CUisJ4"
+//        ProcessInfo.processInfo.playbackID ?? "qxb01i6T202018GFS02vp9RIe01icTcDCjVzQpmaB00CUisJ4"
+        "just-a-placeholder-now"
     }
     
     var url: String {
@@ -85,9 +86,8 @@ class SinglePlayerExampleController: UIViewController {
     }
 
     func preparePlayerViewController() {
-        playerViewController.prepare(
-            playbackID: playbackID,
-            playbackOptions: PlaybackOptions(
+        // TODO: not the real api i guess
+        let playbackOptions =  PlaybackOptions(
                 maximumResolutionTier: maximumResolutionTier,
                 minimumResolutionTier: minimumResolutionTier,
                 renditionOrder: renditionOrder,
@@ -95,7 +95,18 @@ class SinglePlayerExampleController: UIViewController {
                     assetStartTimeInSeconds: assetStartTimeInSeconds,
                     assetEndTimeInSeconds: assetEndTimeInSeconds
                 )
-            ),
+                )
+                
+        let playerItem = AVPlayerItem(
+            url: URL(string:"http://localhost:3000/av-muxed-media.m3u8")!,
+            playbackID: playbackID,
+            playbackOptions: playbackOptions
+        )
+
+        playerViewController.prepare(
+            playbackID: playbackID,
+            playerItem: playerItem, // TODO: not the real api etc
+            playbackOptions: playbackOptions,
             monitoringOptions: monitoringOptions
         )
     }

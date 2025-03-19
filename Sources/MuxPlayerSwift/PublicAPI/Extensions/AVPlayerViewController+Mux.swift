@@ -270,6 +270,25 @@ extension AVPlayerViewController {
             monitoringOptions: monitoringOptions
         )
     }
+    
+    public func prepare(
+        playbackID: String,
+        // TODO: I mean, ppl should be able to provide AVPlayerItems but optionally. I just needed to quickly provide a deocrated player item
+        playerItem: AVPlayerItem,
+        playbackOptions: PlaybackOptions,
+        monitoringOptions: MonitoringOptions
+    ) {
+        prepare(
+//            playerItem: AVPlayerItem(
+//                playbackID: playbackID,
+//                playbackOptions: playbackOptions
+//            ),
+            playerItem: playerItem,
+            playbackID: playbackID,
+            playbackOptions: playbackOptions,
+            monitoringOptions: monitoringOptions
+        )
+    }
 
     internal func prepare(
         playerItem: AVPlayerItem,
