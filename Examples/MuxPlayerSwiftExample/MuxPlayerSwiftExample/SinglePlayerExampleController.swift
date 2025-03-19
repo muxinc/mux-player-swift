@@ -52,7 +52,8 @@ class SinglePlayerExampleController: UIViewController {
     }
     
     var url: String {
-        "http://localhost:3000/av-muxed-media.m3u8"
+        "http://localhost:3000/av-muxed-media-duration-in-init-seg.m3u8"
+//        "http://localhost:3000/av-muxed-media.m3u8"
         //ProcessInfo.processInfo.playbackID ?? "qxb01i6T202018GFS02vp9RIe01icTcDCjVzQpmaB00CUisJ4"
     }
 
@@ -100,7 +101,7 @@ class SinglePlayerExampleController: UIViewController {
                 )
                 
         let playerItem = AVPlayerItem(
-            url: URL(string:"http://localhost:3000/av-muxed-media.m3u8")!,
+            url: URL(string:url)!,
             playbackID: playbackID,
             playbackOptions: playbackOptions
         )
