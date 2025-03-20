@@ -13,7 +13,7 @@ internal enum PlaybackURLConstants {
     static let reverseProxyPort = Int(1234)
 }
 
-// TODO: not a public API. this extension has been modified. It has been hackily refactored to fit our proof-of-concept
+// TODO: this extension has been modified. It has been hackily refactored to fit our proof-of-concept
 public extension AVPlayerItem {
 
     // Initializes a player item with a playback URL that
@@ -68,7 +68,7 @@ public extension AVPlayerItem {
         )
     }
     
-    //TODO: something to make sure the item is prepared? only if this becomes the real api
+    //TODO: we only have this URL-based initializer for the PoC. The real version would know which mux domain to hit, but this version is just hitting a test server
     convenience init(
         url: URL,
         playbackID: String,
@@ -145,6 +145,9 @@ public extension AVPlayerItem {
 internal class ShortFormAssetLoaderDelegate :
     NSObject, AVAssetResourceLoaderDelegate {
     
+    // TODO: same as in the ReverseProxyServer, but maybe we have PlayerSDK specify this for consistency
+    let urlSession: URLSession = URLSession.shared
+    
     func resourceLoader(
         _ resourceLoader: AVAssetResourceLoader,
         shouldWaitForLoadingOfRequestedResource loadingRequest: AVAssetResourceLoadingRequest
@@ -156,7 +159,10 @@ internal class ShortFormAssetLoaderDelegate :
                 "[shorform-test] initSegmentURL: \(initSegmentURL.absoluteString)"
             )
             
-            // TODO: Honor range requests if required
+            // check if init segment is cached already
+            // Get init segment from wherever it's needed
+            // cache init segment in the reverse proxy
+            // generate playlist from
             
             return true
         } else {
@@ -179,19 +185,22 @@ internal class ShortFormAssetLoaderDelegate :
 //        <#code#>
 //    }
     
-    private func byteRange(loadingRequest: AVAssetResourceLoadingRequest) -> (Int64, Int64)? {
+    /// returns (requestedOffset, requestedLength) if the request was for a byte range of the
+    private func byteRange(loadingRequest: AVAssetResourceLoadingRequest) -> (Int64, Int)? {
         guard
             let dataRequest = loadingRequest.dataRequest, !dataRequest.requestsAllDataToEndOfResource
         else { return nil }
             
         return (
             dataRequest.requestedOffset,
-            dataRequest.currentOffset + Int64(dataRequest.requestedLength)
+            dataRequest.requestedLength
         )
     }
     
     private func isURLForShortform(url: URL) -> Bool {
-        // TODO: 'shortform.mux.com/[playbackID].m3u8'
+        // TODO: 'shortform.mux.com/[playbackID].m3u8' or something like that
+        
+        // expected path (for the proof-of-concept) "short-form-tests/v1/playbackID/media.m3u8"
         let isShortForm = url.pathComponents.contains { $0 == "short-form-tests" }
         return isShortForm
     }
@@ -207,9 +216,57 @@ internal class ShortFormAssetLoaderDelegate :
         
         return urlComponents.url! // TODO: yknow, maybe handle
     }
+    
+    private func fetchInitSegment(initSegURL url: URL) throws -> Data {
+        let request = URLRequest(url: url)
+        
+        var segmentData: Data?
+        var responseCode: Int?
+        var error: Error?
+        
+        // you're allowed to be synchronous in an ResourceLoaderDelegate, so be synchronous
+        let dispatchGroup = DispatchGroup()
+        dispatchGroup.enter()
+        urlSession.dataTask(with: request) { data, response, err in
+            if let err {
+                error = err
+            } else if let response, let urlResponse = response as? HTTPURLResponse {
+                responseCode = urlResponse.statusCode
+            }
+            guard let data else {
+                return
+            }
+            
+            segmentData = data
+            dispatchGroup.leave()
+        }
+        dispatchGroup.wait()
+        
+        if let segmentData {
+            return segmentData
+        } else {
+            if let responseCode {
+                throw ShortFormRequestError.httpStatus(url: url, responseCode: responseCode)
+            } else if let error {
+                throw ShortFormRequestError.because(url: url, cause: error)
+            } else {
+                throw ShortFormRequestError.unexpected(url: url, message: "failed with no info (womp)")
+            }
+        }
+    }
 }
 
 internal class ShortFormMediaPlaylistGenerator {
+    let initSegmentData: Data
     
+    init(initSegment: Data) {
+        self.initSegmentData = initSegment
+    }
+}
+
+internal enum ShortFormRequestError: Error {
+    case because(url: URL, cause: any Error)
+    case httpStatus(url: URL, responseCode: Int)
+    case unexpected(url: URL?, message: String)
 }
 
