@@ -51,13 +51,12 @@ class SinglePlayerExampleController: UIViewController {
         "just-a-placeholder-now"
     }
     
+    // can also be a vercel deployment (once the pr is merged)
     var baseTestServerURL = "http://127.0.0.1:8789"
-//    var baseTestServerURL = "http://127.0.0.1:8789"
 
     var url: String {
-//        "\(baseTestServerURL)/single-mp-shortform/v1/av-muxed-media.m3u8"
-        "\(baseTestServerURL)/single-mp-shortform/v1/av-muxed-media-duration-in-init-seg.m3u8"
-//        "\(baseTestServerURL)/av-muxed-media-duration-in-init-seg.m3u8"
+        "\(baseTestServerURL)/short-form-tests/v1/id-duration-in-init-segment/media.m3u8"
+        //        "\(baseTestServerURL)/av-muxed-media-duration-in-init-seg.m3u8"
 //        "\(baseTestServerURL)/av-muxed-media.m3u8"
         //ProcessInfo.processInfo.playbackID ?? "qxb01i6T202018GFS02vp9RIe01icTcDCjVzQpmaB00CUisJ4"
     }

@@ -13,7 +13,7 @@ internal enum PlaybackURLConstants {
     static let reverseProxyPort = Int(1234)
 }
 
-// TODO: not a public API. this extension has been modified. It has been hackily refactored to fit your proof-of-concept
+// TODO: not a public API. this extension has been modified. It has been hackily refactored to fit our proof-of-concept
 public extension AVPlayerItem {
 
     // Initializes a player item with a playback URL that
