@@ -217,46 +217,40 @@ internal class ShortFormAssetLoaderDelegate :
         return urlComponents.url! // TODO: yknow, maybe handle
     }
     
-    private func fetchInitSegment(initSegURL url: URL) throws -> Data {
-        let request = URLRequest(url: url)
-        
-        var segmentData: Data?
-        var responseCode: Int?
-        var error: Error?
-        
-        // you're allowed to be synchronous in an ResourceLoaderDelegate, so be synchronous
-        let dispatchGroup = DispatchGroup()
-        dispatchGroup.enter()
-        urlSession.dataTask(with: request) { data, response, err in
-            if let err {
-                error = err
-            } else if let response, let urlResponse = response as? HTTPURLResponse {
-                responseCode = urlResponse.statusCode
-            }
-            guard let data else {
-                return
-            }
+    private func fetchInitSegment(initSegURL url: URL) async throws -> Data {
+        return try await withCheckedThrowingContinuation { continuation in
+            let request = URLRequest(url: url)
             
-            segmentData = data
-            dispatchGroup.leave()
-        }
-        dispatchGroup.wait()
-        
-        if let segmentData {
-            return segmentData
-        } else {
-            if let responseCode {
-                throw ShortFormRequestError.httpStatus(url: url, responseCode: responseCode)
-            } else if let error {
-                throw ShortFormRequestError.because(url: url, cause: error)
-            } else {
-                throw ShortFormRequestError.unexpected(url: url, message: "failed with no info (womp)")
-            }
-        }
+            let task = urlSession.dataTask(with: request) { data, response, err in
+                if let err {
+                    continuation.resume(throwing: ShortFormRequestError.because(url: url, cause: err))
+                    return
+                } else if let response, let urlResponse = response as? HTTPURLResponse {
+                    continuation.resume(
+                        throwing: ShortFormRequestError.httpStatus(
+                            url: url, responseCode: urlResponse.statusCode
+                        )
+                    )
+                    return
+                }
+                guard let data else {
+                    continuation.resume(throwing: ShortFormRequestError.unexpected(
+                        url: url, message: "segment request failed without a status code or real error"
+                    ))
+                    return
+                }
+                
+                continuation.resume(returning: data)
+            } // ... urlSession.dataTask
+            
+            task.resume()
+        } // ... try await withCheckedThrowingContinuation
     }
 }
 
 internal class ShortFormMediaPlaylistGenerator {
+    static let mvhdPattern: Data = "mvhd".data(using: .utf8)!
+    
     let initSegmentData: Data
     
     init(initSegment: Data) {
