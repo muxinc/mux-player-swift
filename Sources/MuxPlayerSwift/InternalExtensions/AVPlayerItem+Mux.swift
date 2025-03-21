@@ -142,6 +142,8 @@ public extension AVPlayerItem {
     }
 }
 
+/// AVAssetResourceLoaderDelegate for loading Mux's short-form HLS media playlists
+/// Requests a well-formatted init segment and generates a media playlist based on what it got back
 internal class ShortFormAssetLoaderDelegate :
     NSObject, AVAssetResourceLoaderDelegate {
     
@@ -153,7 +155,8 @@ internal class ShortFormAssetLoaderDelegate :
         shouldWaitForLoadingOfRequestedResource loadingRequest: AVAssetResourceLoadingRequest
     ) -> Bool {
         if let url = loadingRequest.request.url,
-            isURLForShortform(url: url) {
+            isURLForShortform(url: url)
+        {
             let initSegmentURL = makeInitSegmentURL(playlistURL: url)
             PlayerSDK.shared.diagnosticsLogger.info(
                 "[shorform-test] initSegmentURL: \(initSegmentURL.absoluteString)"
@@ -217,6 +220,9 @@ internal class ShortFormAssetLoaderDelegate :
         return urlComponents.url! // TODO: yknow, maybe handle
     }
     
+    // TODO: What we really need, is a SegmentFetcher actor with a cancel method that will
+    //  cancel the URLSessionTask and also the SC Task that does this
+    // TODO: I made the thing I claimed we need, but let's try it before we go forward
     private func fetchInitSegment(initSegURL url: URL) async throws -> Data {
         return try await withCheckedThrowingContinuation { continuation in
             let request = URLRequest(url: url)
@@ -264,3 +270,104 @@ internal enum ShortFormRequestError: Error {
     case unexpected(url: URL?, message: String)
 }
 
+/// Fetches the resource at the URL specified by the given URLRequest. This class can only be used once. To make more requests, make more
+/// AsyncFetchers.
+/// Start fetching with ``fetch`` and cancel either by canceling your parent Task or out-of-band using ``cancel``
+internal actor AsyncFetcher {
+    // TODO: Can also use this for the other segments when we replace GCDWebServer but we gotta add a callback to deliver the Data in segments as it arrives.. No need to check cancellation while handling those buffers, since our cancel() method also cancels the task
+    let urlRequest: URLRequest
+    let urlSession: URLSession
+    
+    private var fetchTask: Task<Data, any Error>?
+    private var urlSessionTask: URLSessionTask?
+    
+    /// Fetches the resource specified by this actor's URLRequest. If the task was already started, awaits
+    /// the existing ongoing task, otherwise starts a new one. The Task runs in the parent context, and
+    /// cancels the URLSessionTask if it's canceled. You can also cancel out-of-band with ``cancel``
+    func fetch() async throws -> Data {
+        if let task = self.fetchTask {
+            return try await task.value
+        } else {
+            let task = Task {
+                return try await withTaskCancellationHandler(
+                    operation: { return try await doFetch() },
+                    onCancel: { Task.detached { await self.cancel() } }
+                )
+            }
+            self.fetchTask = task
+            return try await task.value
+        }
+    }
+    
+    func cancel() {
+        // also called internally to handle the parent task of doFetch getting cancelled
+        fetchTask?.cancel()
+        urlSessionTask?.cancel()
+    }
+    
+    /// handles cancellation if the parent task was canceled
+    private func maybeHandleCancellation() throws {
+        if Task.isCancelled {
+            cancel()
+            throw CancellationError()
+        }
+    }
+    
+    private func doFetch() async throws -> Data {
+        // parent task can become canceled while fetch() is still setting up
+        try maybeHandleCancellation()
+        
+        let data: Data = try await withCheckedThrowingContinuation { continuation in
+            let url = urlRequest.url!
+            let task = urlSession.dataTask(with: self.urlRequest) { data, response, err in
+                if let err {
+                    continuation.resume(throwing: ShortFormRequestError.because(url: url, cause: err))
+                    return
+                } else if let response, let urlResponse = response as? HTTPURLResponse {
+                    continuation.resume(
+                        throwing: RequestError.httpStatus(
+                            url: url, responseCode: urlResponse.statusCode
+                        )
+                    )
+                    return
+                }
+                guard let data else {
+                    continuation.resume(throwing: RequestError.unexpected(
+                        url: url, message: "segment request failed without a status code or real error"
+                    ))
+                    return
+                }
+                
+                continuation.resume(returning: data)
+            } // ... urlSession.dataTask
+            
+            self.urlSessionTask = task
+            task.resume()
+        } // ... try await withCheckedThrowingContinuation
+        
+        // parent can be canceled while awaiting the continuation (while the URLSessionTask is executing)
+        try maybeHandleCancellation()
+        
+        return data
+    }
+
+    init(
+        urlRequest: URLRequest,
+        urlSession: URLSession
+    ) {
+        self.urlRequest = urlRequest
+        self.urlSession = urlSession
+        self.fetchTask = nil
+        self.urlSessionTask = nil
+    }
+    
+    deinit {
+        self.cancel()
+    }
+    
+    enum RequestError: Error {
+        case because(url: URL, cause: any Error)
+        case httpStatus(url: URL, responseCode: Int)
+        case unexpected(url: URL?, message: String)
+    }
+}
