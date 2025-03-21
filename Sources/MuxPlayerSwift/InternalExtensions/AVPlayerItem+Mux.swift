@@ -270,8 +270,11 @@ internal enum ShortFormRequestError: Error {
     case unexpected(url: URL?, message: String)
 }
 
-/// Fetches the resource at the URL specified by the given URLRequest. This class can only be used once. To make more requests, make more
-/// AsyncFetchers.
+/// Fetches the resource at the URL specified by the given URLRequest. Handles the state of the underlying URLSesisonTask,
+/// canceling it if the parent task that started the fetch is ever canceled.
+///
+/// This class can only be used once. To make more requests, make more AsyncFetchers.
+///
 /// Start fetching with ``fetch`` and cancel either by canceling your parent Task or out-of-band using ``cancel``
 internal actor AsyncFetcher {
     // TODO: Can also use this for the other segments when we replace GCDWebServer but we gotta add a callback to deliver the Data in segments as it arrives.. No need to check cancellation while handling those buffers, since our cancel() method also cancels the task
@@ -299,6 +302,7 @@ internal actor AsyncFetcher {
         }
     }
     
+    /// Cancels the inner fetch task and url session task if required.
     func cancel() {
         // also called internally to handle the parent task of doFetch getting cancelled
         fetchTask?.cancel()
