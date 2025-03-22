@@ -302,7 +302,7 @@ internal actor AsyncFetcher {
         }
     }
     
-    /// Cancels the inner fetch task and url session task if required.
+    /// Cancels the inner fetch task and url session task if required. Call to cancel stuff this Actor is doing from out-of-band
     func cancel() {
         // also called internally to handle the parent task of doFetch getting cancelled
         fetchTask?.cancel()
@@ -318,9 +318,9 @@ internal actor AsyncFetcher {
     }
     
     private func doFetch() async throws -> Data {
-        // parent task can become canceled while fetch() is still setting up
-        try maybeHandleCancellation()
+        try maybeHandleCancellation() // throw rather than start the task
         
+        // TODO: wait, shit. MuxPlayerSwift is iOS 15+ so we can just use await urlSession.data() lmao
         let data: Data = try await withCheckedThrowingContinuation { continuation in
             let url = urlRequest.url!
             let task = urlSession.dataTask(with: self.urlRequest) { data, response, err in
@@ -345,11 +345,11 @@ internal actor AsyncFetcher {
                 continuation.resume(returning: data)
             } // ... urlSession.dataTask
             
-            self.urlSessionTask = task
             task.resume()
+            self.urlSessionTask = task
         } // ... try await withCheckedThrowingContinuation
         
-        // parent can be canceled while awaiting the continuation (while the URLSessionTask is executing)
+        // in case the SC task was cancelled during the I/O. NSURLErrorCancelled isn't guaranteed 
         try maybeHandleCancellation()
         
         return data
