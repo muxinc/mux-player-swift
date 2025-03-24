@@ -296,10 +296,9 @@ internal class ShortFormMediaPlaylistGenerator {
     static let movieHeaderType: Data = "mvhd".data(using: .ascii)!
     
     let initSegmentData: Data
-    let basePath: String
-    let host: String
     let playlistAttributes: PlaylistAttributes
-    let scheme: String
+    let originBase: URLComponents
+    let cacheProxyBase: URLComponents
     
     func playlistString() -> String {
         // Reminder: If we are generating playlists from inside the loader delegate, we need to point at the Reverse Proxy from here, for each segment (including the init segment, which we don't want to fetch again)
@@ -315,25 +314,27 @@ internal class ShortFormMediaPlaylistGenerator {
         return ""
     }
     
+    /// @param originBaseURL: An aboslute URL that points to the path where segments can be found (ie, `https://shortform.mux.com/abc23/`
+    /// @param cacheProxyURL: An absolute URL that points to the path where the cache proxy is (ie, `http://127.0.0.1:1234/`)
     init(
         initSegment: Data,
-        host: String,
-        scheme: String,
-        basePath: String,
+        originBaseURL: URL,
+        cacheProxyURL: URL,
         playlistAttributes: PlaylistAttributes
     ) {
         self.initSegmentData = initSegment
-        self.basePath = basePath
-        self.host = host
-        self.scheme = scheme
         self.playlistAttributes = playlistAttributes
+        
+        // since we are not resolvingAgainstBaseURL, there's no risk of these initializers returning nil
+        self.cacheProxyBase = URLComponents(url: cacheProxyURL, resolvingAgainstBaseURL: false)!
+        self.originBase = URLComponents(url: originBaseURL, resolvingAgainstBaseURL: false)!
     }
     
     struct PlaylistAttributes {
         let version: UInt
         // TODO: Mux Video's target duration is 5sec, but the test assets have a duration of 4(ish), possibly because they were created from an fmp4 with a ~4.1sec keyframe interval (and accompanying sidx)
         let targetDuration: UInt
-        let extinfSegmentDuration: Float? // inferred from targetDuration if not specified
+        let extinfSegmentDuration: Float? // assumed to be the target duration if not specified
     }
     
     private class Tags {
