@@ -302,8 +302,14 @@ internal class ShortFormMediaPlaylistGenerator {
     let scheme: String
     
     func playlistString() -> String {
+        // Reminder: If we are generating playlists from inside the loader delegate, we need to point at the Reverse Proxy from here, for each segment (including the init segment, which we don't want to fetch again)
+        
         let lines = [
-            Tags.extM3U()
+            Tags.extM3U(),
+            Tags.version(7),
+            Tags.mediaSequence(startingFromSequenceNumber: 0),
+            // TODO: Construct absolute URI? I think so, because we need to point to the reverse proxy
+            Tags.map(uri: "init.mp4", range: nil)
         ]
         
         return ""
