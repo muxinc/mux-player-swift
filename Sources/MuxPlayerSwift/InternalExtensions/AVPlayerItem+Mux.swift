@@ -148,6 +148,30 @@ public extension AVPlayerItem {
     }
 }
 
+internal class RequestLoggingAssetLoaderDelegate: NSObject, AVAssetResourceLoaderDelegate {
+    func resourceLoader(
+        _ resourceLoader: AVAssetResourceLoader,
+        shouldWaitForLoadingOfRequestedResource loadingRequest: AVAssetResourceLoadingRequest
+    ) -> Bool {
+        
+        Task.detached { [self] in
+            do {
+                print("Got request for URL \(loadingRequest.request.url)")
+                let (data, response) = try await URLSession.shared.data(for: loadingRequest.request)
+                
+                
+                // TODO: Set content type and length (from the response)
+                // TODO: maybe also isByteRangeAccessSupported
+                loadingRequest.finishLoading()
+            } catch {
+                loadingRequest.finishLoading(with: error)
+            }
+        }
+        
+        return true
+    }
+}
+
 /// AVAssetResourceLoaderDelegate for loading Mux's short-form HLS media playlists
 /// Requests a well-formatted init segment and generates a media playlist based on what it got back
 /// ``PlayerSDK`` retains a single instance of this Delegate, to be used by all AVURLAssets loading short-form playlists
@@ -188,6 +212,9 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
                 PlayerSDK.shared.diagnosticsLogger.debug("resourceLoader fetched \(segmentData.count) bytes")
                 
                 let playlistData = Data() // TODO
+                
+                // TODO: set content type to m3u8 and content length based on the generated playlist
+                
                 loadingRequest.dataRequest!.respond(with: playlistData)
                 // TODO: handle Errors by actually catching something :)
                 loadingRequest.finishLoading()
