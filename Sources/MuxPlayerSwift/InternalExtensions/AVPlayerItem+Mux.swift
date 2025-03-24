@@ -144,29 +144,49 @@ public extension AVPlayerItem {
 
 /// AVAssetResourceLoaderDelegate for loading Mux's short-form HLS media playlists
 /// Requests a well-formatted init segment and generates a media playlist based on what it got back
-internal class ShortFormAssetLoaderDelegate :
-    NSObject, AVAssetResourceLoaderDelegate {
+internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDelegate {
     
     // TODO: same as in the ReverseProxyServer, but maybe we have PlayerSDK specify this for consistency
     let urlSession: URLSession = URLSession.shared
+    
+    var initSegmentTask: Task<Void, any Error>? = nil
     
     func resourceLoader(
         _ resourceLoader: AVAssetResourceLoader,
         shouldWaitForLoadingOfRequestedResource loadingRequest: AVAssetResourceLoadingRequest
     ) -> Bool {
+        PlayerSDK.shared.diagnosticsLogger.debug("shouldWaitForLoadingOfRequestedResource: called")
         if let url = loadingRequest.request.url,
             isURLForShortform(url: url)
         {
+            PlayerSDK.shared.diagnosticsLogger.debug("WAS short-form URL")
+            
             let initSegmentURL = makeInitSegmentURL(playlistURL: url)
             PlayerSDK.shared.diagnosticsLogger.info(
                 "[shorform-test] initSegmentURL: \(initSegmentURL.absoluteString)"
             )
             
+            // TODO: init segments should be cached somewhere (but must generate a playlist 1st)
+            
             // check if init segment is cached already
             // Get init segment from wherever it's needed
             // cache init segment in the reverse proxy
-            // generate playlist from
+            // generate playlist from init segment
             
+            if initSegmentTask == nil {
+                PlayerSDK.shared.diagnosticsLogger.debug("Creating new init-segment fetch")
+                // Explicitly create a detached task (though Task {} would implicitly create a detached scope in this case)
+                initSegmentTask = Task.detached { [self] in
+                    let segmentData = try await fetchInitSegment(initSegmentURL: initSegmentURL)
+                    PlayerSDK.shared.diagnosticsLogger.debug("resourceLoader fetched \(segmentData.count)")
+                    
+                    let playlistData = Data() // TODO
+                    loadingRequest.dataRequest!.respond(with: playlistData)
+                }
+            } else {
+                PlayerSDK.shared.diagnosticsLogger.debug("Already had an init-segment task, do I even expect this if every fetch has its own isntance of the loader delegate?")
+            }
+
             return true
         } else {
             return false
@@ -220,10 +240,21 @@ internal class ShortFormAssetLoaderDelegate :
         return urlComponents.url! // TODO: yknow, maybe handle
     }
     
+    private func fetchInitSegment(initSegmentURL url: URL) async throws -> Data {
+        let request = URLRequest(url: url)
+        let (data, response) = try await urlSession.data(for: request)
+        let httpResponse = response as! HTTPURLResponse // TODO: unchecked cast safe in practice but eep
+        
+        PlayerSDK.shared.diagnosticsLogger.debug("fetchInitSegment: response code \(httpResponse.statusCode)")
+        
+        // init segments are really tiny and have no media data, so we don't need to stream them
+        return data
+    }
+    
     // TODO: What we really need, is a SegmentFetcher actor with a cancel method that will
     //  cancel the URLSessionTask and also the SC Task that does this
     // TODO: I made the thing I claimed we need, but let's try it before we go forward
-    private func fetchInitSegment(initSegURL url: URL) async throws -> Data {
+    private func fetchInitSegmentOldApis(initSegURL url: URL) async throws -> Data {
         return try await withCheckedThrowingContinuation { continuation in
             let request = URLRequest(url: url)
             
@@ -269,6 +300,14 @@ internal enum ShortFormRequestError: Error {
     case httpStatus(url: URL, responseCode: Int)
     case unexpected(url: URL?, message: String)
 }
+
+// So what to do now?
+//  1 Fetch the init segment and generate a media playlist from it
+//  2 Cache the init segment in memory in the ReverseProxyServer
+//  3 Find good criteria for evicting the init segment
+//      * Maybe when the AssetLoaderDelegate is deinitialized? (except we control the lifecycle of it)
+//      * CANNOT rely on LRU, since we don't ever want to re-fetch an init segment during play
+//      * CANNOT rely on anything, this entire player sdk has no way to clean up its own resources, since you can't make deinitializers with extensions, so we have no control over the lifecycle of any object in the entire player, other than asking clients to call stopMonioring when their viewcontroller disappears (which they can't do in a feed becuase the view in the cell could be reused... unless they disable reusing the cells, which will lead to garbage performance)
 
 /// Fetches the resource at the URL specified by the given URLRequest. Handles the state of the underlying URLSesisonTask,
 /// canceling it if the parent task that started the fetch is ever canceled.
