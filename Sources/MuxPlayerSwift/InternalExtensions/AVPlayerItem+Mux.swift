@@ -293,12 +293,83 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
 }
 
 internal class ShortFormMediaPlaylistGenerator {
-    static let mvhdPattern: Data = "mvhd".data(using: .utf8)!
+    static let movieHeaderType: Data = "mvhd".data(using: .ascii)!
     
     let initSegmentData: Data
+    let basePath: String
+    let host: String
+    let playlistAttributes: PlaylistAttributes
+    let scheme: String
     
-    init(initSegment: Data) {
+    func playlistString() -> String {
+        let lines = [
+            Tags.extM3U()
+        ]
+        
+        return ""
+    }
+    
+    init(
+        initSegment: Data,
+        host: String,
+        scheme: String,
+        basePath: String,
+        playlistAttributes: PlaylistAttributes
+    ) {
         self.initSegmentData = initSegment
+        self.basePath = basePath
+        self.host = host
+        self.scheme = scheme
+        self.playlistAttributes = playlistAttributes
+    }
+    
+    struct PlaylistAttributes {
+        let version: UInt
+        // TODO: Mux Video's target duration is 5sec, but the test assets have a duration of 4(ish), possibly because they were created from an fmp4 with a ~4.1sec keyframe interval (and accompanying sidx)
+        let targetDuration: UInt
+        let extinfSegmentDuration: Float? // inferred from targetDuration if not specified
+    }
+    
+    private class Tags {
+        static func extM3U() -> String {
+            return "#EXTM3U"
+        }
+        static func discontunityMarker() -> String {
+            return "#EXT-X-DISCONTINUITY"
+        }
+        static func version(_ version: UInt) -> String {
+            return "#EXT-X-VERSION:\(version)"
+        }
+        static func targetDuration(_ duration: UInt) -> String {
+            return "#EXT-X-TARGETDURATION:\(duration)"
+        }
+        static func mediaSequence(startingFromSequenceNumber sn: UInt) -> String {
+            return "#EXT-X-MEDIA-SEQUENCE:\(sn)"
+        }
+//        func map(uri: String, startingByte start: UInt?, offsetFromStart offset: UInt?) -> String {
+        static func map(uri: String, range: (UInt, UInt?)?) -> String {
+            let base = "#EXT-X-MAP:URI=\"\(uri)\""
+            if let (start, offset) = range {
+                if let offset {
+                    return "\(base),BYTERANGE=\"\(start)@\(offset)\""
+                } else {
+                    return "\(base),BYTERANGE=\"\(start)\""
+                }
+            } else {
+                return base
+            }
+        }
+        static func extinf(segmentDuration: Float, title: String?) -> String {
+            let base = "#EXTINF:\(String(describing: segmentDuration))"
+            if let title {
+                return "\(base),\(title)"
+            } else {
+                return base
+            }
+        }
+        static func endlist() -> String {
+            return "#EXT-X-ENDLIST"
+        }
     }
 }
 
