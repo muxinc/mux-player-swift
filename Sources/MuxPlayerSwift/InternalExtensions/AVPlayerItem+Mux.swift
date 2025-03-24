@@ -189,6 +189,8 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
                 
                 let playlistData = Data() // TODO
                 loadingRequest.dataRequest!.respond(with: playlistData)
+                // TODO: handle Errors by actually catching something :)
+                loadingRequest.finishLoading()
             }
 
             return true
@@ -308,10 +310,11 @@ internal class ShortFormMediaPlaylistGenerator {
             Tags.version(7),
             Tags.mediaSequence(startingFromSequenceNumber: 0),
             // TODO: Construct absolute URI? I think so, because we need to point to the reverse proxy
-            Tags.map(uri: "init.mp4", range: nil)
+            Tags.map(uri: "init.mp4", range: nil),
+            Tags.discontunityMarker()
         ]
         
-        return ""
+        return lines.joined(separator: "\n")
     }
     
     /// @param originBaseURL: An aboslute URL that points to the path where segments can be found (ie, `https://shortform.mux.com/abc23/`
@@ -332,9 +335,9 @@ internal class ShortFormMediaPlaylistGenerator {
     
     struct PlaylistAttributes {
         let version: UInt
-        // TODO: Mux Video's target duration is 5sec, but the test assets have a duration of 4(ish), possibly because they were created from an fmp4 with a ~4.1sec keyframe interval (and accompanying sidx)
+        // TODO: Mux Video's target duration is 5sec, but the test assets have a duration of 4(ish), possibly because they were created from an source with a ~4.1sec keyframe interval (and/or accompanying sidx)
         let targetDuration: UInt
-        let extinfSegmentDuration: Float? // assumed to be the target duration if not specified
+        let extinfSegmentDuration: Double? // assumed to be the target duration if not specified
     }
     
     private class Tags {
