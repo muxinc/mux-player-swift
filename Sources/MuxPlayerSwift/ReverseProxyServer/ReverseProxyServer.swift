@@ -100,6 +100,9 @@ class ReverseProxyServer {
             )
 
             if originURL.pathExtension == "m3u8" {
+                
+                // TODO: If we don't want to use a custom scheme then this is the place where we'd go
+                
                 let task = session.dataTask(
                     with: originURL
                 ) { data, response, error in

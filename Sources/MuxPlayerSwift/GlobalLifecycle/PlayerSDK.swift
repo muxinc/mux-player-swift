@@ -29,6 +29,15 @@ class PlayerSDK {
 
     let fairPlaySessionManager: FairPlayStreamingSessionManager
 
+    // MARK: things for shortform PoC
+    
+    // TODO: Only works if we have a custom url scheme
+    let resourceLoaderDelegate = ShortFormAssetLoaderDelegate()
+    let resourceLoaderDispatchQueue = DispatchQueue(label: "shortform-resource-loader")
+    
+    // TODO: not the final form. The real player will need to support an arbitrary number of these tasks, presumably cleaning up the tasks as they finish or something
+//    var shortFormPlaylistTask: Task<Data, any Error>?
+    
     convenience init() {
         let monitor = Monitor()
 
@@ -92,7 +101,11 @@ class PlayerSDK {
                 category: "External"
             )
         )
+        
         self.reverseProxyServer = ReverseProxyServer()
+        
+        // TODO: Maybe there's some other way but I don't care
+        self.enableLogging()
     }
 
     func enableLogging() {

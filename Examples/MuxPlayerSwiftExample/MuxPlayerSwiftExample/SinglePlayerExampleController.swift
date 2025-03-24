@@ -51,8 +51,8 @@ class SinglePlayerExampleController: UIViewController {
         "just-a-placeholder-now"
     }
     
-    // can also be a vercel deployment (once the pr is merged)
-    var baseTestServerURL = "http://127.0.0.1:8789"
+//    var baseTestServerURL = "http://127.0.0.1:8789"
+    var baseTestServerURL = "mux-short://127.0.0.1:8789"
 
     var url: String {
         "\(baseTestServerURL)/short-form-tests/v1/id-duration-in-init-segment/media.m3u8"

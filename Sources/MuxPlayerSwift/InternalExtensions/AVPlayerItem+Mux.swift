@@ -95,7 +95,13 @@ public extension AVPlayerItem {
             url: playbackURL
         )
         
-        // TODO: Delegate here
+        // TODO: won't be called at all for http/https, also we'd need our own dispatch queue here, which is a pointless pain
+        //  what we're doing instead is using the RPS to handle all the requests including the manifest
+        PlayerSDK.shared.diagnosticsLogger.info("setting delegate for AVURLAsset pointing to \(playbackURL.absoluteString)")
+        asset.resourceLoader.setDelegate(
+            PlayerSDK.shared.resourceLoaderDelegate,
+            queue: PlayerSDK.shared.resourceLoaderDispatchQueue
+        )
         
         self.init(
             asset: asset
@@ -144,18 +150,19 @@ public extension AVPlayerItem {
 
 /// AVAssetResourceLoaderDelegate for loading Mux's short-form HLS media playlists
 /// Requests a well-formatted init segment and generates a media playlist based on what it got back
+/// ``PlayerSDK`` retains a single instance of this Delegate, to be used by all AVURLAssets loading short-form playlists
 internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDelegate {
     
-    // TODO: same as in the ReverseProxyServer, but maybe we have PlayerSDK specify this for consistency
+    // TODO: same as in the ReverseProxyServer, but maybe we should have PlayerSDK provide a URLSession to both
     let urlSession: URLSession = URLSession.shared
-    
-    var initSegmentTask: Task<Void, any Error>? = nil
     
     func resourceLoader(
         _ resourceLoader: AVAssetResourceLoader,
         shouldWaitForLoadingOfRequestedResource loadingRequest: AVAssetResourceLoadingRequest
     ) -> Bool {
         PlayerSDK.shared.diagnosticsLogger.debug("shouldWaitForLoadingOfRequestedResource: called")
+        PlayerSDK.shared.diagnosticsLogger.debug("shouldWaitForLoadingOfRequestedResource: url is \(loadingRequest.request.url!)")
+        
         if let url = loadingRequest.request.url,
             isURLForShortform(url: url)
         {
@@ -173,18 +180,15 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
             // cache init segment in the reverse proxy
             // generate playlist from init segment
             
-            if initSegmentTask == nil {
-                PlayerSDK.shared.diagnosticsLogger.debug("Creating new init-segment fetch")
-                // Explicitly create a detached task (though Task {} would implicitly create a detached scope in this case)
-                initSegmentTask = Task.detached { [self] in
-                    let segmentData = try await fetchInitSegment(initSegmentURL: initSegmentURL)
-                    PlayerSDK.shared.diagnosticsLogger.debug("resourceLoader fetched \(segmentData.count)")
-                    
-                    let playlistData = Data() // TODO
-                    loadingRequest.dataRequest!.respond(with: playlistData)
-                }
-            } else {
-                PlayerSDK.shared.diagnosticsLogger.debug("Already had an init-segment task, do I even expect this if every fetch has its own isntance of the loader delegate?")
+            PlayerSDK.shared.diagnosticsLogger.debug("Creating new init-segment fetch")
+            // TODO: need to track these someplace (a Map in this object maybe) so we can cancel them
+            // Explicitly create a detached task (though Task {} would implicitly create a detached scope in this case)
+            Task.detached { [self] in
+                let segmentData = try await fetchInitSegment(initSegmentURL: initSegmentURL)
+                PlayerSDK.shared.diagnosticsLogger.debug("resourceLoader fetched \(segmentData.count) bytes")
+                
+                let playlistData = Data() // TODO
+                loadingRequest.dataRequest!.respond(with: playlistData)
             }
 
             return true
@@ -230,12 +234,15 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
     
     private func makeInitSegmentURL(playlistURL: URL) -> URL {
         // current path: some-host/short-form-tests/v1/[playbackID]/media.m3u8
-        let playbackID = playlistURL.pathComponents[2]
+        let playbackID = playlistURL.pathComponents[3]
         let host = playlistURL.host
+        let port = playlistURL.port
         
         var urlComponents = URLComponents()
         urlComponents.host = host
-        urlComponents.path = "short-form-tests/v1/\(playbackID)/init.mp4"
+        urlComponents.port = port
+        urlComponents.path = "/short-form-tests/v1/\(playbackID)/init.mp4"
+        urlComponents.scheme = "http"
         
         return urlComponents.url! // TODO: yknow, maybe handle
     }
