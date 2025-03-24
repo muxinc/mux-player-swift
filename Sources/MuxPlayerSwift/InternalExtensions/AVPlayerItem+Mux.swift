@@ -98,8 +98,13 @@ public extension AVPlayerItem {
         // TODO: won't be called at all for http/https, also we'd need our own dispatch queue here, which is a pointless pain
         //  what we're doing instead is using the RPS to handle all the requests including the manifest
         PlayerSDK.shared.diagnosticsLogger.info("setting delegate for AVURLAsset pointing to \(playbackURL.absoluteString)")
+//        asset.resourceLoader.setDelegate(
+//            PlayerSDK.shared.resourceLoaderDelegate,
+//            queue: PlayerSDK.shared.resourceLoaderDispatchQueue
+//        )
+        
         asset.resourceLoader.setDelegate(
-            PlayerSDK.shared.resourceLoaderDelegate,
+            PlayerSDK.shared.loggingDelegate,
             queue: PlayerSDK.shared.resourceLoaderDispatchQueue
         )
         
@@ -149,6 +154,13 @@ public extension AVPlayerItem {
 }
 
 internal class RequestLoggingAssetLoaderDelegate: NSObject, AVAssetResourceLoaderDelegate {
+    
+    // OKAY WHAT HAVE WE FOUND? You can't actually send segment data this way. AVPlayer just ignores it undocumented-ly
+    //  We need to redirect to ReverseProxyServer (either in this request or by rewriting the manifest)
+    // https://developer.apple.com/forums/thread/113063
+    // https://stackoverflow.com/questions/39962882/video-streaming-fails-when-using-avassetresourceloader
+    // (both from this blog: https://medium.com/@alinekborges/urlsession-tampering-with-avplayer-03bc8f41156c)
+    
     func resourceLoader(
         _ resourceLoader: AVAssetResourceLoader,
         shouldWaitForLoadingOfRequestedResource loadingRequest: AVAssetResourceLoadingRequest
@@ -156,14 +168,53 @@ internal class RequestLoggingAssetLoaderDelegate: NSObject, AVAssetResourceLoade
         
         Task.detached { [self] in
             do {
-                print("Got request for URL \(loadingRequest.request.url)")
-                let (data, response) = try await URLSession.shared.data(for: loadingRequest.request)
+                let incomingReq = loadingRequest.request
+                let specialURL = incomingReq.url!
+                print("LDELEGATE: Got request \(loadingRequest.request)")
+                print("LDELEGATE: Got request for URL \(loadingRequest.request.url)")
+                print("LDELEGATE: Data Request is \(loadingRequest.dataRequest)")
+                print("LDELEGATE: Data Request for all bytes? \(loadingRequest.dataRequest?.requestsAllDataToEndOfResource)")
+                print("LDELEGATE: Data Request for offset \(loadingRequest.dataRequest?.requestedOffset)")
+                print("LDELEGATE: Data Request .. and legnth \(loadingRequest.dataRequest?.requestedLength)")
+
+                let outboundURL = {
+                    var comps = URLComponents(url: specialURL, resolvingAgainstBaseURL: false)!
+                    comps.scheme = "http" // TODO: if this wasn't just a quick logging thing, try not losing the scheme
+                    return comps.url!
+                }()
+                var actualRequest = URLRequest(url: outboundURL)
+                actualRequest.httpMethod = incomingReq.httpMethod
+                
+                print("LDELEGATE: Actually requesting URL \(actualRequest.url)")
+                
+                let (data, response) = try await URLSession.shared.data(for: actualRequest)
+                
+                print("LDELEGATE: Response Code \((response as! HTTPURLResponse).statusCode)")
+                print("LDELEGATE: Response Len \(response.expectedContentLength)")
+                print("LDELEGATE: Response MIME \(response.mimeType)")
+                print("LDELEGATE: Response data is \(data.count) bytes")
                 
                 
-                // TODO: Set content type and length (from the response)
-                // TODO: maybe also isByteRangeAccessSupported
+                // TODO: Works for init segment too??
+                let responseType: String? = {
+                    if response.mimeType == "video/mp4" {
+                        return AVFileType.mp4.rawValue
+                    } else {
+                        return response.mimeType
+                    }
+                }()
+                
+                print("LDELEGATE: responding with type \(responseType)")
+//                loadingRequest.contentInformationRequest?.contentType = response.mimeType
+                loadingRequest.contentInformationRequest?.contentType = responseType!
+                loadingRequest.contentInformationRequest?.contentLength = Int64(data.count)
+//                loadingRequest.contentInformationRequest?.contentLength = response.expectedContentLength
+                loadingRequest.contentInformationRequest?.isByteRangeAccessSupported = true
+                
+                loadingRequest.dataRequest!.respond(with: data)
                 loadingRequest.finishLoading()
             } catch {
+                print("\nLDELEGATE: ERROR! \(error.localizedDescription)")
                 loadingRequest.finishLoading(with: error)
             }
         }

@@ -34,6 +34,8 @@ class PlayerSDK {
     // TODO: Only works if we have a custom url scheme
     let resourceLoaderDelegate = ShortFormAssetLoaderDelegate()
     let resourceLoaderDispatchQueue = DispatchQueue(label: "shortform-resource-loader")
+    // just for a quick sanity test
+    let loggingDelegate = RequestLoggingAssetLoaderDelegate()
     
     // TODO: not the final form. The real player will need to support an arbitrary number of these tasks, presumably cleaning up the tasks as they finish or something
 //    var shortFormPlaylistTask: Task<Data, any Error>?
