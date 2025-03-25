@@ -330,6 +330,8 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
         return urlComponents.url! // TODO: yknow, maybe handle
     }
     
+
+    
     private func fetchInitSegment(initSegmentURL url: URL) async throws -> Data {
         let request = URLRequest(url: url)
         let (data, response) = try await urlSession.data(for: request)
@@ -381,7 +383,9 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
 
 internal class ShortFormMediaPlaylistGenerator {
     static let movieHeaderType: Data = "mvhd".data(using: .ascii)!
-    
+    static let movieHeaderTimeScaleOffset = 20
+    static let movieHeaderDurationOffset = 24
+
     let initSegmentData: Data
     let playlistAttributes: PlaylistAttributes
     let originBase: URLComponents
@@ -399,7 +403,36 @@ internal class ShortFormMediaPlaylistGenerator {
             Tags.discontunityMarker()
         ]
         
+        // Ok, now we need to 1) Extract the duration from the init segment data 2) use the power of division to get the duration in segments and 3) generate EXTINF/segment-urls for each and 4) Point to the caching proxy (for the proof-of-concept, can do this in all cases)
+        
         return lines.joined(separator: "\n")
+    }
+    
+    private func findMVHDDurationSec(mp4Data: Data) throws -> TimeInterval? {
+        
+        // find the mvhd
+        // Look back 1 byte for the size (for safety)
+        // if the duration and timescale are inside the mvhd (for safety):
+        //  extract them from the Data and return floating point seconds
+        let mvhdTypeRange = mp4Data.range(of: ShortFormMediaPlaylistGenerator.movieHeaderType)
+        guard let mvhdTypeRange else {
+            throw ShortFormRequestError.unexpected(message: "no mvhd found in int segment")
+        }
+        // TODO: i don't think this is reachable? If the data isn't found, that' sa nil
+        if mvhdTypeRange.isEmpty {
+            throw ShortFormRequestError.unexpected(message: "no mvhd found in int segment")
+        }
+        
+        let boxStart = Int32(mvhdTypeRange.startIndex - 4) // 4 bytes for the size field
+        guard boxStart < 0 else {
+            throw ShortFormRequestError.unexpected(message: "mvhd start was out of bounds")
+        }
+        let boxSize = mp4Data[boxStart..<(boxStart + 4)].withUnsafeBytes { bytePointer in
+            return bytePointer.load(as: Int32.self).bigEndian
+        }
+        let boxEnd = boxStart + boxSize // not inclusive
+        
+        return 0
     }
     
     /// @param originBaseURL: An aboslute URL that points to the path where segments can be found (ie, `https://shortform.mux.com/abc23/`
@@ -472,6 +505,7 @@ internal enum ShortFormRequestError: Error {
     case because(url: URL, cause: any Error)
     case httpStatus(url: URL, responseCode: Int)
     case unexpected(url: URL?, message: String)
+    case unexpected(message: String)
 }
 
 // So what to do now?
