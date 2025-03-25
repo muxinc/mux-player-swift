@@ -98,15 +98,15 @@ public extension AVPlayerItem {
         // TODO: won't be called at all for http/https, also we'd need our own dispatch queue here, which is a pointless pain
         //  what we're doing instead is using the RPS to handle all the requests including the manifest
         PlayerSDK.shared.diagnosticsLogger.info("setting delegate for AVURLAsset pointing to \(playbackURL.absoluteString)")
-//        asset.resourceLoader.setDelegate(
-//            PlayerSDK.shared.resourceLoaderDelegate,
-//            queue: PlayerSDK.shared.resourceLoaderDispatchQueue
-//        )
-        
         asset.resourceLoader.setDelegate(
-            PlayerSDK.shared.loggingDelegate,
+            PlayerSDK.shared.resourceLoaderDelegate,
             queue: PlayerSDK.shared.resourceLoaderDispatchQueue
         )
+        
+//        asset.resourceLoader.setDelegate(
+//            PlayerSDK.shared.loggingDelegate,
+//            queue: PlayerSDK.shared.resourceLoaderDispatchQueue
+//        )
         
         self.init(
             asset: asset
@@ -264,8 +264,10 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
                 
                 let playlistData = Data() // TODO
                 
-                // TODO: set content type to m3u8 and content length based on the generated playlist
-                
+//                loadingRequest.contentInformationRequest?.contentType = responseType!
+//                loadingRequest.contentInformationRequest?.contentLength = Int64(data.count)
+//                loadingRequest.contentInformationRequest?.isByteRangeAccessSupported = true
+
                 loadingRequest.dataRequest!.respond(with: playlistData)
                 // TODO: handle Errors by actually catching something :)
                 loadingRequest.finishLoading()
@@ -309,6 +311,7 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
         
         // expected path (for the proof-of-concept) "short-form-tests/v1/playbackID/media.m3u8"
         let isShortForm = url.pathComponents.contains { $0 == "short-form-tests" }
+            && url.lastPathComponent == "media.m3u8"
         return isShortForm
     }
     
@@ -333,6 +336,10 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
         let httpResponse = response as! HTTPURLResponse // TODO: unchecked cast safe in practice but eep
         
         PlayerSDK.shared.diagnosticsLogger.debug("fetchInitSegment: response code \(httpResponse.statusCode)")
+        
+        if (httpResponse.statusCode != 200) {
+            throw ShortFormRequestError.httpStatus(url: url, responseCode: httpResponse.statusCode)
+        }
         
         // init segments are really tiny and have no media data, so we don't need to stream them
         return data
