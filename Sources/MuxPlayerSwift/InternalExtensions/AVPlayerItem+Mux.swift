@@ -258,20 +258,35 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
             PlayerSDK.shared.diagnosticsLogger.debug("Creating new init-segment fetch")
             // TODO: need to track these someplace (a Map in this object maybe) so we can cancel them
             // Explicitly create a detached task (though Task {} would implicitly create a detached scope in this case)
-            Task.detached { [self] in
+            Task.detached { [self] in do {
                 let segmentData = try await fetchInitSegment(initSegmentURL: initSegmentURL)
                 PlayerSDK.shared.diagnosticsLogger.debug("resourceLoader fetched \(segmentData.count) bytes")
                 
+                let playlistString = try ShortFormMediaPlaylistGenerator(
+                    initSegment: segmentData,
+                    originBaseURL: URL(string: "https://mux.com")!, // TODO: Real URL
+                    cacheProxyBaseURL: URL(string: "https://mux.com")!, // TODO: Real URL
+                    playlistAttributes: ShortFormMediaPlaylistGenerator.PlaylistAttributes(
+                        version: 7,
+                        targetDuration: 5, // TODO: wouldn't a mux video asset have 6?
+                        extinfSegmentDuration: 5 // TODO: wouldn't a mux video asset have 5?
+//                        targetDuration: 4, // TODO: wouldn't a mux video asset have 6?
+//                        extinfSegmentDuration: 4.16667 // TODO: wouldn't a mux video asset have 5?
+                    )
+                ).playlistString()
+                
                 let playlistData = Data() // TODO
                 
-//                loadingRequest.contentInformationRequest?.contentType = responseType!
-//                loadingRequest.contentInformationRequest?.contentLength = Int64(data.count)
-//                loadingRequest.contentInformationRequest?.isByteRangeAccessSupported = true
-
+                //                loadingRequest.contentInformationRequest?.contentType = responseType!
+                //                loadingRequest.contentInformationRequest?.contentLength = Int64(data.count)
+                //                loadingRequest.contentInformationRequest?.isByteRangeAccessSupported = true
+                
                 loadingRequest.dataRequest!.respond(with: playlistData)
                 // TODO: handle Errors by actually catching something :)
                 loadingRequest.finishLoading()
-            }
+            } catch {
+                PlayerSDK.shared.diagnosticsLogger.error("Error caught while generating playlist")
+            }}
 
             return true
         } else {
@@ -383,15 +398,17 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
 
 internal class ShortFormMediaPlaylistGenerator {
     static let movieHeaderType: Data = "mvhd".data(using: .ascii)! // not a risky `!` with low-order chars
-    static let movieHeaderTimeScaleOffset: Int32 = 24
-    static let movieHeaderDurationOffset: Int32 = 28
+    // relative to the start of the box
+    static let movieHeaderTimeScaleOffset: Int32 = 20
+    // relative to the start of the box
+    static let movieHeaderDurationOffset: Int32 = 24
 
     let initSegmentData: Data
     let playlistAttributes: PlaylistAttributes
     let originBase: URLComponents
     let cacheProxyBase: URLComponents
     
-    func playlistString() -> String {
+    func playlistString() throws -> String {
         // Reminder: If we are generating playlists from inside the loader delegate, we need to point at the Reverse Proxy from here, for each segment (including the init segment, which we don't want to fetch again)
         
         let lines = [
@@ -402,6 +419,21 @@ internal class ShortFormMediaPlaylistGenerator {
             Tags.map(uri: "init.mp4", range: nil),
             Tags.discontunityMarker()
         ]
+        
+        // TODO: Might want to check the trak's too, and take the longest duration(?)
+        let mvhdDuration = try findMVHDDurationSec(mp4Data: initSegmentData)
+        let segmentDuration = playlistAttributes.extinfSegmentDuration
+            ?? Double(playlistAttributes.targetDuration)
+        let numberOfSegments = mvhdDuration / segmentDuration
+        
+//        let segmentDurationByTargetOnly = Double(playlistAttributes.targetDuration)
+//        let numberOfSegmentsByTargetOnly = mvhdDuration / segmentDurationByTargetOnly
+
+        // What do we want here? The int-part of the number of segments, plus another segment with whatever is left (some fraction of a segment)
+        // So we can subtract off the number of whole segments.. If whatver is left is greater than FLT_EPSILON, then we have one more segment to put in the platlist
+        let wholeSegments = floor(numberOfSegments)
+        
+        // TODO: Last segment
         
         // Ok, now we need to 1) Extract the duration from the init segment data 2) use the power of division to get the duration in segments and 3) generate EXTINF/segment-urls for each and 4) Point to the caching proxy (for the proof-of-concept, can do this in all cases)
         
@@ -415,7 +447,7 @@ internal class ShortFormMediaPlaylistGenerator {
         }
         
         let boxStart = Int32(mvhdTypeRange.startIndex - 4) // 4 bytes for the size field
-        guard boxStart < 0 else {
+        guard boxStart >= 0 else {
             throw ShortFormRequestError.unexpected(message: "mvhd start was out of bounds")
         }
         let boxSize = try readInt32(data: mp4Data, at: boxStart)
@@ -447,14 +479,14 @@ internal class ShortFormMediaPlaylistGenerator {
     init(
         initSegment: Data,
         originBaseURL: URL,
-        cacheProxyURL: URL,
+        cacheProxyBaseURL: URL,
         playlistAttributes: PlaylistAttributes
     ) {
         self.initSegmentData = initSegment
         self.playlistAttributes = playlistAttributes
         
         // since we are not resolvingAgainstBaseURL, there's no risk of these initializers returning nil
-        self.cacheProxyBase = URLComponents(url: cacheProxyURL, resolvingAgainstBaseURL: false)!
+        self.cacheProxyBase = URLComponents(url: cacheProxyBaseURL, resolvingAgainstBaseURL: false)!
         self.originBase = URLComponents(url: originBaseURL, resolvingAgainstBaseURL: false)!
     }
     
