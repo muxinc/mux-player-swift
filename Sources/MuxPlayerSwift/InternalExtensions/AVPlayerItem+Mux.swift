@@ -382,9 +382,9 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
 }
 
 internal class ShortFormMediaPlaylistGenerator {
-    static let movieHeaderType: Data = "mvhd".data(using: .ascii)!
-    static let movieHeaderTimeScaleOffset = 20
-    static let movieHeaderDurationOffset = 24
+    static let movieHeaderType: Data = "mvhd".data(using: .ascii)! // not a risky `!` with low-order chars
+    static let movieHeaderTimeScaleOffset: Int32 = 24
+    static let movieHeaderDurationOffset: Int32 = 28
 
     let initSegmentData: Data
     let playlistAttributes: PlaylistAttributes
@@ -408,18 +408,9 @@ internal class ShortFormMediaPlaylistGenerator {
         return lines.joined(separator: "\n")
     }
     
-    private func findMVHDDurationSec(mp4Data: Data) throws -> TimeInterval? {
-        
-        // find the mvhd
-        // Look back 1 byte for the size (for safety)
-        // if the duration and timescale are inside the mvhd (for safety):
-        //  extract them from the Data and return floating point seconds
+    private func findMVHDDurationSec(mp4Data: Data) throws -> TimeInterval {
         let mvhdTypeRange = mp4Data.range(of: ShortFormMediaPlaylistGenerator.movieHeaderType)
-        guard let mvhdTypeRange else {
-            throw ShortFormRequestError.unexpected(message: "no mvhd found in int segment")
-        }
-        // TODO: i don't think this is reachable? If the data isn't found, that' sa nil
-        if mvhdTypeRange.isEmpty {
+        guard let mvhdTypeRange, !mvhdTypeRange.isEmpty else {
             throw ShortFormRequestError.unexpected(message: "no mvhd found in int segment")
         }
         
@@ -427,12 +418,28 @@ internal class ShortFormMediaPlaylistGenerator {
         guard boxStart < 0 else {
             throw ShortFormRequestError.unexpected(message: "mvhd start was out of bounds")
         }
-        let boxSize = mp4Data[boxStart..<(boxStart + 4)].withUnsafeBytes { bytePointer in
+        let boxSize = try readInt32(data: mp4Data, at: boxStart)
+        let boxEnd = boxStart + boxSize // not inclusive
+        guard boxEnd <= mp4Data.count else {
+            throw ShortFormRequestError.unexpected(message: "mvhd end was out of bounds")
+        }
+        
+        let timescaleStart = boxStart + ShortFormMediaPlaylistGenerator.movieHeaderTimeScaleOffset
+        let durationStart = boxStart + ShortFormMediaPlaylistGenerator.movieHeaderDurationOffset
+        let timescale = try readInt32(data: mp4Data, at: timescaleStart)
+        let duration = try readInt32(data: mp4Data, at: durationStart)
+        
+        return Double(duration) / Double(timescale)
+    }
+    
+    /// Reads an int32 out of the given data.
+    private func readInt32(data: Data, at offset: Int32) throws -> Int32 {
+        guard data.count >= 4 && offset < data.count - 4 else {
+            throw ShortFormRequestError.unexpected(message: "readInt32: out of bounds")
+        }
+        return data[offset..<(offset + 4)].withUnsafeBytes { bytePointer in
             return bytePointer.load(as: Int32.self).bigEndian
         }
-        let boxEnd = boxStart + boxSize // not inclusive
-        
-        return 0
     }
     
     /// @param originBaseURL: An aboslute URL that points to the path where segments can be found (ie, `https://shortform.mux.com/abc23/`
