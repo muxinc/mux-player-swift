@@ -294,7 +294,6 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
                 loadingRequest.contentInformationRequest?.isByteRangeAccessSupported = true
                 
                 loadingRequest.dataRequest!.respond(with: playlistData)
-                // TODO: handle Errors by actually catching something :)
                 loadingRequest.finishLoading()
             } catch {
                 PlayerSDK.shared.diagnosticsLogger.error("Error caught while generating playlist")
@@ -343,18 +342,7 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
     }
     
     private func makeInitSegmentURL(playlistURL: URL) -> URL {
-        // current path: some-host/short-form-tests/v1/[playbackID]/media.m3u8
-        let playbackID = playlistURL.pathComponents[3]
-        let host = playlistURL.host
-        let port = playlistURL.port
-        
-        var urlComponents = URLComponents()
-        urlComponents.host = host
-        urlComponents.port = port
-        urlComponents.path = "/short-form-tests/v1/\(playbackID)/init.mp4"
-        urlComponents.scheme = "http"
-        
-        return urlComponents.url! // TODO: yknow, maybe handle
+        return URL(string:"\(makeOriginBaseURL(playlistURL: playlistURL))/init.mp4")!
     }
     
     private func makeOriginBaseURL(playlistURL: URL) -> URL {
@@ -447,7 +435,9 @@ internal class ShortFormMediaPlaylistGenerator {
         ]
         
         // TODO: Might want to check the trak's too, and take the longest duration(?)
+        // TODO: The production impl of this may depend on a source of duration other than spec-deviant init segments
         let mvhdDuration = try findMVHDDurationSec(mp4Data: initSegmentData)
+        
         let segmentDuration = playlistAttributes.extinfSegmentDuration
             ?? Double(playlistAttributes.targetDuration)
         let segmentsPerStream = mvhdDuration / segmentDuration
@@ -461,11 +451,13 @@ internal class ShortFormMediaPlaylistGenerator {
             segmentLines.append(Tags.extinf(segmentDuration: segmentDuration, title: nil))
             segmentLines.append(segmentBasename)
         }
-        // TODO: What if we don't have a last segment (ie, if lastSegmentDuration is 0, or 0 within some tolerance)
-        segmentLines.append(Tags.extinf(segmentDuration: lastSegmentDuration, title: nil))
-        segmentLines.append("\(originBaseURLStr)/\(Int(numberOfSegments - 1)).mp4")
         
-        // TODO: ffmpeg generates one really short segment at the end. I think it has the last audio sample in it (since the 'fake mez' we generated test assets from has slightly longer audio than video)
+        // Equal when the duration of the asset is an exact multiple of the segment duration
+        if wholeSegments != numberOfSegments {
+            segmentLines.append(Tags.extinf(segmentDuration: lastSegmentDuration, title: nil))
+            segmentLines.append("\(originBaseURLStr)/\(Int(numberOfSegments - 1)).mp4")
+            
+        }
         // i promise "postamble" is a real word
         let postambleLines = [
             Tags.endlist()
