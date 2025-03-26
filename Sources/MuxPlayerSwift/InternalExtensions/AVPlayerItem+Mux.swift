@@ -169,6 +169,10 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
             PlayerSDK.shared.diagnosticsLogger.debug("WAS short-form URL")
             // We are definitely not in an SC context here, just explicity make a new context
             fetchTask = Task.detached { [self] in
+                // TODO: Proof-of-concept just always uses the proxy cache
+                // TODO: Cache init segments in mem (init segments are smaller than the generated playlists)
+                await MainActor.run { PlayerSDK.shared.reverseProxyServer.start() }
+                
                 do {
                     try await answerRequestForPlaylist(
                         resourceLoadingRequest: loadingRequest,
@@ -227,7 +231,7 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
         ).playlistString()
         
         
-        PlayerSDK.shared.diagnosticsLogger.debug("generated playlist:\n\(playlistString)")
+        //PlayerSDK.shared.diagnosticsLogger.debug("generated playlist:\n\(playlistString)")
 
         let playlistData = playlistString.data(using: .utf8)
         guard let playlistData else {
@@ -354,9 +358,14 @@ internal class ShortFormMediaPlaylistGenerator {
         // Equal when the duration of the asset is an exact multiple of the segment duration
         if wholeSegments != numberOfSegments {
             segmentLines.append(Tags.extinf(segmentDuration: lastSegmentDuration, title: nil))
-            segmentLines.append("\(originBaseURLStr)/\(Int(numberOfSegments - 1)).mp4")
-            
+            //            segmentLines.append("\(originBaseURLStr)/\(Int(numberOfSegments - 1)).mp4")
+            segmentLines.append(
+                makeCacheProxyURL(
+                    forFullURL: URL(string: "\(originBaseURLStr)/\(Int(numberOfSegments - 1)).mp4")!
+                ).absoluteString
+            )
         }
+        
         // i promise "postamble" is a real word
         let postambleLines = [
             Tags.endlist()

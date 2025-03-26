@@ -276,6 +276,10 @@ class ReverseProxyServer {
         ) { [weak self] request, completion in
             
             PlayerSDK.shared.diagnosticsLogger.debug("Got segment Request to \(request.url.absoluteString)")
+            if request.url.lastPathComponent == "init.mp4" {
+                
+                PlayerSDK.shared.diagnosticsLogger.debug("!!! INIT SEGMENT REQUESTED")
+            }
             
             guard let self = self else {
                 return completion(
