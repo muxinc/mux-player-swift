@@ -271,7 +271,7 @@ class ReverseProxyServer {
     private func setupCMAFSegmentHandler() {
         self.webServer.addHandler(
             forMethod: "GET",
-            pathRegex: "^/.*\\.m4s$",
+            pathRegex: "^/.*\\.(m4s|mp4)$", // TODO: For the shortform proposal: test assets crrently have mp4
             request: GCDWebServerRequest.self
         ) { [weak self] request, completion in
 
