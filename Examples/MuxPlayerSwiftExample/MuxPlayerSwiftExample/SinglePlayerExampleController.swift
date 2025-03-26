@@ -58,7 +58,7 @@ class SinglePlayerExampleController: UIViewController {
 
     var url: String {
 //        "\(baseTestServerURL)/short-form-tests/v1/id-single-mp-spec-compliant/media.m3u8"
-        "\(baseTestServerURL)/short-form-tests/v1/id-duration-in-init-segment/media.m3u8"
+        "\(baseTestServerURL)/short-form-tests/v1/id-duration-600s-in-init-segment/media.m3u8"
         //        "\(baseTestServerURL)/av-muxed-media-duration-in-init-seg.m3u8"
 //        "\(baseTestServerURL)/av-muxed-media.m3u8"
         //ProcessInfo.processInfo.playbackID ?? "qxb01i6T202018GFS02vp9RIe01icTcDCjVzQpmaB00CUisJ4"

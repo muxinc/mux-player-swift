@@ -268,10 +268,10 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
                     cacheProxyBaseURL: URL(string: "https://mux.com")!, // TODO: Real URL
                     playlistAttributes: ShortFormMediaPlaylistGenerator.PlaylistAttributes(
                         version: 7,
-                        targetDuration: 5, // TODO: wouldn't a mux video asset have 6?
-                        extinfSegmentDuration: 5 // TODO: wouldn't a mux video asset have 5?
-//                        targetDuration: 4, // TODO: wouldn't a mux video asset have 6?
-//                        extinfSegmentDuration: 4.16667 // TODO: wouldn't a mux video asset have 5?
+//                        targetDuration: 5, // TODO: wouldn't a mux video asset have 6?
+//                        extinfSegmentDuration: 5 // TODO: wouldn't a mux video asset have 5?
+                        targetDuration: 4, // TODO: wouldn't a mux video asset have 6?
+                        extinfSegmentDuration: 4.16667 // TODO: wouldn't a mux video asset have 5?
                     )
                 ).playlistString()
                 
@@ -399,9 +399,9 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
 internal class ShortFormMediaPlaylistGenerator {
     static let movieHeaderType: Data = "mvhd".data(using: .ascii)! // not a risky `!` with low-order chars
     // relative to the start of the box
-    static let movieHeaderTimeScaleOffset: Int32 = 20
+    static let movieHeaderTimeScaleOffset: Int = 20
     // relative to the start of the box
-    static let movieHeaderDurationOffset: Int32 = 24
+    static let movieHeaderDurationOffset: Int = 24
 
     let initSegmentData: Data
     let playlistAttributes: PlaylistAttributes
@@ -424,20 +424,36 @@ internal class ShortFormMediaPlaylistGenerator {
         let mvhdDuration = try findMVHDDurationSec(mp4Data: initSegmentData)
         let segmentDuration = playlistAttributes.extinfSegmentDuration
             ?? Double(playlistAttributes.targetDuration)
-        let numberOfSegments = mvhdDuration / segmentDuration
+        let segmentsPerStream = mvhdDuration / segmentDuration
+        let numberOfSegments = ceil(segmentsPerStream) // including the last segment
+        let wholeSegments = floor(segmentsPerStream)
+        let lastSegmentDuration = (numberOfSegments - wholeSegments) * segmentDuration
         
+        var segmentLines: [String] = []
+        for segmentNumber in 0..<Int(wholeSegments) {
+            let segmentBasename = "\(segmentNumber).mp4"
+            segmentLines.append(Tags.extinf(segmentDuration: segmentDuration, title: nil))
+            segmentLines.append(segmentBasename)
+        }
+        // TODO: What if we don't have a last segment (ie, if lastSegmentDuration is 0, or 0 within some tolerance)
+        segmentLines.append(Tags.extinf(segmentDuration: lastSegmentDuration, title: nil))
+        segmentLines.append("\(Int(numberOfSegments)).mp4")
+        
+        // TODO: ffmpeg always geneates one more segment with a really small duration. What is with that
+        
+        let numSegUlp = segmentsPerStream.ulp
+        let numSegNextUp = segmentsPerStream.nextUp
+        let numSegNextDown = segmentsPerStream.nextDown
 //        let segmentDurationByTargetOnly = Double(playlistAttributes.targetDuration)
 //        let numberOfSegmentsByTargetOnly = mvhdDuration / segmentDurationByTargetOnly
 
         // What do we want here? The int-part of the number of segments, plus another segment with whatever is left (some fraction of a segment)
-        // So we can subtract off the number of whole segments.. If whatver is left is greater than FLT_EPSILON, then we have one more segment to put in the platlist
-        let wholeSegments = floor(numberOfSegments)
         
         // TODO: Last segment
         
         // Ok, now we need to 1) Extract the duration from the init segment data 2) use the power of division to get the duration in segments and 3) generate EXTINF/segment-urls for each and 4) Point to the caching proxy (for the proof-of-concept, can do this in all cases)
         
-        return lines.joined(separator: "\n")
+        return (lines + segmentLines).joined(separator: "\n")
     }
     
     private func findMVHDDurationSec(mp4Data: Data) throws -> TimeInterval {
@@ -446,12 +462,12 @@ internal class ShortFormMediaPlaylistGenerator {
             throw ShortFormRequestError.unexpected(message: "no mvhd found in int segment")
         }
         
-        let boxStart = Int32(mvhdTypeRange.startIndex - 4) // 4 bytes for the size field
+        let boxStart = mvhdTypeRange.startIndex - 4 // 4 bytes for the size field
         guard boxStart >= 0 else {
             throw ShortFormRequestError.unexpected(message: "mvhd start was out of bounds")
         }
         let boxSize = try readInt32(data: mp4Data, at: boxStart)
-        let boxEnd = boxStart + boxSize // not inclusive
+        let boxEnd = Int32(boxStart) + boxSize // not inclusive
         guard boxEnd <= mp4Data.count else {
             throw ShortFormRequestError.unexpected(message: "mvhd end was out of bounds")
         }
@@ -464,8 +480,8 @@ internal class ShortFormMediaPlaylistGenerator {
         return Double(duration) / Double(timescale)
     }
     
-    /// Reads an int32 out of the given data.
-    private func readInt32(data: Data, at offset: Int32) throws -> Int32 {
+    /// Reads an int32 out of the given data. The data is read big-endian because isobmff files are big-endian
+    private func readInt32(data: Data, at offset: Int) throws -> Int32 {
         guard data.count >= 4 && offset < data.count - 4 else {
             throw ShortFormRequestError.unexpected(message: "readInt32: out of bounds")
         }
@@ -526,7 +542,7 @@ internal class ShortFormMediaPlaylistGenerator {
                 return base
             }
         }
-        static func extinf(segmentDuration: Float, title: String?) -> String {
+        static func extinf(segmentDuration: Double, title: String?) -> String {
             let base = "#EXTINF:\(String(describing: segmentDuration))"
             if let title {
                 return "\(base),\(title)"
