@@ -34,9 +34,6 @@ class PlayerSDK {
     let resourceLoaderDelegate = ShortFormAssetLoaderDelegate()
     let resourceLoaderDispatchQueue = DispatchQueue(label: "shortform-resource-loader")
     
-    // TODO: not the final form. The real player will need to support an arbitrary number of these tasks, presumably cleaning up the tasks as they finish or something
-//    var shortFormPlaylistTask: Task<Data, any Error>?
-    
     convenience init() {
         let monitor = Monitor()
 

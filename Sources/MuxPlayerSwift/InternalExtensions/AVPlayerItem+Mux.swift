@@ -174,7 +174,7 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
                         resourceLoadingRequest: loadingRequest,
                         playlistURL: url,
                         originBaseURL: makeOriginBaseURL(playlistURL: url),
-                        proxyCacheBaseURL: URL(string: "https://mux.com")! // TODO: Real URL
+                        cacheBaseURL: URL(string: "https://mux.com")! // TODO: Real URL
                     )
                 } catch {
                     PlayerSDK.shared.diagnosticsLogger.error(
@@ -203,7 +203,7 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
         resourceLoadingRequest loadingRequest: AVAssetResourceLoadingRequest,
         playlistURL: URL,
         originBaseURL: URL,
-        proxyCacheBaseURL: URL
+        cacheBaseURL: URL
     ) async throws {
         let initSegmentURL = makeInitSegmentURL(playlistURL: playlistURL)
         PlayerSDK.shared.diagnosticsLogger.info(
@@ -216,7 +216,7 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
         let playlistString = try ShortFormMediaPlaylistGenerator(
             initSegment: segmentData,
             originBaseURL: originBaseURL,
-            cacheProxyBaseURL: URL(string: "https://mux.com")!, // TODO: Real URL
+            cacheProxyBaseURL: cacheBaseURL,
             playlistAttributes: ShortFormMediaPlaylistGenerator.PlaylistAttributes(
                 version: 7,
 //                        targetDuration: 5, // TODO: wouldn't a mux video asset have 6?
@@ -267,6 +267,22 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
     
     private func makeInitSegmentURL(playlistURL: URL) -> URL {
         return URL(string:"\(makeOriginBaseURL(playlistURL: playlistURL))/init.mp4")!
+    }
+    
+    private func makeCacheProxyURL(forFullURL url: URL) -> URL {
+        var components = URLComponents()
+        components.scheme = PlaybackURLConstants.reverseProxyScheme
+        components.host = PlaybackURLConstants.reverseProxyHost
+        components.port = PlaybackURLConstants.reverseProxyPort
+        
+        components.queryItems = [
+            URLQueryItem(
+                name: PlayerSDK.shared.reverseProxyServer.originURLKey,
+                value: url.absoluteString
+            )
+        ]
+        
+        return components.url!
     }
     
     private func makeOriginBaseURL(playlistURL: URL) -> URL {
