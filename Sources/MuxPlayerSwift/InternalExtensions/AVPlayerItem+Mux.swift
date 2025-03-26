@@ -151,7 +151,7 @@ public extension AVPlayerItem {
 /// ``PlayerSDK`` retains a single instance of this Delegate, to be used by all AVURLAssets loading short-form playlists
 internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDelegate {
     
-    // TODO: In the real thing, we'll need to support multiple Tasks at the same time for cases of multiple items.
+    // TODO: In the real thing, we'll need to support multiple Tasks at the same time for cases of multiple items. Accomplish this either by having multiple delegates (hard because we don't really have an object with a predictable lifecycle that can own them except indefinitely) or by having multiple Tasks and init segments cached someplace (might still be hard because we still don't have anything with a known lifecycle that we control that can own *those*)
     private var fetchTask: Task<Void, any Error>? = nil
     
     // TODO: same as in the ReverseProxyServer, but maybe we should have PlayerSDK provide a URLSession to both
@@ -324,12 +324,17 @@ internal class ShortFormMediaPlaylistGenerator {
         // Reminder: If we are generating playlists from inside the loader delegate, we need to point at the Reverse Proxy from here, for each segment (including the init segment, which we don't want to fetch again)
         let originBaseURLStr = originBase.string!
         
+        let initSegmentProxiedURL = makeCacheProxyURL(
+            forFullURL: URL(string: "\(originBaseURLStr)/init.mp4")!
+        )
+        
         let preambleLines = [
             Tags.extM3U(),
             Tags.version(7),
             Tags.targetDuration(playlistAttributes.targetDuration),
             Tags.mediaSequence(startingFromSequenceNumber: 0),
-            Tags.map(uri: "\(originBaseURLStr)/init.mp4", range: nil),
+//            Tags.map(uri: "\(originBaseURLStr)/init.mp4", range: nil),
+            Tags.map(uri: initSegmentProxiedURL.absoluteString, range: nil),
             Tags.discontunityMarker()
         ]
         
@@ -357,13 +362,13 @@ internal class ShortFormMediaPlaylistGenerator {
         
         // Equal when the duration of the asset is an exact multiple of the segment duration
         if wholeSegments != numberOfSegments {
+            let proxiedLastSegmentURL = makeCacheProxyURL(
+                forFullURL: URL(string: "\(originBaseURLStr)/\(Int(numberOfSegments - 1)).mp4")!
+            )
+            
             segmentLines.append(Tags.extinf(segmentDuration: lastSegmentDuration, title: nil))
             //            segmentLines.append("\(originBaseURLStr)/\(Int(numberOfSegments - 1)).mp4")
-            segmentLines.append(
-                makeCacheProxyURL(
-                    forFullURL: URL(string: "\(originBaseURLStr)/\(Int(numberOfSegments - 1)).mp4")!
-                ).absoluteString
-            )
+            segmentLines.append(proxiedLastSegmentURL.absoluteString)
         }
         
         // i promise "postamble" is a real word
