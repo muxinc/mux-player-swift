@@ -151,6 +151,9 @@ public extension AVPlayerItem {
 /// ``PlayerSDK`` retains a single instance of this Delegate, to be used by all AVURLAssets loading short-form playlists
 internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDelegate {
     
+    // TODO: In the real thing, we'll need to support multiple Tasks at the same time for cases of multiple items.
+    private var fetchTask: Task<Void, any Error>? = nil
+    
     // TODO: same as in the ReverseProxyServer, but maybe we should have PlayerSDK provide a URLSession to both
     let urlSession: URLSession = URLSession.shared
     
@@ -162,66 +165,26 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
         PlayerSDK.shared.diagnosticsLogger.debug("shouldWaitForLoadingOfRequestedResource: url is \(loadingRequest.request.url!)")
         
         if let url = loadingRequest.request.url,
-            isURLForShortform(url: url)
-        {
+            isURLForShortform(url: url) {
             PlayerSDK.shared.diagnosticsLogger.debug("WAS short-form URL")
-            
-            let originBaseURL = makeOriginBaseURL(playlistURL: url)
-            
-            let initSegmentURL = makeInitSegmentURL(playlistURL: url)
-            PlayerSDK.shared.diagnosticsLogger.info(
-                "[shorform-test] initSegmentURL: \(initSegmentURL.absoluteString)"
-            )
-            
-            // TODO: init segments should be cached somewhere (but must generate a playlist 1st)
-            
-            // check if init segment is cached already
-            // Get init segment from wherever it's needed
-            // cache init segment in the reverse proxy
-            // generate playlist from init segment
-            
-            PlayerSDK.shared.diagnosticsLogger.debug("Creating new init-segment fetch")
-            // TODO: need to track these someplace (a Map in this object maybe) so we can cancel them
-            // Explicitly create a detached task (though Task {} would implicitly create a detached scope in this case)
-            Task.detached { [self] in do {
-                let segmentData = try await fetchInitSegment(initSegmentURL: initSegmentURL)
-                PlayerSDK.shared.diagnosticsLogger.debug("resourceLoader fetched \(segmentData.count) bytes")
-                
-                let playlistString = try ShortFormMediaPlaylistGenerator(
-                    initSegment: segmentData,
-//                    originBaseURL: URL(string: "https://mux.com")!, // TODO: Real URL
-                    originBaseURL: originBaseURL,
-                    cacheProxyBaseURL: URL(string: "https://mux.com")!, // TODO: Real URL
-                    playlistAttributes: ShortFormMediaPlaylistGenerator.PlaylistAttributes(
-                        version: 7,
-//                        targetDuration: 5, // TODO: wouldn't a mux video asset have 6?
-//                        extinfSegmentDuration: 5 // TODO: wouldn't a mux video asset have 5?
-                        targetDuration: 4, // TODO: wouldn't a mux video asset have 6?
-                        extinfSegmentDuration: 4.16667 // TODO: wouldn't a mux video asset have 5?
+            // We are definitely not in an SC context here, just explicity make a new context
+            fetchTask = Task.detached { [self] in
+                do {
+                    try await answerRequestForPlaylist(
+                        resourceLoadingRequest: loadingRequest,
+                        playlistURL: url,
+                        originBaseURL: makeOriginBaseURL(playlistURL: url),
+                        proxyCacheBaseURL: URL(string: "https://mux.com")! // TODO: Real URL
                     )
-                ).playlistString()
-                
-                
-                PlayerSDK.shared.diagnosticsLogger.debug("generated playlist:\n\(playlistString)")
-
-                let playlistData = playlistString.data(using: .utf8)
-                guard let playlistData else {
-                    throw ShortFormRequestError.unexpected(url: url, message: "playlist didn't encode to utf-8")
+                } catch {
+                    PlayerSDK.shared.diagnosticsLogger.error(
+                        "Error fetching/generating short-form playlist: \(error.localizedDescription)"
+                    )
+                    loadingRequest.finishLoading(with: error)
                 }
-                
-                let requestedStart = loadingRequest.dataRequest?.requestedOffset
-                let requestedLength = loadingRequest.dataRequest?.requestedLength
-                
-                loadingRequest.contentInformationRequest?.contentType = "application/vnd.apple.mpegurl"
-                loadingRequest.contentInformationRequest?.contentLength = Int64(playlistData.count)
-                loadingRequest.contentInformationRequest?.isByteRangeAccessSupported = true
-                
-                loadingRequest.dataRequest!.respond(with: playlistData)
-                loadingRequest.finishLoading()
-            } catch {
-                PlayerSDK.shared.diagnosticsLogger.error("Error caught while generating playlist")
-            }}
-
+                fetchTask = nil
+            }
+            
             return true
         } else {
             return false
@@ -232,16 +195,54 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
         _ resourceLoader: AVAssetResourceLoader,
         didCancel loadingRequest: AVAssetResourceLoadingRequest
     ) {
-        // TODO: Cancel downloading
+        
     }
     
-//    func resourceLoader(
-//        _ resourceLoader: AVAssetResourceLoader,
-//        shouldWaitForRenewalOfRequestedResource renewalRequest: AVAssetResourceRenewalRequest
-//    ) -> Bool {
-//        // TODO: maybe try to download it again? I dunno
-//        <#code#>
-//    }
+    private func answerRequestForPlaylist(
+        resourceLoadingRequest loadingRequest: AVAssetResourceLoadingRequest,
+        playlistURL: URL,
+        originBaseURL: URL,
+        proxyCacheBaseURL: URL
+    ) async throws {
+        let initSegmentURL = makeInitSegmentURL(playlistURL: playlistURL)
+        PlayerSDK.shared.diagnosticsLogger.info(
+            "[shorform-test] initSegmentURL: \(initSegmentURL.absoluteString)"
+        )
+
+        let segmentData = try await fetchInitSegment(initSegmentURL: initSegmentURL)
+        PlayerSDK.shared.diagnosticsLogger.debug("resourceLoader fetched \(segmentData.count) bytes")
+        
+        let playlistString = try ShortFormMediaPlaylistGenerator(
+            initSegment: segmentData,
+            originBaseURL: originBaseURL,
+            cacheProxyBaseURL: URL(string: "https://mux.com")!, // TODO: Real URL
+            playlistAttributes: ShortFormMediaPlaylistGenerator.PlaylistAttributes(
+                version: 7,
+//                        targetDuration: 5, // TODO: wouldn't a mux video asset have 6?
+//                        extinfSegmentDuration: 5 // TODO: wouldn't a mux video asset have 5?
+                targetDuration: 4, // TODO: wouldn't a mux video asset have 6?
+                extinfSegmentDuration: 4.16667 // TODO: wouldn't a mux video asset have 5?
+            )
+        ).playlistString()
+        
+        
+        PlayerSDK.shared.diagnosticsLogger.debug("generated playlist:\n\(playlistString)")
+
+        let playlistData = playlistString.data(using: .utf8)
+        guard let playlistData else {
+            throw ShortFormRequestError.unexpected(url: playlistURL, message: "playlist didn't encode to utf-8")
+        }
+        
+        let requestedStart = loadingRequest.dataRequest?.requestedOffset
+        let requestedLength = loadingRequest.dataRequest?.requestedLength
+        
+        loadingRequest.contentInformationRequest?.contentType = "application/vnd.apple.mpegurl"
+        loadingRequest.contentInformationRequest?.contentLength = Int64(playlistData.count)
+        loadingRequest.contentInformationRequest?.isByteRangeAccessSupported = true
+        
+        loadingRequest.dataRequest!.respond(with: playlistData)
+        loadingRequest.finishLoading()
+    }
     
     /// returns (requestedOffset, requestedLength) if the request was for a byte range of the
     private func byteRange(loadingRequest: AVAssetResourceLoadingRequest) -> (Int64, Int)? {
@@ -257,7 +258,6 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
     
     private func isURLForShortform(url: URL) -> Bool {
         // TODO: 'shortform.mux.com/[playbackID].m3u8' or something like that
-        
         // expected path (for the proof-of-concept) "short-form-tests/v1/playbackID/media.m3u8"
         let isShortForm = url.pathComponents.contains { $0 == "short-form-tests" }
             && url.lastPathComponent == "media.m3u8"
