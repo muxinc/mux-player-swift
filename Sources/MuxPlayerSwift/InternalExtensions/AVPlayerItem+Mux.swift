@@ -151,7 +151,7 @@ public extension AVPlayerItem {
 /// ``PlayerSDK`` retains a single instance of this Delegate, to be used by all AVURLAssets loading short-form playlists
 internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDelegate {
     
-    // TODO: In the real thing, we'll need to support multiple Tasks at the same time for cases of multiple items. Accomplish this either by having multiple delegates (hard because we don't really have an object with a predictable lifecycle that can own them except indefinitely) or by having multiple Tasks and init segments cached someplace (might still be hard because we still don't have anything with a known lifecycle that we control that can own *those*)
+    // TODO: In the real thing, we'll need to support multiple Tasks at the same time since you can have multiple items. Accomplish this either by having multiple delegates (hard because we don't really have an object with a predictable lifecycle that can own them except indefinitely) or by having multiple Tasks and init segments cached someplace (might still be hard because we still don't have anything with a known lifecycle that we control that can own *those*)
     private var fetchTask: Task<Void, any Error>? = nil
     
     // TODO: same as in the ReverseProxyServer, but maybe we should have PlayerSDK provide a URLSession to both
@@ -169,8 +169,7 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
             PlayerSDK.shared.diagnosticsLogger.debug("WAS short-form URL")
             // We are definitely not in an SC context here, just explicity make a new context
             fetchTask = Task.detached { [self] in
-                // TODO: Proof-of-concept just always uses the proxy cache
-                // TODO: Cache init segments in mem (init segments are smaller than the generated playlists)
+                // TODO: Proof-of-concept just always uses the proxy cache. Disabling caching feels silly but maybe customers really don't want to use the 256M
                 await MainActor.run { PlayerSDK.shared.reverseProxyServer.start() }
                 
                 do {
@@ -178,7 +177,7 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
                         resourceLoadingRequest: loadingRequest,
                         playlistURL: url,
                         originBaseURL: makeOriginBaseURL(playlistURL: url),
-                        cacheBaseURL: URL(string: "https://mux.com")! // TODO: Real URL
+                        cacheBaseURL: URL(string: "https://mux.com")! // TODO: Didn't need this param
                     )
                 } catch {
                     PlayerSDK.shared.diagnosticsLogger.error(
@@ -209,7 +208,10 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
         originBaseURL: URL,
         cacheBaseURL: URL
     ) async throws {
-        let initSegmentURL = makeInitSegmentURL(playlistURL: playlistURL)
+        // TODO: The most straightforward way to cache the init segment is via the same proxy cache as everything else, but this *does* mean we might evict an init segment and have to re-request it even in the same app session (which is probably not necessary)
+        //        let initSegmentURL = makeInitSegmentURL(playlistURL: playlistURL)
+        let initSegmentURL = makeCacheProxyURL(forFullURL: makeInitSegmentURL(playlistURL: playlistURL))
+        
         PlayerSDK.shared.diagnosticsLogger.info(
             "[shorform-test] initSegmentURL: \(initSegmentURL.absoluteString)"
         )
@@ -294,6 +296,7 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
     
     private func fetchInitSegment(initSegmentURL url: URL) async throws -> Data {
         let request = URLRequest(url: url)
+        
         let (data, response) = try await urlSession.data(for: request)
         let httpResponse = response as! HTTPURLResponse // TODO: unchecked cast safe in practice but eep
         
@@ -303,7 +306,6 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
             throw ShortFormRequestError.httpStatus(url: url, responseCode: httpResponse.statusCode)
         }
         
-        // init segments are really tiny and have no media data, so we don't need to stream them
         return data
     }
 }
@@ -321,7 +323,6 @@ internal class ShortFormMediaPlaylistGenerator {
     let cacheProxyBase: URLComponents
     
     func playlistString() throws -> String {
-        // Reminder: If we are generating playlists from inside the loader delegate, we need to point at the Reverse Proxy from here, for each segment (including the init segment, which we don't want to fetch again)
         let originBaseURLStr = originBase.string!
         
         let initSegmentProxiedURL = makeCacheProxyURL(
@@ -371,12 +372,11 @@ internal class ShortFormMediaPlaylistGenerator {
             segmentLines.append(proxiedLastSegmentURL.absoluteString)
         }
         
-        // i promise "postamble" is a real word
-        let postambleLines = [
+        let endingLines = [
             Tags.endlist()
         ]
         
-        return (preambleLines + segmentLines + postambleLines).joined(separator: "\n")
+        return (preambleLines + segmentLines + endingLines).joined(separator: "\n")
     }
     
     private func findMVHDDurationSec(mp4Data: Data) throws -> TimeInterval {
@@ -411,24 +411,6 @@ internal class ShortFormMediaPlaylistGenerator {
         return data[offset..<(offset + 4)].withUnsafeBytes { bytePointer in
             return bytePointer.load(as: Int32.self).bigEndian
         }
-    }
-    
-    private func makeCacheProxyURL(forFullURL url: URL) -> URL {
-        var components = URLComponents()
-        components.scheme = PlaybackURLConstants.reverseProxyScheme
-        components.host = PlaybackURLConstants.reverseProxyHost
-        components.port = PlaybackURLConstants.reverseProxyPort
-        
-        components.path = url.path
-        
-        components.queryItems = [
-            URLQueryItem(
-                name: PlayerSDK.shared.reverseProxyServer.originURLKey,
-                value: url.absoluteString
-            )
-        ]
-        
-        return components.url!
     }
     
     /// @param originBaseURL: An aboslute URL that points to the path where segments can be found (ie, `https://shortform.mux.com/abc23/`
@@ -500,4 +482,22 @@ internal enum ShortFormRequestError: Error {
     case httpStatus(url: URL, responseCode: Int)
     case unexpected(url: URL?, message: String)
     case unexpected(message: String)
+}
+
+fileprivate func makeCacheProxyURL(forFullURL url: URL) -> URL {
+    var components = URLComponents()
+    components.scheme = PlaybackURLConstants.reverseProxyScheme
+    components.host = PlaybackURLConstants.reverseProxyHost
+    components.port = PlaybackURLConstants.reverseProxyPort
+    
+    components.path = url.path
+    
+    components.queryItems = [
+        URLQueryItem(
+            name: PlayerSDK.shared.reverseProxyServer.originURLKey,
+            value: url.absoluteString
+        )
+    ]
+    
+    return components.url!
 }
