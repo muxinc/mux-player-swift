@@ -243,6 +243,8 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
         {
             PlayerSDK.shared.diagnosticsLogger.debug("WAS short-form URL")
             
+            let originBaseURL = makeOriginBaseURL(playlistURL: url)
+            
             let initSegmentURL = makeInitSegmentURL(playlistURL: url)
             PlayerSDK.shared.diagnosticsLogger.info(
                 "[shorform-test] initSegmentURL: \(initSegmentURL.absoluteString)"
@@ -264,7 +266,8 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
                 
                 let playlistString = try ShortFormMediaPlaylistGenerator(
                     initSegment: segmentData,
-                    originBaseURL: URL(string: "https://mux.com")!, // TODO: Real URL
+//                    originBaseURL: URL(string: "https://mux.com")!, // TODO: Real URL
+                    originBaseURL: originBaseURL,
                     cacheProxyBaseURL: URL(string: "https://mux.com")!, // TODO: Real URL
                     playlistAttributes: ShortFormMediaPlaylistGenerator.PlaylistAttributes(
                         version: 7,
@@ -275,11 +278,20 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
                     )
                 ).playlistString()
                 
-                let playlistData = Data() // TODO
                 
-                //                loadingRequest.contentInformationRequest?.contentType = responseType!
-                //                loadingRequest.contentInformationRequest?.contentLength = Int64(data.count)
-                //                loadingRequest.contentInformationRequest?.isByteRangeAccessSupported = true
+                PlayerSDK.shared.diagnosticsLogger.debug("generated playlist:\n\(playlistString)")
+
+                let playlistData = playlistString.data(using: .utf8)
+                guard let playlistData else {
+                    throw ShortFormRequestError.unexpected(url: url, message: "playlist didn't encode to utf-8")
+                }
+                
+                let requestedStart = loadingRequest.dataRequest?.requestedOffset
+                let requestedLength = loadingRequest.dataRequest?.requestedLength
+                
+                loadingRequest.contentInformationRequest?.contentType = "application/vnd.apple.mpegurl"
+                loadingRequest.contentInformationRequest?.contentLength = Int64(playlistData.count)
+                loadingRequest.contentInformationRequest?.isByteRangeAccessSupported = true
                 
                 loadingRequest.dataRequest!.respond(with: playlistData)
                 // TODO: handle Errors by actually catching something :)
@@ -345,7 +357,20 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
         return urlComponents.url! // TODO: yknow, maybe handle
     }
     
-
+    private func makeOriginBaseURL(playlistURL: URL) -> URL {
+        // current path: some-host/short-form-tests/v1/[playbackID]/media.m3u8
+        let playbackID = playlistURL.pathComponents[3]
+        let host = playlistURL.host
+        let port = playlistURL.port
+        
+        var urlComponents = URLComponents()
+        urlComponents.host = host
+        urlComponents.port = port
+        urlComponents.path = "/short-form-tests/v1/\(playbackID)"
+        urlComponents.scheme = "http"
+        
+        return urlComponents.url! // TODO: yknow, maybe handle
+    }
     
     private func fetchInitSegment(initSegmentURL url: URL) async throws -> Data {
         let request = URLRequest(url: url)
@@ -410,13 +435,16 @@ internal class ShortFormMediaPlaylistGenerator {
     
     func playlistString() throws -> String {
         // Reminder: If we are generating playlists from inside the loader delegate, we need to point at the Reverse Proxy from here, for each segment (including the init segment, which we don't want to fetch again)
+        let originBaseURLStr = originBase.string!
         
-        let lines = [
+        let preambleLines = [
             Tags.extM3U(),
             Tags.version(7),
+            Tags.targetDuration(playlistAttributes.targetDuration),
             Tags.mediaSequence(startingFromSequenceNumber: 0),
             // TODO: Construct absolute URI? I think so, because we need to point to the reverse proxy
-            Tags.map(uri: "init.mp4", range: nil),
+            Tags.map(uri: "\(originBaseURLStr)/init.mp4", range: nil),
+//            Tags.map(uri: "init.mp4", range: nil),
             Tags.discontunityMarker()
         ]
         
@@ -431,15 +459,20 @@ internal class ShortFormMediaPlaylistGenerator {
         
         var segmentLines: [String] = []
         for segmentNumber in 0..<Int(wholeSegments) {
-            let segmentBasename = "\(segmentNumber).mp4"
+//            let segmentBasename = "\(segmentNumber).mp4"
+            let segmentBasename = "\(originBaseURLStr)/\(segmentNumber).mp4"
             segmentLines.append(Tags.extinf(segmentDuration: segmentDuration, title: nil))
             segmentLines.append(segmentBasename)
         }
         // TODO: What if we don't have a last segment (ie, if lastSegmentDuration is 0, or 0 within some tolerance)
         segmentLines.append(Tags.extinf(segmentDuration: lastSegmentDuration, title: nil))
-        segmentLines.append("\(Int(numberOfSegments)).mp4")
+        segmentLines.append("\(originBaseURLStr)/\(Int(numberOfSegments - 1)).mp4")
         
         // TODO: ffmpeg always geneates one more segment with a really small duration. What is with that
+        // i promise "postamble" is a real word
+        let postambleLines = [
+            Tags.endlist()
+        ]
         
         let numSegUlp = segmentsPerStream.ulp
         let numSegNextUp = segmentsPerStream.nextUp
@@ -453,7 +486,7 @@ internal class ShortFormMediaPlaylistGenerator {
         
         // Ok, now we need to 1) Extract the duration from the init segment data 2) use the power of division to get the duration in segments and 3) generate EXTINF/segment-urls for each and 4) Point to the caching proxy (for the proof-of-concept, can do this in all cases)
         
-        return (lines + segmentLines).joined(separator: "\n")
+        return (preambleLines + segmentLines + postambleLines).joined(separator: "\n")
     }
     
     private func findMVHDDurationSec(mp4Data: Data) throws -> TimeInterval {
