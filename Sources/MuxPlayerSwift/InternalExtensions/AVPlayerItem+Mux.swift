@@ -104,7 +104,10 @@ public extension AVPlayerItem {
         self.init(
             asset: asset
         )
-
+        
+        // Added for the proof-of-concept. The default is a lot more than this, like half the video. If we want shortform to be cheap for customers, we don't want to prewarm 300sec of video
+        self.preferredForwardBufferDuration = 10.0
+        
         playerSDK.registerPlayerItem(
             self,
             playbackID: playbackID,
