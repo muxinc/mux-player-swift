@@ -249,8 +249,6 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
         loadingRequest.contentInformationRequest?.contentLength = Int64(playlistData.count)
         loadingRequest.contentInformationRequest?.isByteRangeAccessSupported = true
         
-        // TODO: Also need to cache the init segment
-        
         loadingRequest.dataRequest!.respond(with: playlistData)
         loadingRequest.finishLoading()
     }
