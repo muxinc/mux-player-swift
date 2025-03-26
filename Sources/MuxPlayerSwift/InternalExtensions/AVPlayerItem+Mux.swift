@@ -241,6 +241,8 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
         loadingRequest.contentInformationRequest?.contentLength = Int64(playlistData.count)
         loadingRequest.contentInformationRequest?.isByteRangeAccessSupported = true
         
+        // TODO: Also need to cache the init segment
+        
         loadingRequest.dataRequest!.respond(with: playlistData)
         loadingRequest.finishLoading()
     }
@@ -269,21 +271,7 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
         return URL(string:"\(makeOriginBaseURL(playlistURL: playlistURL))/init.mp4")!
     }
     
-    private func makeCacheProxyURL(forFullURL url: URL) -> URL {
-        var components = URLComponents()
-        components.scheme = PlaybackURLConstants.reverseProxyScheme
-        components.host = PlaybackURLConstants.reverseProxyHost
-        components.port = PlaybackURLConstants.reverseProxyPort
-        
-        components.queryItems = [
-            URLQueryItem(
-                name: PlayerSDK.shared.reverseProxyServer.originURLKey,
-                value: url.absoluteString
-            )
-        ]
-        
-        return components.url!
-    }
+
     
     private func makeOriginBaseURL(playlistURL: URL) -> URL {
         // current path: some-host/short-form-tests/v1/[playbackID]/media.m3u8
@@ -354,9 +342,13 @@ internal class ShortFormMediaPlaylistGenerator {
         
         var segmentLines: [String] = []
         for segmentNumber in 0..<Int(wholeSegments) {
-            let segmentBasename = "\(originBaseURLStr)/\(segmentNumber).mp4"
+            let segmentURL = "\(originBaseURLStr)/\(segmentNumber).mp4"
+            let proxiedSegmentURL = makeCacheProxyURL(forFullURL: URL(string:segmentURL)!)
+            
             segmentLines.append(Tags.extinf(segmentDuration: segmentDuration, title: nil))
-            segmentLines.append(segmentBasename)
+//            segmentLines.append(segmentURL)
+            segmentLines.append(proxiedSegmentURL.absoluteString)
+            
         }
         
         // Equal when the duration of the asset is an exact multiple of the segment duration
@@ -405,6 +397,24 @@ internal class ShortFormMediaPlaylistGenerator {
         return data[offset..<(offset + 4)].withUnsafeBytes { bytePointer in
             return bytePointer.load(as: Int32.self).bigEndian
         }
+    }
+    
+    private func makeCacheProxyURL(forFullURL url: URL) -> URL {
+        var components = URLComponents()
+        components.scheme = PlaybackURLConstants.reverseProxyScheme
+        components.host = PlaybackURLConstants.reverseProxyHost
+        components.port = PlaybackURLConstants.reverseProxyPort
+        
+        components.path = url.path
+        
+        components.queryItems = [
+            URLQueryItem(
+                name: PlayerSDK.shared.reverseProxyServer.originURLKey,
+                value: url.absoluteString
+            )
+        ]
+        
+        return components.url!
     }
     
     /// @param originBaseURL: An aboslute URL that points to the path where segments can be found (ie, `https://shortform.mux.com/abc23/`

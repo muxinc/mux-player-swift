@@ -274,7 +274,9 @@ class ReverseProxyServer {
             pathRegex: "^/.*\\.(m4s|mp4)$", // TODO: For the shortform proposal: test assets crrently have mp4
             request: GCDWebServerRequest.self
         ) { [weak self] request, completion in
-
+            
+            PlayerSDK.shared.diagnosticsLogger.debug("Got segment Request to \(request.url.absoluteString)")
+            
             guard let self = self else {
                 return completion(
                     GCDWebServerDataResponse(
