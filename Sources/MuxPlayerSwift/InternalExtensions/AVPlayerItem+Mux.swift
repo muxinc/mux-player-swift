@@ -195,7 +195,8 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
         _ resourceLoader: AVAssetResourceLoader,
         didCancel loadingRequest: AVAssetResourceLoadingRequest
     ) {
-        
+        // As long as the methods of this delegate are called without interleaving (i think they are), this should be fine
+        fetchTask?.cancel()
     }
     
     private func answerRequestForPlaylist(
