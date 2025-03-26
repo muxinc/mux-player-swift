@@ -95,18 +95,11 @@ public extension AVPlayerItem {
             url: playbackURL
         )
         
-        // TODO: won't be called at all for http/https, also we'd need our own dispatch queue here, which is a pointless pain
-        //  what we're doing instead is using the RPS to handle all the requests including the manifest
         PlayerSDK.shared.diagnosticsLogger.info("setting delegate for AVURLAsset pointing to \(playbackURL.absoluteString)")
         asset.resourceLoader.setDelegate(
             PlayerSDK.shared.resourceLoaderDelegate,
             queue: PlayerSDK.shared.resourceLoaderDispatchQueue
         )
-        
-//        asset.resourceLoader.setDelegate(
-//            PlayerSDK.shared.loggingDelegate,
-//            queue: PlayerSDK.shared.resourceLoaderDispatchQueue
-//        )
         
         self.init(
             asset: asset
@@ -150,76 +143,6 @@ public extension AVPlayerItem {
         path.removeFirst(1)
 
         return path
-    }
-}
-
-internal class RequestLoggingAssetLoaderDelegate: NSObject, AVAssetResourceLoaderDelegate {
-    
-    // OKAY WHAT HAVE WE FOUND? You can't actually send segment data this way. AVPlayer just ignores it undocumented-ly
-    //  We need to redirect to ReverseProxyServer (either in this request or by rewriting the manifest)
-    // https://developer.apple.com/forums/thread/113063
-    // https://stackoverflow.com/questions/39962882/video-streaming-fails-when-using-avassetresourceloader
-    // (both from this blog: https://medium.com/@alinekborges/urlsession-tampering-with-avplayer-03bc8f41156c)
-    
-    func resourceLoader(
-        _ resourceLoader: AVAssetResourceLoader,
-        shouldWaitForLoadingOfRequestedResource loadingRequest: AVAssetResourceLoadingRequest
-    ) -> Bool {
-        
-        Task.detached { [self] in
-            do {
-                let incomingReq = loadingRequest.request
-                let specialURL = incomingReq.url!
-                print("LDELEGATE: Got request \(loadingRequest.request)")
-                print("LDELEGATE: Got request for URL \(loadingRequest.request.url)")
-                print("LDELEGATE: Data Request is \(loadingRequest.dataRequest)")
-                print("LDELEGATE: Data Request for all bytes? \(loadingRequest.dataRequest?.requestsAllDataToEndOfResource)")
-                print("LDELEGATE: Data Request for offset \(loadingRequest.dataRequest?.requestedOffset)")
-                print("LDELEGATE: Data Request .. and legnth \(loadingRequest.dataRequest?.requestedLength)")
-
-                let outboundURL = {
-                    var comps = URLComponents(url: specialURL, resolvingAgainstBaseURL: false)!
-                    comps.scheme = "http" // TODO: if this wasn't just a quick logging thing, try not losing the scheme
-                    return comps.url!
-                }()
-                var actualRequest = URLRequest(url: outboundURL)
-                actualRequest.httpMethod = incomingReq.httpMethod
-                
-                print("LDELEGATE: Actually requesting URL \(actualRequest.url)")
-                
-                let (data, response) = try await URLSession.shared.data(for: actualRequest)
-                
-                print("LDELEGATE: Response Code \((response as! HTTPURLResponse).statusCode)")
-                print("LDELEGATE: Response Len \(response.expectedContentLength)")
-                print("LDELEGATE: Response MIME \(response.mimeType)")
-                print("LDELEGATE: Response data is \(data.count) bytes")
-                
-                
-                // TODO: Works for init segment too??
-                let responseType: String? = {
-                    if response.mimeType == "video/mp4" {
-                        return AVFileType.mp4.rawValue
-                    } else {
-                        return response.mimeType
-                    }
-                }()
-                
-                print("LDELEGATE: responding with type \(responseType)")
-//                loadingRequest.contentInformationRequest?.contentType = response.mimeType
-                loadingRequest.contentInformationRequest?.contentType = responseType!
-                loadingRequest.contentInformationRequest?.contentLength = Int64(data.count)
-//                loadingRequest.contentInformationRequest?.contentLength = response.expectedContentLength
-                loadingRequest.contentInformationRequest?.isByteRangeAccessSupported = true
-                
-                loadingRequest.dataRequest!.respond(with: data)
-                loadingRequest.finishLoading()
-            } catch {
-                print("\nLDELEGATE: ERROR! \(error.localizedDescription)")
-                loadingRequest.finishLoading(with: error)
-            }
-        }
-        
-        return true
     }
 }
 
@@ -374,43 +297,10 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
         // init segments are really tiny and have no media data, so we don't need to stream them
         return data
     }
-    
-    // TODO: What we really need, is a SegmentFetcher actor with a cancel method that will
-    //  cancel the URLSessionTask and also the SC Task that does this
-    // TODO: I made the thing I claimed we need, but let's try it before we go forward
-    private func fetchInitSegmentOldApis(initSegURL url: URL) async throws -> Data {
-        return try await withCheckedThrowingContinuation { continuation in
-            let request = URLRequest(url: url)
-            
-            let task = urlSession.dataTask(with: request) { data, response, err in
-                if let err {
-                    continuation.resume(throwing: ShortFormRequestError.because(url: url, cause: err))
-                    return
-                } else if let response, let urlResponse = response as? HTTPURLResponse {
-                    continuation.resume(
-                        throwing: ShortFormRequestError.httpStatus(
-                            url: url, responseCode: urlResponse.statusCode
-                        )
-                    )
-                    return
-                }
-                guard let data else {
-                    continuation.resume(throwing: ShortFormRequestError.unexpected(
-                        url: url, message: "segment request failed without a status code or real error"
-                    ))
-                    return
-                }
-                
-                continuation.resume(returning: data)
-            } // ... urlSession.dataTask
-            
-            task.resume()
-        } // ... try await withCheckedThrowingContinuation
-    }
 }
 
 internal class ShortFormMediaPlaylistGenerator {
-    static let movieHeaderType: Data = "mvhd".data(using: .ascii)! // not a risky `!` with low-order chars
+    static let movieHeaderType: Data = "mvhd".data(using: .ascii)! // not risky
     // relative to the start of the box
     static let movieHeaderTimeScaleOffset: Int = 20
     // relative to the start of the box
@@ -435,7 +325,7 @@ internal class ShortFormMediaPlaylistGenerator {
         ]
         
         // TODO: Might want to check the trak's too, and take the longest duration(?)
-        // TODO: The production impl of this may depend on a source of duration other than spec-deviant init segments
+        // TODO: The final impl of this may depend on a source of duration other than spec-deviant init segments
         let mvhdDuration = try findMVHDDurationSec(mp4Data: initSegmentData)
         
         let segmentDuration = playlistAttributes.extinfSegmentDuration
@@ -569,118 +459,4 @@ internal enum ShortFormRequestError: Error {
     case httpStatus(url: URL, responseCode: Int)
     case unexpected(url: URL?, message: String)
     case unexpected(message: String)
-}
-
-// So what to do now?
-//  1 Fetch the init segment and generate a media playlist from it
-//  2 Cache the init segment in memory in the ReverseProxyServer
-//  3 Find good criteria for evicting the init segment
-//      * Maybe when the AssetLoaderDelegate is deinitialized? (except we control the lifecycle of it)
-//      * CANNOT rely on LRU, since we don't ever want to re-fetch an init segment during play
-//      * CANNOT rely on anything, this entire player sdk has no way to clean up its own resources, since you can't make deinitializers with extensions, so we have no control over the lifecycle of any object in the entire player, other than asking clients to call stopMonioring when their viewcontroller disappears (which they can't do in a feed becuase the view in the cell could be reused... unless they disable reusing the cells, which will lead to garbage performance)
-
-/// Fetches the resource at the URL specified by the given URLRequest. Handles the state of the underlying URLSesisonTask,
-/// canceling it if the parent task that started the fetch is ever canceled.
-///
-/// This class can only be used once. To make more requests, make more AsyncFetchers.
-///
-/// Start fetching with ``fetch`` and cancel either by canceling your parent Task or out-of-band using ``cancel``
-internal actor AsyncFetcher {
-    // TODO: Can also use this for the other segments when we replace GCDWebServer but we gotta add a callback to deliver the Data in segments as it arrives.. No need to check cancellation while handling those buffers, since our cancel() method also cancels the task
-    let urlRequest: URLRequest
-    let urlSession: URLSession
-    
-    private var fetchTask: Task<Data, any Error>?
-    private var urlSessionTask: URLSessionTask?
-    
-    /// Fetches the resource specified by this actor's URLRequest. If the task was already started, awaits
-    /// the existing ongoing task, otherwise starts a new one. The Task runs in the parent context, and
-    /// cancels the URLSessionTask if it's canceled. You can also cancel out-of-band with ``cancel``
-    func fetch() async throws -> Data {
-        if let task = self.fetchTask {
-            return try await task.value
-        } else {
-            let task = Task {
-                return try await withTaskCancellationHandler(
-                    operation: { return try await doFetch() },
-                    onCancel: { Task.detached { await self.cancel() } }
-                )
-            }
-            self.fetchTask = task
-            return try await task.value
-        }
-    }
-    
-    /// Cancels the inner fetch task and url session task if required. Call to cancel stuff this Actor is doing from out-of-band
-    func cancel() {
-        // also called internally to handle the parent task of doFetch getting cancelled
-        fetchTask?.cancel()
-        urlSessionTask?.cancel()
-    }
-    
-    /// handles cancellation if the parent task was canceled
-    private func maybeHandleCancellation() throws {
-        if Task.isCancelled {
-            cancel()
-            throw CancellationError()
-        }
-    }
-    
-    private func doFetch() async throws -> Data {
-        try maybeHandleCancellation() // throw rather than start the task
-        
-        // TODO: wait, shit. MuxPlayerSwift is iOS 15+ so we can just use await urlSession.data() lmao
-        let data: Data = try await withCheckedThrowingContinuation { continuation in
-            let url = urlRequest.url!
-            let task = urlSession.dataTask(with: self.urlRequest) { data, response, err in
-                if let err {
-                    continuation.resume(throwing: ShortFormRequestError.because(url: url, cause: err))
-                    return
-                } else if let response, let urlResponse = response as? HTTPURLResponse {
-                    continuation.resume(
-                        throwing: RequestError.httpStatus(
-                            url: url, responseCode: urlResponse.statusCode
-                        )
-                    )
-                    return
-                }
-                guard let data else {
-                    continuation.resume(throwing: RequestError.unexpected(
-                        url: url, message: "segment request failed without a status code or real error"
-                    ))
-                    return
-                }
-                
-                continuation.resume(returning: data)
-            } // ... urlSession.dataTask
-            
-            task.resume()
-            self.urlSessionTask = task
-        } // ... try await withCheckedThrowingContinuation
-        
-        // in case the SC task was cancelled during the I/O. NSURLErrorCancelled isn't guaranteed 
-        try maybeHandleCancellation()
-        
-        return data
-    }
-
-    init(
-        urlRequest: URLRequest,
-        urlSession: URLSession
-    ) {
-        self.urlRequest = urlRequest
-        self.urlSession = urlSession
-        self.fetchTask = nil
-        self.urlSessionTask = nil
-    }
-    
-    deinit {
-        self.cancel()
-    }
-    
-    enum RequestError: Error {
-        case because(url: URL, cause: any Error)
-        case httpStatus(url: URL, responseCode: Int)
-        case unexpected(url: URL?, message: String)
-    }
 }

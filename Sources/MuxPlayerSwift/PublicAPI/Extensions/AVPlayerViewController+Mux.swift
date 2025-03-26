@@ -273,7 +273,7 @@ extension AVPlayerViewController {
     
     public func prepare(
         playbackID: String,
-        // TODO: I mean, ppl should be able to provide AVPlayerItems but optionally. I just needed to quickly provide a deocrated player item
+        // TODO: This is not intended to be the final API. It's just for the PoC so I can specify a good URL
         playerItem: AVPlayerItem,
         playbackOptions: PlaybackOptions,
         monitoringOptions: MonitoringOptions
