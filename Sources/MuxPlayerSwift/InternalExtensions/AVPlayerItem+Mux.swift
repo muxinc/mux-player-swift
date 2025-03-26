@@ -173,7 +173,7 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
                 await MainActor.run { PlayerSDK.shared.reverseProxyServer.start() }
                 
                 do {
-                    try await answerRequestForPlaylist(
+                    try await answerRequestForMediaPlaylist(
                         resourceLoadingRequest: loadingRequest,
                         playlistURL: url,
                         originBaseURL: makeOriginBaseURL(playlistURL: url),
@@ -202,7 +202,7 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
         fetchTask?.cancel()
     }
     
-    private func answerRequestForPlaylist(
+    private func answerRequestForMediaPlaylist(
         resourceLoadingRequest loadingRequest: AVAssetResourceLoadingRequest,
         playlistURL: URL,
         originBaseURL: URL,
@@ -219,6 +219,8 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
         let segmentData = try await fetchInitSegment(initSegmentURL: initSegmentURL)
         PlayerSDK.shared.diagnosticsLogger.debug("resourceLoader fetched \(segmentData.count) bytes")
         
+        // TODO: The target duration (and real segment duration; can be different) should maybe come down from the server via Response Header, if that's the way the origin is going to give us information
+        // TODO: (continued) .. although for playback, we might not need the real target duration...
         let playlistString = try ShortFormMediaPlaylistGenerator(
             initSegment: segmentData,
             originBaseURL: originBaseURL,
