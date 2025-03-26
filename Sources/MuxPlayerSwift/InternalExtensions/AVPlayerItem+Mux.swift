@@ -442,9 +442,7 @@ internal class ShortFormMediaPlaylistGenerator {
             Tags.version(7),
             Tags.targetDuration(playlistAttributes.targetDuration),
             Tags.mediaSequence(startingFromSequenceNumber: 0),
-            // TODO: Construct absolute URI? I think so, because we need to point to the reverse proxy
             Tags.map(uri: "\(originBaseURLStr)/init.mp4", range: nil),
-//            Tags.map(uri: "init.mp4", range: nil),
             Tags.discontunityMarker()
         ]
         
@@ -459,7 +457,6 @@ internal class ShortFormMediaPlaylistGenerator {
         
         var segmentLines: [String] = []
         for segmentNumber in 0..<Int(wholeSegments) {
-//            let segmentBasename = "\(segmentNumber).mp4"
             let segmentBasename = "\(originBaseURLStr)/\(segmentNumber).mp4"
             segmentLines.append(Tags.extinf(segmentDuration: segmentDuration, title: nil))
             segmentLines.append(segmentBasename)
@@ -468,23 +465,11 @@ internal class ShortFormMediaPlaylistGenerator {
         segmentLines.append(Tags.extinf(segmentDuration: lastSegmentDuration, title: nil))
         segmentLines.append("\(originBaseURLStr)/\(Int(numberOfSegments - 1)).mp4")
         
-        // TODO: ffmpeg always geneates one more segment with a really small duration. What is with that
+        // TODO: ffmpeg generates one really short segment at the end. I think it has the last audio sample in it (since the 'fake mez' we generated test assets from has slightly longer audio than video)
         // i promise "postamble" is a real word
         let postambleLines = [
             Tags.endlist()
         ]
-        
-        let numSegUlp = segmentsPerStream.ulp
-        let numSegNextUp = segmentsPerStream.nextUp
-        let numSegNextDown = segmentsPerStream.nextDown
-//        let segmentDurationByTargetOnly = Double(playlistAttributes.targetDuration)
-//        let numberOfSegmentsByTargetOnly = mvhdDuration / segmentDurationByTargetOnly
-
-        // What do we want here? The int-part of the number of segments, plus another segment with whatever is left (some fraction of a segment)
-        
-        // TODO: Last segment
-        
-        // Ok, now we need to 1) Extract the duration from the init segment data 2) use the power of division to get the duration in segments and 3) generate EXTINF/segment-urls for each and 4) Point to the caching proxy (for the proof-of-concept, can do this in all cases)
         
         return (preambleLines + segmentLines + postambleLines).joined(separator: "\n")
     }
@@ -541,7 +526,6 @@ internal class ShortFormMediaPlaylistGenerator {
     
     struct PlaylistAttributes {
         let version: UInt
-        // TODO: Mux Video's target duration is 5sec, but the test assets have a duration of 4(ish), possibly because they were created from an source with a ~4.1sec keyframe interval (and/or accompanying sidx)
         let targetDuration: UInt
         let extinfSegmentDuration: Double? // assumed to be the target duration if not specified
     }
@@ -562,7 +546,6 @@ internal class ShortFormMediaPlaylistGenerator {
         static func mediaSequence(startingFromSequenceNumber sn: UInt) -> String {
             return "#EXT-X-MEDIA-SEQUENCE:\(sn)"
         }
-//        func map(uri: String, startingByte start: UInt?, offsetFromStart offset: UInt?) -> String {
         static func map(uri: String, range: (UInt, UInt?)?) -> String {
             let base = "#EXT-X-MAP:URI=\"\(uri)\""
             if let (start, offset) = range {
