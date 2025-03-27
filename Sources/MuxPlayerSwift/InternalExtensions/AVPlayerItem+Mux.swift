@@ -378,11 +378,11 @@ internal class ShortFormMediaPlaylistGenerator {
         ]
         
         // TODO: Might want to check the trak's too, and take the longest duration(?)
-        let mvhdDuration = self.assetDuration
+        let duration = self.assetDuration
         
         let segmentDuration = playlistAttributes.extinfSegmentDuration
             ?? Double(playlistAttributes.targetDuration)
-        let segmentsPerStream = mvhdDuration / segmentDuration
+        let segmentsPerStream = duration / segmentDuration
         let numberOfSegments = ceil(segmentsPerStream) // including the last segment
         let wholeSegments = floor(segmentsPerStream)
         let lastSegmentDuration = (numberOfSegments - wholeSegments) * segmentDuration
