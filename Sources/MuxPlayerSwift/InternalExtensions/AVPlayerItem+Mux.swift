@@ -238,7 +238,7 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
         ).playlistString()
         
         
-        //PlayerSDK.shared.diagnosticsLogger.debug("generated playlist:\n\(playlistString)")
+        PlayerSDK.shared.diagnosticsLogger.debug("generated playlist:\n\(playlistString)")
 
         let playlistData = playlistString.data(using: .utf8)
         guard let playlistData else {
@@ -364,8 +364,8 @@ internal class ShortFormMediaPlaylistGenerator {
             
         }
         
-        // Equal when the duration of the asset is an exact multiple of the segment duration
-        if wholeSegments != numberOfSegments {
+        // If the last segment is less than 10msec, we dont need to worry about it
+        if !approximatelyEqual(lastSegmentDuration, 0, tolerance: 0.01) {
             let proxiedLastSegmentURL = makeCacheProxyURL(
                 forFullURL: URL(string: "\(originBaseURLStr)/\(Int(numberOfSegments - 1)).mp4")!
             )
@@ -392,7 +392,7 @@ internal class ShortFormMediaPlaylistGenerator {
         guard boxStart >= 0 else {
             throw ShortFormRequestError.unexpected(message: "mvhd start was out of bounds")
         }
-        let boxSize = try readInt32(data: mp4Data, at: boxStart)
+        let boxSize = try readInt32(data: mp4Data, at: UInt(boxStart))
         let boxEnd = Int32(boxStart) + boxSize // not inclusive
         guard boxEnd <= mp4Data.count else {
             throw ShortFormRequestError.unexpected(message: "mvhd end was out of bounds")
@@ -400,14 +400,18 @@ internal class ShortFormMediaPlaylistGenerator {
         
         let timescaleStart = boxStart + ShortFormMediaPlaylistGenerator.movieHeaderTimeScaleOffset
         let durationStart = boxStart + ShortFormMediaPlaylistGenerator.movieHeaderDurationOffset
-        let timescale = try readInt32(data: mp4Data, at: timescaleStart)
-        let duration = try readInt32(data: mp4Data, at: durationStart)
+        let timescale = try readInt32(data: mp4Data, at: UInt(timescaleStart))
+        let duration = try readInt32(data: mp4Data, at: UInt(durationStart))
         
         return Double(duration) / Double(timescale)
     }
     
+    private func approximatelyEqual(_ lhs: Double, _ rhs: Double, tolerance: Double) -> Bool {
+        return abs(lhs - rhs) <= tolerance
+    }
+    
     /// Reads an int32 out of the given data. The data is read big-endian because isobmff files are big-endian
-    private func readInt32(data: Data, at offset: Int) throws -> Int32 {
+    private func readInt32(data: Data, at offset: UInt) throws -> Int32 {
         guard data.count >= 4 && offset < data.count - 4 else {
             throw ShortFormRequestError.unexpected(message: "readInt32: out of bounds")
         }
