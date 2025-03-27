@@ -153,6 +153,8 @@ public extension AVPlayerItem {
 /// Requests a well-formatted init segment and generates a media playlist based on what it got back
 /// ``PlayerSDK`` retains a single instance of this Delegate, to be used by all AVURLAssets loading short-form playlists
 internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDelegate {
+    // TODO: The final impl of this may depend on a source of duration other than spec-deviant init segments
+    static let movieHeaderType: Data = "mvhd".data(using: .ascii)! // not risky
     
     // TODO: In the real thing, we'll need to support multiple Tasks at the same time since you can have multiple items. Accomplish this either by having multiple delegates (hard because we don't really have an object with a predictable lifecycle that can own them except indefinitely) or by having multiple Tasks and init segments cached someplace (might still be hard because we still don't have anything with a known lifecycle that we control that can own *those*)
     private var fetchTask: Task<Void, any Error>? = nil
@@ -225,7 +227,7 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
         // TODO: The target duration (and real segment duration; can be different) should maybe come down from the server via Response Header, if that's the way the origin is going to give us information
         // TODO: (continued) .. although for playback, we might not need the real target duration...
         let playlistString = try ShortFormMediaPlaylistGenerator(
-            initSegment: segmentData,
+            mediaDuration: findMVHDDurationSec(mp4Data: segmentData),
             originBaseURL: originBaseURL,
             cacheProxyBaseURL: cacheBaseURL,
             playlistAttributes: ShortFormMediaPlaylistGenerator.PlaylistAttributes(
@@ -311,16 +313,49 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
         
         return data
     }
+    
+    private func findMVHDDurationSec(mp4Data: Data) throws -> TimeInterval {
+        let mvhdTypeRange = mp4Data.range(of: Self.movieHeaderType)
+        guard let mvhdTypeRange, !mvhdTypeRange.isEmpty else {
+            throw ShortFormRequestError.unexpected(message: "no mvhd found in int segment")
+        }
+        
+        let boxStart = mvhdTypeRange.startIndex - 4 // 4 bytes for the size field
+        guard boxStart >= 0 else {
+            throw ShortFormRequestError.unexpected(message: "mvhd start was out of bounds")
+        }
+        let boxSize = try readInt32(data: mp4Data, at: UInt(boxStart))
+        let boxEnd = Int32(boxStart) + boxSize // not inclusive
+        guard boxEnd <= mp4Data.count else {
+            throw ShortFormRequestError.unexpected(message: "mvhd end was out of bounds")
+        }
+        
+        let timescaleStart = boxStart + ShortFormMediaPlaylistGenerator.movieHeaderTimeScaleOffset
+        let durationStart = boxStart + ShortFormMediaPlaylistGenerator.movieHeaderDurationOffset
+        let timescale = try readInt32(data: mp4Data, at: UInt(timescaleStart))
+        let duration = try readInt32(data: mp4Data, at: UInt(durationStart))
+        
+        return Double(duration) / Double(timescale)
+    }
+    
+    /// Reads an int32 out of the given data. The data is read big-endian because isobmff files are big-endian
+    private func readInt32(data: Data, at offset: UInt) throws -> Int32 {
+        guard data.count >= 4 && offset < data.count - 4 else {
+            throw ShortFormRequestError.unexpected(message: "readInt32: out of bounds")
+        }
+        return data[offset..<(offset + 4)].withUnsafeBytes { bytePointer in
+            return bytePointer.load(as: Int32.self).bigEndian
+        }
+    }
 }
 
 internal class ShortFormMediaPlaylistGenerator {
-    static let movieHeaderType: Data = "mvhd".data(using: .ascii)! // not risky
     // relative to the start of the box
     static let movieHeaderTimeScaleOffset: Int = 20
     // relative to the start of the box
     static let movieHeaderDurationOffset: Int = 24
-
-    let initSegmentData: Data
+    
+    let assetDuration: TimeInterval
     let playlistAttributes: PlaylistAttributes
     let originBase: URLComponents
     let cacheProxyBase: URLComponents
@@ -343,8 +378,7 @@ internal class ShortFormMediaPlaylistGenerator {
         ]
         
         // TODO: Might want to check the trak's too, and take the longest duration(?)
-        // TODO: The final impl of this may depend on a source of duration other than spec-deviant init segments
-        let mvhdDuration = try findMVHDDurationSec(mp4Data: initSegmentData)
+        let mvhdDuration = self.assetDuration
         
         let segmentDuration = playlistAttributes.extinfSegmentDuration
             ?? Double(playlistAttributes.targetDuration)
@@ -381,54 +415,22 @@ internal class ShortFormMediaPlaylistGenerator {
         
         return (preambleLines + segmentLines + endingLines).joined(separator: "\n")
     }
-    
-    private func findMVHDDurationSec(mp4Data: Data) throws -> TimeInterval {
-        let mvhdTypeRange = mp4Data.range(of: ShortFormMediaPlaylistGenerator.movieHeaderType)
-        guard let mvhdTypeRange, !mvhdTypeRange.isEmpty else {
-            throw ShortFormRequestError.unexpected(message: "no mvhd found in int segment")
-        }
-        
-        let boxStart = mvhdTypeRange.startIndex - 4 // 4 bytes for the size field
-        guard boxStart >= 0 else {
-            throw ShortFormRequestError.unexpected(message: "mvhd start was out of bounds")
-        }
-        let boxSize = try readInt32(data: mp4Data, at: UInt(boxStart))
-        let boxEnd = Int32(boxStart) + boxSize // not inclusive
-        guard boxEnd <= mp4Data.count else {
-            throw ShortFormRequestError.unexpected(message: "mvhd end was out of bounds")
-        }
-        
-        let timescaleStart = boxStart + ShortFormMediaPlaylistGenerator.movieHeaderTimeScaleOffset
-        let durationStart = boxStart + ShortFormMediaPlaylistGenerator.movieHeaderDurationOffset
-        let timescale = try readInt32(data: mp4Data, at: UInt(timescaleStart))
-        let duration = try readInt32(data: mp4Data, at: UInt(durationStart))
-        
-        return Double(duration) / Double(timescale)
-    }
+ 
     
     private func approximatelyEqual(_ lhs: Double, _ rhs: Double, tolerance: Double) -> Bool {
         return abs(lhs - rhs) <= tolerance
     }
-    
-    /// Reads an int32 out of the given data. The data is read big-endian because isobmff files are big-endian
-    private func readInt32(data: Data, at offset: UInt) throws -> Int32 {
-        guard data.count >= 4 && offset < data.count - 4 else {
-            throw ShortFormRequestError.unexpected(message: "readInt32: out of bounds")
-        }
-        return data[offset..<(offset + 4)].withUnsafeBytes { bytePointer in
-            return bytePointer.load(as: Int32.self).bigEndian
-        }
-    }
+ 
     
     /// @param originBaseURL: An aboslute URL that points to the path where segments can be found (ie, `https://shortform.mux.com/abc23/`
     /// @param cacheProxyURL: An absolute URL that points to the path where the cache proxy is (ie, `http://127.0.0.1:1234/`)
     init(
-        initSegment: Data,
+        mediaDuration: TimeInterval,
         originBaseURL: URL,
         cacheProxyBaseURL: URL,
         playlistAttributes: PlaylistAttributes
     ) {
-        self.initSegmentData = initSegment
+        self.assetDuration = mediaDuration
         self.playlistAttributes = playlistAttributes
         
         // since we are not resolvingAgainstBaseURL, there's no risk of these initializers returning nil
