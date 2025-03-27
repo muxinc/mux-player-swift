@@ -155,7 +155,12 @@ public extension AVPlayerItem {
 internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDelegate {
     // TODO: The final impl of this may depend on a source of duration other than spec-deviant init segments
     static let movieHeaderType: Data = "mvhd".data(using: .ascii)! // not risky
+    // relative to the start of the box
+    static let movieHeaderTimeScaleOffset: Int = 20
+    // relative to the start of the box
+    static let movieHeaderDurationOffset: Int = 24
     
+
     // TODO: In the real thing, we'll need to support multiple Tasks at the same time since you can have multiple items. Accomplish this either by having multiple delegates (hard because we don't really have an object with a predictable lifecycle that can own them except indefinitely) or by having multiple Tasks and init segments cached someplace (might still be hard because we still don't have anything with a known lifecycle that we control that can own *those*)
     private var fetchTask: Task<Void, any Error>? = nil
     
@@ -330,8 +335,8 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
             throw ShortFormRequestError.unexpected(message: "mvhd end was out of bounds")
         }
         
-        let timescaleStart = boxStart + ShortFormMediaPlaylistGenerator.movieHeaderTimeScaleOffset
-        let durationStart = boxStart + ShortFormMediaPlaylistGenerator.movieHeaderDurationOffset
+        let timescaleStart = boxStart + Self.movieHeaderTimeScaleOffset
+        let durationStart = boxStart + Self.movieHeaderDurationOffset
         let timescale = try readInt32(data: mp4Data, at: UInt(timescaleStart))
         let duration = try readInt32(data: mp4Data, at: UInt(durationStart))
         
@@ -350,11 +355,6 @@ internal class ShortFormAssetLoaderDelegate : NSObject, AVAssetResourceLoaderDel
 }
 
 internal class ShortFormMediaPlaylistGenerator {
-    // relative to the start of the box
-    static let movieHeaderTimeScaleOffset: Int = 20
-    // relative to the start of the box
-    static let movieHeaderDurationOffset: Int = 24
-    
     let assetDuration: TimeInterval
     let playlistAttributes: PlaylistAttributes
     let originBase: URLComponents
