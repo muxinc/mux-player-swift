@@ -100,7 +100,7 @@ class PlayerSDK {
         
         self.reverseProxyServer = ReverseProxyServer()
         
-        // TODO: Maybe there's some other way but I don't care
+        // TODO: should rely on DEBUG flag
         self.enableLogging()
     }
 

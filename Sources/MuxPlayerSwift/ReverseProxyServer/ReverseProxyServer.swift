@@ -101,7 +101,7 @@ class ReverseProxyServer {
 
             if originURL.pathExtension == "m3u8" {
                 
-                // TODO: If we don't want to use a custom scheme then this is the place where we'd go
+                // TODO: If we don't want to use a custom scheme then this is the place where we'd start fetching the init segment
                 
                 let task = session.dataTask(
                     with: originURL
@@ -277,8 +277,7 @@ class ReverseProxyServer {
             
             PlayerSDK.shared.diagnosticsLogger.debug("Got segment Request to \(request.url.absoluteString)")
             if request.url.lastPathComponent == "init.mp4" {
-                
-                PlayerSDK.shared.diagnosticsLogger.debug("!!! INIT SEGMENT REQUESTED")
+                PlayerSDK.shared.diagnosticsLogger.debug("init segment requested")
             }
             
             guard let self = self else {

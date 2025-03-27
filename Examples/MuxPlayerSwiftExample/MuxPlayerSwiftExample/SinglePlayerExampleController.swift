@@ -16,7 +16,7 @@ class SinglePlayerExampleController: UIViewController {
 
     // MARK: Player View Controller
 
-    // TODO: aw christ
+    // TODO: changed for PoC. For now we're just feeding URLs in directly, though our public APIs are intended to obfuscate that
     lazy var playerViewController = AVPlayerViewController()
 //    lazy var playerViewController = AVPlayerViewController(
 //        playbackID: playbackID
@@ -52,7 +52,6 @@ class SinglePlayerExampleController: UIViewController {
     }
     
     // TODO: To use the LoaderDelegate, we need a custom scheme. Here, I'm setting this up in the viewcontroller, but the best place to do this would be in the URLComponents extension, where we'd do this instead of swapping-in the reverse proxy URL.
-    // TODO: Given the above, we have two options that differ in a few ways (but mostly in devex). Explain what those ways are and socialize the choice between doing this
 //    var baseTestServerURL = "http://127.0.0.1:8789"
     var baseTestServerURL = "mux-short://127.0.0.1:8789"
 
