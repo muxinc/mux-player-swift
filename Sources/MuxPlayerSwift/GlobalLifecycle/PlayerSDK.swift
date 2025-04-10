@@ -29,6 +29,11 @@ class PlayerSDK {
 
     let fairPlaySessionManager: FairPlayStreamingSessionManager
 
+    // MARK: things for shortform PoC
+    
+    let resourceLoaderDelegate = ShortFormAssetLoaderDelegate()
+    let resourceLoaderDispatchQueue = DispatchQueue(label: "shortform-resource-loader")
+    
     convenience init() {
         let monitor = Monitor()
 
@@ -92,7 +97,11 @@ class PlayerSDK {
                 category: "External"
             )
         )
+        
         self.reverseProxyServer = ReverseProxyServer()
+        
+        // TODO: should rely on DEBUG flag
+        self.enableLogging()
     }
 
     func enableLogging() {

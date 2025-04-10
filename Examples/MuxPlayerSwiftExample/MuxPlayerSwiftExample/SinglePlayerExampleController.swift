@@ -9,15 +9,18 @@ import SwiftUI
 import UIKit
 
 import MuxPlayerSwift
+import MuxCore
 
 // Single player example
 class SinglePlayerExampleController: UIViewController {
 
     // MARK: Player View Controller
 
-    lazy var playerViewController = AVPlayerViewController(
-        playbackID: playbackID
-    )
+    // TODO: changed for PoC. For now we're just feeding URLs in directly, though our public APIs are intended to obfuscate that
+    lazy var playerViewController = AVPlayerViewController()
+//    lazy var playerViewController = AVPlayerViewController(
+//        playbackID: playbackID
+//    )
 
     // MARK: Mux Data Monitoring Parameters
 
@@ -35,7 +38,8 @@ class SinglePlayerExampleController: UIViewController {
             )
         } else {
             MonitoringOptions(
-                playbackID: playbackID
+                //playbackID: "just-a-monitoring-placeholder"
+                customerData: MUXSDKCustomerData(), playerName: "shortform-demo-\(UUID().uuidString)"
             )
         }
     }
@@ -43,7 +47,20 @@ class SinglePlayerExampleController: UIViewController {
     // MARK: Mux Video Playback Parameters
 
     var playbackID: String {
-        ProcessInfo.processInfo.playbackID ?? "qxb01i6T202018GFS02vp9RIe01icTcDCjVzQpmaB00CUisJ4"
+//        ProcessInfo.processInfo.playbackID ?? "qxb01i6T202018GFS02vp9RIe01icTcDCjVzQpmaB00CUisJ4"
+        "just-a-placeholder-now"
+    }
+    
+    // TODO: To use the LoaderDelegate, we need a custom scheme. Here, I'm setting this up in the viewcontroller, but the best place to do this would be in the URLComponents extension, where we'd do this instead of swapping-in the reverse proxy URL.
+//    var baseTestServerURL = "http://127.0.0.1:8789"
+    var baseTestServerURL = "mux-short://127.0.0.1:8789"
+
+    var url: String {
+//        "\(baseTestServerURL)/short-form-tests/v1/id-single-mp-spec-compliant/media.m3u8"
+        "\(baseTestServerURL)/short-form-tests/v1/id-duration-600s-in-init-segment/media.m3u8"
+        //        "\(baseTestServerURL)/av-muxed-media-duration-in-init-seg.m3u8"
+//        "\(baseTestServerURL)/av-muxed-media.m3u8"
+        //ProcessInfo.processInfo.playbackID ?? "qxb01i6T202018GFS02vp9RIe01icTcDCjVzQpmaB00CUisJ4"
     }
 
     var minimumResolutionTier: MinResolutionTier = .default {
@@ -78,9 +95,8 @@ class SinglePlayerExampleController: UIViewController {
     }
 
     func preparePlayerViewController() {
-        playerViewController.prepare(
-            playbackID: playbackID,
-            playbackOptions: PlaybackOptions(
+        // TODO: not the real api i guess
+        let playbackOptions =  PlaybackOptions(
                 maximumResolutionTier: maximumResolutionTier,
                 minimumResolutionTier: minimumResolutionTier,
                 renditionOrder: renditionOrder,
@@ -88,7 +104,18 @@ class SinglePlayerExampleController: UIViewController {
                     assetStartTimeInSeconds: assetStartTimeInSeconds,
                     assetEndTimeInSeconds: assetEndTimeInSeconds
                 )
-            ),
+                )
+                
+        let playerItem = AVPlayerItem(
+            url: URL(string:url)!,
+            playbackID: playbackID,
+            playbackOptions: playbackOptions
+        )
+
+        playerViewController.prepare(
+            playbackID: playbackID,
+            playerItem: playerItem, // TODO: not the real api etc
+            playbackOptions: playbackOptions,
             monitoringOptions: monitoringOptions
         )
     }
@@ -380,6 +407,7 @@ class SinglePlayerExampleController: UIViewController {
             title: "Play Video",
             primaryAction: UIAction(
                 handler: { _ in
+                    self.preparePlayerViewController()
                     self.displayPlayerViewController()
                 }
             )

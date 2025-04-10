@@ -100,6 +100,9 @@ class ReverseProxyServer {
             )
 
             if originURL.pathExtension == "m3u8" {
+                
+                // TODO: If we don't want to use a custom scheme then this is the place where we'd start fetching the init segment
+                
                 let task = session.dataTask(
                     with: originURL
                 ) { data, response, error in
@@ -268,10 +271,15 @@ class ReverseProxyServer {
     private func setupCMAFSegmentHandler() {
         self.webServer.addHandler(
             forMethod: "GET",
-            pathRegex: "^/.*\\.m4s$",
+            pathRegex: "^/.*\\.(m4s|mp4)$", // TODO: For the shortform proposal: test assets crrently have mp4
             request: GCDWebServerRequest.self
         ) { [weak self] request, completion in
-
+            
+            PlayerSDK.shared.diagnosticsLogger.debug("Got segment Request to \(request.url.absoluteString)")
+            if request.url.lastPathComponent == "init.mp4" {
+                PlayerSDK.shared.diagnosticsLogger.debug("init segment requested")
+            }
+            
             guard let self = self else {
                 return completion(
                     GCDWebServerDataResponse(

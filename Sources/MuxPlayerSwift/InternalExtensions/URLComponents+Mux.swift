@@ -5,7 +5,12 @@
 import Foundation
 
 internal extension URLComponents {
-
+    
+    // TODO: Just for the proof-of-concept.
+    // may need to set this to something else for your own test
+    static let shortFormTestServerHost = "http://127.0.0.1:8789"
+    static let shortFormTestAssetVersion = "v1"
+    
     // MARK: - Playback URL Construction
 
     init(
@@ -15,9 +20,11 @@ internal extension URLComponents {
         self.init()
         self.scheme = "https"
 
-        self.host = "stream.\(playbackOptions.rootDomain())"
-        self.path = "/\(playbackID).m3u8"
-
+//        self.host = "stream.\(playbackOptions.rootDomain())"
+//        self.path = "/\(playbackID).m3u8"
+        self.host = URLComponents.shortFormTestServerHost
+        self.path = "/\(URLComponents.shortFormTestAssetVersion)/\(playbackID).m3u8"
+        
         if case PlaybackOptions.PlaybackPolicy.public(
             let publicPlaybackOptions
         ) = playbackOptions.playbackPolicy {
@@ -118,7 +125,8 @@ internal extension URLComponents {
 
         }
 
-        let isReverseProxyEnabled = playbackOptions.enableSmartCache
+        let isReverseProxyEnabled = true//playbackOptions.enableSmartCache
+//        let isReverseProxyEnabled = playbackOptions.enableSmartCache
 
         if isReverseProxyEnabled {
             // TODO: clean up

@@ -270,6 +270,25 @@ extension AVPlayerViewController {
             monitoringOptions: monitoringOptions
         )
     }
+    
+    public func prepare(
+        playbackID: String,
+        // TODO: This is not intended to be the final API. It's just for the PoC so I can specify a good URL
+        playerItem: AVPlayerItem,
+        playbackOptions: PlaybackOptions,
+        monitoringOptions: MonitoringOptions
+    ) {
+        prepare(
+//            playerItem: AVPlayerItem(
+//                playbackID: playbackID,
+//                playbackOptions: playbackOptions
+//            ),
+            playerItem: playerItem,
+            playbackID: playbackID,
+            playbackOptions: playbackOptions,
+            monitoringOptions: monitoringOptions
+        )
+    }
 
     internal func prepare(
         playerItem: AVPlayerItem,
