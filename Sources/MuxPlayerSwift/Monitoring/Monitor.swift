@@ -502,12 +502,12 @@ class Monitor: ErrorDispatcher {
 
                 binding.dispatchError(
                     "\(updatedPlayerError.code)",
-                    withMessage: enrichedErrorMessage ?? "No additional information"
+                    withMessage: enrichedErrorMessage ?? "No additional information."
                 )
             } else {
                 binding.dispatchError(
                     "\(updatedPlayerError.code)",
-                    withMessage: updatedPlayerError.localizedFailureReason ?? "No additional information"
+                    withMessage: updatedPlayerError.localizedFailureReason ?? "No additional information."
                 )
             }
 
