@@ -12,14 +12,25 @@ import os
 class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredentialClient & PlaybackOptionsRegistry> : NSObject, AVContentKeySessionDelegate {
     
     weak var sessionManager: SessionManager?
-
-    var logger: Logger
+    
+    private var _logger: Logger?
+    var logger: Logger {
+        get {
+            if let logger = _logger {
+                logger
+            } else {
+                PlayerSDK.shared.contentKeyLogger
+            }
+        }
+        set(logger) {
+            _logger = logger
+        }
+    }
 
     init(
         sessionManager: SessionManager
     ) {
         self.sessionManager = sessionManager
-        self.logger = sessionManager.logger
     }
     
     // MARK: AVContentKeySessionDelegate implementation

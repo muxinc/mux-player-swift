@@ -22,6 +22,8 @@ class PlayerSDK {
     var abrLogger: Logger
 
     var externalLogger: Logger
+    
+    var contentKeyLogger: Logger
 
     let reverseProxyServer: ReverseProxyServer
 
@@ -77,11 +79,20 @@ class PlayerSDK {
                 category: "Diagnostics"
             )
         )
+        self.contentKeyLogger = Logger(
+            OSLog(
+                subsystem: "com.mux.player",
+                category: "CK"
+            )
+        )
         #else
         self.abrLogger = Logger(
             .disabled
         )
         self.diagnosticsLogger = Logger(
+            .disabled
+        )
+        self.contentKeyLogger = Logger(
             .disabled
         )
         #endif
@@ -109,6 +120,12 @@ class PlayerSDK {
             )
         )
         self.fairPlaySessionManager.logger = Logger(
+            OSLog(
+                subsystem: "com.mux.player",
+                category: "CK"
+            )
+        )
+        self.contentKeyLogger = Logger(
             OSLog(
                 subsystem: "com.mux.player",
                 category: "CK"

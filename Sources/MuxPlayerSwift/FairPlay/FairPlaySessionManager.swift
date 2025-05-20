@@ -91,19 +91,20 @@ class DefaultFairPlayStreamingSessionManager<
     var playbackOptionsByPlaybackID: [String: PlaybackOptions] = [:]
     let contentKeySession: ContentKeySession
     let errorDispatcher: (any ErrorDispatcher)
-
-    #if DEBUG
-    var logger: Logger = Logger(
-        OSLog(
-            subsystem: "com.mux.player",
-            category: "CK"
-        )
-    )
-    #else
-    var logger: Logger = Logger(
-        OSLog.disabled
-    )
-    #endif
+    
+    private var _logger: Logger?
+    var logger: Logger {
+        get {
+            if let logger = _logger {
+                logger
+            } else {
+                PlayerSDK.shared.contentKeyLogger
+            }
+        }
+        set(logger) {
+            _logger = logger
+        }
+    }
 
     var sessionDelegate: AVContentKeySessionDelegate? {
         didSet {
