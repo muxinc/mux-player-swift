@@ -66,7 +66,7 @@ class PlayerSDK {
         self.fairPlaySessionManager = fairPlayStreamingSessionManager
         self.monitor = monitor
 
-        #if DEBUG
+//        #if DEBUG
         self.abrLogger = Logger(
             OSLog(
                 subsystem: "com.mux.player",
@@ -85,17 +85,17 @@ class PlayerSDK {
                 category: "CK"
             )
         )
-        #else
-        self.abrLogger = Logger(
-            .disabled
-        )
-        self.diagnosticsLogger = Logger(
-            .disabled
-        )
-        self.contentKeyLogger = Logger(
-            .disabled
-        )
-        #endif
+//        #else
+//        self.abrLogger = Logger(
+//            .disabled
+//        )
+//        self.diagnosticsLogger = Logger(
+//            .disabled
+//        )
+//        self.contentKeyLogger = Logger(
+//            .disabled
+//        )
+//        #endif
 
         self.externalLogger = Logger(
             OSLog(
