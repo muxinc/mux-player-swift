@@ -1,20 +1,15 @@
 //
-//  AVPlayerItem+Mux.swift
+//  File.swift
+//  MuxPlayerSwift
+//
+//  Created by Emily Dixon on 8/14/25.
 //
 
-import AVFoundation
 import Foundation
+import AVKit
 
-internal enum PlaybackURLConstants {
-    static let reverseProxyScheme = "http"
-
-    static let reverseProxyHost = "127.0.0.1"
-
-    static let reverseProxyPort = Int(1234)
-}
-
-internal extension AVPlayerItem {
-
+public extension AVPlayerItem {
+    
     // Initializes a player item with a playback URL that
     // references your Mux Video at the supplied playback ID.
     // The playback ID must be public.
@@ -50,39 +45,10 @@ internal extension AVPlayerItem {
             playerSDK: .shared
         )
     }
-
-    convenience init(
-        playbackID: String,
-        playbackOptions: PlaybackOptions,
-        playerSDK: PlayerSDK
-    ) {
-        // Create a new `AVAsset` that has been prepared
-        // for playback
-        guard let playbackURL = URLComponents(
-            playbackID: playbackID,
-            playbackOptions: playbackOptions
-        ).url else {
-            preconditionFailure("Invalid playback URL components")
-        }
-
-        let asset = AVURLAsset(
-            url: playbackURL
-        )
-
-        self.init(
-            asset: asset
-        )
-
-        playerSDK.registerPlayerItem(
-            self,
-            playbackID: playbackID,
-            playbackOptions: playbackOptions
-        )
-    }
 }
 
-internal extension AVPlayerItem {
-
+public extension AVPlayerItem {
+    
     // Extracts Mux playback ID from remote AVAsset, if possible
     var playbackID: String? {
         guard let remoteAsset = asset as? AVURLAsset else {
@@ -112,4 +78,5 @@ internal extension AVPlayerItem {
 
         return path
     }
+
 }
