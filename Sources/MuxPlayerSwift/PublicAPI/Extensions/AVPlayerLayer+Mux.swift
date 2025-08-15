@@ -5,14 +5,20 @@
 import AVFoundation
 import Foundation
 
-extension AVPlayerLayer {
-
+public extension AVPlayerLayer {
+    
+    /// If this AVPlayerLayer is being monitored by mux data, this is the `playerName` to use with `MUXSDKStats`
+    var muxDataName: String? {
+        let selfIdentifier = ObjectIdentifier(self)
+        return PlayerSDK.shared.monitor.bindings[selfIdentifier]?.name
+    }
+    
     /// Initializes an AVPlayerLayer that's configured
     /// to play your Mux Asset as well as monitor and report
     /// back it's playback performance.
     /// - Parameter playbackID: playback ID of the Mux
     /// Asset you'd like to play
-    public convenience init(playbackID: String) {
+    convenience init(playbackID: String) {
         self.init()
 
         let playerItem = AVPlayerItem(
@@ -42,7 +48,7 @@ extension AVPlayerLayer {
     ///   you'd like to play
     ///   - playbackOptions: playback-related options such
     ///   as custom domain and maximum resolution
-    public convenience init(
+    convenience init(
         playbackID: String,
         playbackOptions: PlaybackOptions
     ) {
@@ -90,7 +96,7 @@ extension AVPlayerLayer {
     ///   as custom domain and maximum resolution
     ///   - monitoringOptions: Options to customize monitoring
     ///   data reported by Mux
-    public convenience init(
+    convenience init(
         playbackID: String,
         playbackOptions: PlaybackOptions,
         monitoringOptions: MonitoringOptions
@@ -126,7 +132,7 @@ extension AVPlayerLayer {
     }
 
     /// Stops monitoring the player
-    public func stopMonitoring() {
+    func stopMonitoring() {
         PlayerSDK.shared.monitor.tearDownMonitoring(playerLayer: self)
     }
     
@@ -142,7 +148,7 @@ extension AVPlayerLayer {
     ///
     ///   - playbackID: playback ID of the Mux Asset
     ///   you'd like to play
-    public func prepare(
+    func prepare(
         playbackID: String
     ) {
         prepare(
@@ -169,7 +175,7 @@ extension AVPlayerLayer {
     ///   you'd like to play
     ///   - playbackOptions: playback-related options such
     ///   as custom domain and maximum resolution
-    public func prepare(
+    func prepare(
         playbackID: String,
         playbackOptions: PlaybackOptions
     ) {
@@ -199,7 +205,7 @@ extension AVPlayerLayer {
     ///   you'd like to play
     ///   - monitoringOptions: Options to customize monitoring
     ///   data reported by Mux
-    public func prepare(
+    func prepare(
         playbackID: String,
         monitoringOptions: MonitoringOptions
     ) {
@@ -227,7 +233,7 @@ extension AVPlayerLayer {
     ///   as custom domain and maximum resolution
     ///   - monitoringOptions: Options to customize monitoring
     ///   data reported by Mux
-    public func prepare(
+    func prepare(
         playbackID: String,
         playbackOptions: PlaybackOptions,
         monitoringOptions: MonitoringOptions
