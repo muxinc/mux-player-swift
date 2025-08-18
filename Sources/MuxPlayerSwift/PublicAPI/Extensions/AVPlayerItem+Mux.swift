@@ -21,7 +21,7 @@ public extension AVPlayerItem {
     /// - Parameter playbackID: playback ID of the Mux Asset
     /// you'd like to play
     ///
-    /// > important: To use Mux Data, you must still  use ``AVPlayerViewController.prepare(playbackID:)``, ``AVPlayerLayer.prepare(playbackID:)`` or a realted method
+    /// > important: To use Mux Data, you must still  use ``AVPlayerViewController.prepare(playbackID:)``, ``AVPlayerLayer.prepare(playbackID:)`` or a related method
     ///
     /// - SeeAlso:
     ///   -  ``AVPlayerViewController.init(playbackID:)``
@@ -48,7 +48,7 @@ public extension AVPlayerItem {
     ///   - playbackID: playback ID of the Mux Asset
     ///   you'd like to play
     ///   - playbackOptions: Options for how to play your asset
-    /// > important: To use Mux Data, you must still  use ``AVPlayerViewController.prepare(playbackID:)``, ``AVPlayerLayer.prepare(playbackID:)`` or a realted method
+    /// > important: To use Mux Data, you must still  use ``AVPlayerViewController.prepare(playbackID:)``, ``AVPlayerLayer.prepare(playbackID:)`` or a related method
     ///
     /// - SeeAlso:
     ///   -  ``AVPlayerViewController.init(playbackID:)``
