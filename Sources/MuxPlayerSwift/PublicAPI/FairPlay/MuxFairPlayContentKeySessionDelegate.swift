@@ -21,28 +21,28 @@ class MuxFairPlayContentKeySessionDelegate: NSObject, AVContentKeySessionDelegat
     // We wrap our internal delegate in a facade so we don't have to expose the internal plumbing in our
     // ContentKeySessionDelegate, which mostly exists for testability and isn't useful to customers
     private let internalDelegate: ContentKeySessionDelegate< DefaultFairPlayStreamingSessionManager<AVContentKeySession>
-    >
+    >?
     private let sessionManager: DefaultFairPlayStreamingSessionManager<AVContentKeySession>
     
     func contentKeySession(
         _ session: AVContentKeySession,
         didProvide keyRequest: AVContentKeyRequest
     ) {
-        internalDelegate.contentKeySession(session, didProvide: keyRequest)
+        internalDelegate?.contentKeySession(session, didProvide: keyRequest)
     }
     
     func contentKeySession(
         _ session: AVContentKeySession,
         didProvideRenewingContentKeyRequest keyRequest: AVContentKeyRequest
     ) {
-        internalDelegate.contentKeySession(session, didProvideRenewingContentKeyRequest: keyRequest)
+        internalDelegate?.contentKeySession(session, didProvideRenewingContentKeyRequest: keyRequest)
     }
     
     func contentKeySession(
         _ session: AVContentKeySession,
         contentKeyRequestDidSucceed keyRequest: AVContentKeyRequest
     ) {
-        internalDelegate.contentKeySession(session, contentKeyRequestDidSucceed: keyRequest)
+        internalDelegate?.contentKeySession(session, contentKeyRequestDidSucceed: keyRequest)
     }
     
     func contentKeySession(
@@ -50,7 +50,7 @@ class MuxFairPlayContentKeySessionDelegate: NSObject, AVContentKeySessionDelegat
         keyRequest: AVContentKeyRequest, didFailWithError
         err: any Error
     ) {
-        internalDelegate.contentKeySession(session, contentKeyRequest: keyRequest, didFailWithError: err)
+        internalDelegate?.contentKeySession(session, contentKeyRequest: keyRequest, didFailWithError: err)
     }
     
     func contentKeySession(
@@ -58,9 +58,13 @@ class MuxFairPlayContentKeySessionDelegate: NSObject, AVContentKeySessionDelegat
         shouldRetry keyRequest: AVContentKeyRequest,
         reason retryReason: AVContentKeyRequest.RetryReason
     ) -> Bool {
-        return internalDelegate.contentKeySession(
-            session, shouldRetry: keyRequest, reason: retryReason
-        )
+        if let internalDelegate = self.internalDelegate {
+            return internalDelegate.contentKeySession(
+                session, shouldRetry: keyRequest, reason: retryReason
+            )
+        } else {
+            return false
+        }
     }
     
     private func makeFairPlayContentKeySession() -> AVContentKeySession {
@@ -82,7 +86,7 @@ class MuxFairPlayContentKeySessionDelegate: NSObject, AVContentKeySessionDelegat
             urlSession: .shared,
             errorDispatcher: PlayerSDK.shared.monitor
         )
-        self.internalDelegate = NoOpContentKeyDelegate()
+        self.internalDelegate = nil
         #else
         self.sessionManager = DefaultFairPlayStreamingSessionManager(
             contentKeySession: AVContentKeySession(keySystem: .fairPlayStreaming),
@@ -100,13 +104,5 @@ class MuxFairPlayContentKeySessionDelegate: NSObject, AVContentKeySessionDelegat
         self.sessionManager.registerPlaybackOptions(options, for: playbackID)
         
         super.init()
-    }
-}
-
-// for use on simulators, where fairplay will cause a crash.
-// Does nothing because Mux Video doesn't support clearkey
-private class NoOpContentKeyDelegate: NSObject, AVContentKeySessionDelegate {
-    func contentKeySession(_ session: AVContentKeySession, didProvide keyRequest: AVContentKeyRequest) {
-        // no-op
     }
 }
