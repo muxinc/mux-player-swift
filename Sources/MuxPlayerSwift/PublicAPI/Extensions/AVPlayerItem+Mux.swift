@@ -21,17 +21,17 @@ public extension AVPlayerItem {
     /// - Parameter playbackID: playback ID of the Mux Asset
     /// you'd like to play
     ///
-    /// > important: To use Mux Data, you must still  use ``AVPlayerViewController.prepare(playbackID:)``, ``AVPlayerLayer.prepare(playbackID:)`` or a related method
+    /// - Important- To use Mux Data, you must still  use ``AVKit/AVPlayerViewController/prepare(playbackID:)``,
+    /// ``AVFoundation/AVPlayerLayer/prepare(playbackID:)`` or a related method
     ///
     /// - SeeAlso:
-    ///   -  ``AVPlayerViewController.init(playbackID:)``
-    ///   -  ``AVPlayerViewController.init(playbackID:monitoringOptions:)``
-    ///   -  ``AVPlayerViewController.init(playbackID:playbackOptions:)``
-    ///   -  ``AVPlayerViewController.init(playbackID:playbackOptions:monitoringOptions:)``
-    ///   -  ``AVPlayerLayer.init(playbackID:)``
-    ///   -  ``AVPlayerLayer.init(playbackID:monitoringOptions:)``
-    ///   -  ``AVPlayerLayer.init(playbackID:playbackOptions:)``
-    ///   -  ``AVPlayerLayer.init(playbackID:playbackOptions:monitoringOptions:)``
+    ///   -  ``AVKit/AVPlayerViewController/init(playbackID:)``
+    ///   -  ``AVKit/AVPlayerViewController/init(playbackID:monitoringOptions:)``
+    ///   -  ``AVKit/AVPlayerViewController/init(playbackID:playbackOptions:)``
+    ///   -  ``AVKit/AVPlayerViewController/init(playbackID:playbackOptions:monitoringOptions:)``
+    ///   -  ``AVFoundation/AVPlayerLayer/init(playbackID:)``
+    ///   -  ``AVFoundation/AVPlayerLayer/init(playbackID:playbackOptions:)``
+    ///   -  ``AVFoundation/AVPlayerLayer/init(playbackID:playbackOptions:monitoringOptions:)``
     convenience init(playbackID: String) {
         self.init(
             playbackID: playbackID,

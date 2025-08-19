@@ -9,13 +9,20 @@ import Foundation
 import AVFoundation
 
 /// Standalone `AVContentKeySessionDelegate` for use with Mux Video's FairPlay streaming.
-/// Use this if you aren't using any of our `AVPlayerViewController`, `AVPlayerLayer`, or `AVPlayerItem` extensions in your app
+///
+/// Use this with FairPlay and Mux Video if you aren't using any of our `AVPlayerViewController`, `AVPlayerLayer`, or `AVPlayerItem` extensions in your app
+///
 /// As with any other `AVContentKeySessionDelegate`, your app must own instances of this class. AVFoundation objects hold only weak references to it
-/// - Note: If you're using Mux Player's ``AVPlayerLayer`` or ``AVPlayerViewController`` extensions, you don't need to use this object. Just choose ``PlaybackOptions.PlaybackPolicy.drm`` when creating your `AVPlayerLayer` or `AVPlayerViewController`
-/// - Note: Mux Video does not support ClearKey DRM. If you use this object on a simulator, playback will fail
+///
+/// Mux Video does not support ClearKey DRM. If you use this object on a simulator, playback will fail
+///
+/// - Note: If you're using Mux Player's `AVPlayerLayer` or `AVPlayerViewController` extensions, you don't need to use this object.
+/// Just  use the DRM `PlaybackOptions` (``PlaybackOptions/init(playbackToken:drmToken:customDomain:)``)  when creating your `AVPlayerLayer`
+/// or `AVPlayerViewController` via our extensions
+///
 /// - SeeAlso:
-///   - ``AVPlayerViewController.init(playbackID:, playbackOptions:)``
-///   - ``AVPlayerLayer.init(playbackID:, playbackOptions:)``
+///   - ``AVKit/AVPlayerViewController/init(playbackID:playbackOptions:)``
+///   - ``AVFoundation/AVPlayerLayer/init(playbackID:playbackOptions:)``
 public class MuxFairPlayContentKeySessionDelegate: NSObject, AVContentKeySessionDelegate {
     
     // We wrap our internal delegate in a facade so we don't have to expose the internal plumbing in our
