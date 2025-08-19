@@ -16,7 +16,7 @@ import AVFoundation
 /// - SeeAlso:
 ///   - ``AVPlayerViewController.init(playbackID:, playbackOptions:)``
 ///   - ``AVPlayerLayer.init(playbackID:, playbackOptions:)``
-class MuxFairPlayContentKeySessionDelegate: NSObject, AVContentKeySessionDelegate {
+public class MuxFairPlayContentKeySessionDelegate: NSObject, AVContentKeySessionDelegate {
     
     // We wrap our internal delegate in a facade so we don't have to expose the internal plumbing in our
     // ContentKeySessionDelegate, which mostly exists for testability and isn't useful to customers
@@ -24,28 +24,28 @@ class MuxFairPlayContentKeySessionDelegate: NSObject, AVContentKeySessionDelegat
     >?
     private let sessionManager: DefaultFairPlayStreamingSessionManager<AVContentKeySession>
     
-    func contentKeySession(
+    public func contentKeySession(
         _ session: AVContentKeySession,
         didProvide keyRequest: AVContentKeyRequest
     ) {
         internalDelegate?.contentKeySession(session, didProvide: keyRequest)
     }
     
-    func contentKeySession(
+    public func contentKeySession(
         _ session: AVContentKeySession,
         didProvideRenewingContentKeyRequest keyRequest: AVContentKeyRequest
     ) {
         internalDelegate?.contentKeySession(session, didProvideRenewingContentKeyRequest: keyRequest)
     }
     
-    func contentKeySession(
+    public func contentKeySession(
         _ session: AVContentKeySession,
         contentKeyRequestDidSucceed keyRequest: AVContentKeyRequest
     ) {
         internalDelegate?.contentKeySession(session, contentKeyRequestDidSucceed: keyRequest)
     }
     
-    func contentKeySession(
+    public func contentKeySession(
         _ session: AVContentKeySession, contentKeyRequest
         keyRequest: AVContentKeyRequest, didFailWithError
         err: any Error
@@ -53,7 +53,7 @@ class MuxFairPlayContentKeySessionDelegate: NSObject, AVContentKeySessionDelegat
         internalDelegate?.contentKeySession(session, contentKeyRequest: keyRequest, didFailWithError: err)
     }
     
-    func contentKeySession(
+    public func contentKeySession(
         _ session: AVContentKeySession,
         shouldRetry keyRequest: AVContentKeyRequest,
         reason retryReason: AVContentKeyRequest.RetryReason
@@ -77,7 +77,7 @@ class MuxFairPlayContentKeySessionDelegate: NSObject, AVContentKeySessionDelegat
 
     /// Make a new instance for the given Mux PlaybackID, using the given playback and DRM tokens
     /// - SeeAlso: https://www.mux.com/docs/guides/mux-player-ios#secure-your-playback-experience
-    init(playbackID: String, playbackToken: String, drmToken: String) {
+    public init(playbackID: String, playbackToken: String, drmToken: String) {
         #if targetEnvironment(simulator)
         // Creating an AVContentKeySession for fairplay will cause a silent crash on simulators, so
         //  we stub out functionality using a .clearKey session and dummy session delegate
