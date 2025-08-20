@@ -74,14 +74,6 @@ public class MuxFairPlayContentKeySessionDelegate: NSObject, AVContentKeySession
         }
     }
     
-    private func makeFairPlayContentKeySession() -> AVContentKeySession {
-        return AVContentKeySession(keySystem: .fairPlayStreaming)
-    }
-    
-    private func makeClearKeyContentKeySession() -> AVContentKeySession {
-        return AVContentKeySession(keySystem: .clearKey)
-    }
-
     /// Make a new instance for the given Mux PlaybackID, using the given playback and DRM tokens
     /// - SeeAlso: https://www.mux.com/docs/guides/mux-player-ios#secure-your-playback-experience
     public init(playbackID: String, playbackToken: String, drmToken: String) {
