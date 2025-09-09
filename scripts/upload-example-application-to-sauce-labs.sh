@@ -2,6 +2,8 @@
 
 set -eo pipefail
 
+set -x
+
 if ! command -v saucectl &> /dev/null
 then
     echo -e "\033[1;31m ERROR: saucectl could not be found please install it... \033[0m"
@@ -17,6 +19,8 @@ fi
 readonly APPLICATION_NAME="MuxPlayerSwiftExample.ipa"
 # TODO: make this an argument
 readonly APPLICATION_PAYLOAD_PATH="Examples/MuxPlayerSwiftExample/${APPLICATION_NAME}"
+
+ls -lah . Examples/MuxPlayerSwiftExample
 
 if [ ! -f $APPLICATION_PAYLOAD_PATH ]; then
     echo -e "\033[1;31m ERROR: application archive not found \033[0m"
