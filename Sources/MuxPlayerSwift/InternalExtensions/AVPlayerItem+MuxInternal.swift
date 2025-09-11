@@ -1,5 +1,5 @@
 //
-//  AVPlayerItem+Mux.swift
+//  AVPlayerItem+MuxInternal.swift
 //
 
 import AVFoundation

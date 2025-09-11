@@ -1,9 +1,5 @@
 //
-//  File.swift
-//  MuxPlayerSwift
-//
-//  Created by Emily Dixon on 8/14/25.
-//
+//  AVPlayerItem+Mux.swift
 
 import Foundation
 import AVKit
@@ -63,7 +59,7 @@ public extension AVPlayerItem {
     ///   -  ``AVPlayerLayer.prepare(playbackID:playbackOptions:monitoringOptions:)``
     convenience init(
         playbackID: String,
-        playbackOptions: PlaybackOptions
+        playbackOptions: PlaybackOptions = PlaybackOptions()
     ) {
         self.init(
             playbackID: playbackID,
