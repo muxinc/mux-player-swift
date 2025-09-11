@@ -44,19 +44,17 @@ public extension AVPlayerItem {
     ///   - playbackID: playback ID of the Mux Asset
     ///   you'd like to play
     ///   - playbackOptions: Options for how to play your asset
-    /// > important: To use Mux Data, you must still  use ``AVPlayerViewController.prepare(playbackID:)``, ``AVPlayerLayer.prepare(playbackID:)`` or a related method
+    /// > important: To use Mux Data, you must still  use ``AVKit/AVPlayerViewController/prepare(playbackID:)``, ``AVFoundation/AVPlayerLayer/prepare(playbackID:)`` or a related method
     ///
     /// - SeeAlso:
-    ///   -  ``AVPlayerViewController.init(playbackID:)``
-    ///   -  ``AVPlayerViewController.init(playbackID:monitoringOptions:)``
-    ///   -  ``AVPlayerViewController.init(playbackID:playbackOptions:)``
-    ///   -  ``AVPlayerViewController.init(playbackID:playbackOptions:monitoringOptions:)``
-    ///   -  ``AVPlayerViewController.prepare(playbackID:playbackOptions:monitoringOptions:)``
-    ///   -  ``AVPlayerLayer.init(playbackID:)``
-    ///   -  ``AVPlayerLayer.init(playbackID:monitoringOptions:)``
-    ///   -  ``AVPlayerLayer.init(playbackID:playbackOptions:)``
-    ///   -  ``AVPlayerLayer.init(playbackID:playbackOptions:monitoringOptions:)``
-    ///   -  ``AVPlayerLayer.prepare(playbackID:playbackOptions:monitoringOptions:)``
+    ///   -  ``AVKit/AVPlayerViewController/init(playbackID:)``
+    ///   -  ``AVKit/AVPlayerViewController/init(playbackID:monitoringOptions:)``
+    ///   -  ``AVKit/AVPlayerViewController/init(playbackID:playbackOptions:)``
+    ///   -  ``AVKit/AVPlayerViewController/init(playbackID:playbackOptions:monitoringOptions:)``
+    ///   -  ``AVKit/AVPlayerViewController/prepare(playbackID:playbackOptions:monitoringOptions:)``
+    ///   -  ``AVFoundation/AVPlayerLayer/init(playbackID:playbackOptions:)``
+    ///   -  ``AVFoundation/AVPlayerLayer/init(playbackID:playbackOptions:monitoringOptions:)``
+    ///   -  ``AVFoundation/AVPlayerLayer/prepare(playbackID:playbackOptions:monitoringOptions:)``
     convenience init(
         playbackID: String,
         playbackOptions: PlaybackOptions = PlaybackOptions()
