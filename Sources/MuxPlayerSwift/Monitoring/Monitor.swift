@@ -166,7 +166,8 @@ class Monitor: ErrorDispatcher {
             }
         }
 
-        let shouldTrackErrorsAutomatically = !usingDRM
+        // If using DRM, MuxPlayerSwift tracks errors in order to enrich appcert/CKC request errors
+        let shouldTrackErrorsAutomatically = !usingDRM && options.automaticErrorTracking
 
         let binding = playerObservationContext.monitorAVPlayerViewController(
             playerViewController,
@@ -201,7 +202,7 @@ class Monitor: ErrorDispatcher {
                 player
             )
 
-            if usingDRM {
+            if usingDRM && options.automaticErrorTracking {
                 keyValueObservation.register(
                     player,
                     for: \.error,
@@ -327,7 +328,7 @@ class Monitor: ErrorDispatcher {
             }
         }
 
-        let shouldTrackErrorsAutomatically = !usingDRM
+        let shouldTrackErrorsAutomatically = !usingDRM && options.automaticErrorTracking
 
         let binding = playerObservationContext.monitorAVPlayerLayer(
             playerLayer,
@@ -362,7 +363,7 @@ class Monitor: ErrorDispatcher {
                 player
             )
 
-            if usingDRM {
+            if usingDRM && options.automaticErrorTracking {
                 keyValueObservation.register(
                     player,
                     for: \.error,
