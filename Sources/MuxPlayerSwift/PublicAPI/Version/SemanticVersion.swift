@@ -11,10 +11,10 @@ public struct SemanticVersion {
     public static let major = 1
 
     /// Minor version component.
-    public static let minor = 2
+    public static let minor = 3
 
     /// Patch version component.
-    public static let patch = 1
+    public static let patch = 0
 
     /// String form of the version number in the format X.Y.Z
     /// where X, Y, and Z are the major, minor, and patch
