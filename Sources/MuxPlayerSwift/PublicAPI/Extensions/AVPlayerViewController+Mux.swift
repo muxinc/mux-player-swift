@@ -6,6 +6,12 @@ import AVKit
 import Foundation
 
 extension AVPlayerViewController {
+    
+    /// If this AVPlayerLayer is being monitored by mux data, this is the `playerName` to use with `MUXSDKStats`
+    public var muxDataName: String? {
+        let selfIdentifier = ObjectIdentifier(self)
+        return PlayerSDK.shared.monitor.bindings[selfIdentifier]?.name
+    }
 
     /// Initializes an AVPlayerViewController that's configured
     /// to play your Mux Asset as well as monitor and report

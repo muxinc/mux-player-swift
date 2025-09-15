@@ -6,34 +6,13 @@ import AVFoundation
 import Foundation
 
 extension AVPlayerLayer {
-
-    /// Initializes an AVPlayerLayer that's configured
-    /// to play your Mux Asset as well as monitor and report
-    /// back it's playback performance.
-    /// - Parameter playbackID: playback ID of the Mux
-    /// Asset you'd like to play
-    public convenience init(playbackID: String) {
-        self.init()
-
-        let playerItem = AVPlayerItem(
-            playbackID: playbackID
-        )
-
-        let player = AVPlayer(playerItem: playerItem)
-
-        self.player = player
-
-        let monitoringOptions = MonitoringOptions(
-            playbackID: playbackID
-        )
-
-        PlayerSDK.shared.monitor.setupMonitoring(
-            playerLayer: self,
-            playbackID: playbackID,
-            options: monitoringOptions
-        )
+    
+    /// If this AVPlayerLayer is being monitored by mux data, this is the `playerName` to use with `MUXSDKStats`
+    public var muxDataName: String? {
+        let selfIdentifier = ObjectIdentifier(self)
+        return PlayerSDK.shared.monitor.bindings[selfIdentifier]?.name
     }
-
+    
     /// Initializes an AVPlayerLayer that's configured
     /// to play your Mux Asset as well as monitor and report
     /// back it's playback performance.
@@ -44,7 +23,7 @@ extension AVPlayerLayer {
     ///   as custom domain and maximum resolution
     public convenience init(
         playbackID: String,
-        playbackOptions: PlaybackOptions
+        playbackOptions: PlaybackOptions = PlaybackOptions()
     ) {
         self.init()
 
@@ -129,32 +108,6 @@ extension AVPlayerLayer {
     public func stopMonitoring() {
         PlayerSDK.shared.monitor.tearDownMonitoring(playerLayer: self)
     }
-    
-
-    /// Prepares an already instantiated AVPlayerLayer
-    /// for playback.
-    ///
-    /// If AVPlayerLayer doesn't already hold an
-    /// AVPlayer reference, this method will create one and
-    /// set the AVPlayerLayer player property. If
-    /// the AVPlayerLayer already holds a player,
-    /// it will be configured for playback.
-    ///
-    ///   - playbackID: playback ID of the Mux Asset
-    ///   you'd like to play
-    public func prepare(
-        playbackID: String
-    ) {
-        prepare(
-            playerItem: AVPlayerItem(
-                playbackID: playbackID
-            ),
-            playbackID: playbackID,
-            monitoringOptions: MonitoringOptions(
-                playbackID: playbackID
-            )
-        )
-    }
 
     /// Prepares an already instantiated AVPlayerLayer
     /// for playback.
@@ -171,7 +124,7 @@ extension AVPlayerLayer {
     ///   as custom domain and maximum resolution
     public func prepare(
         playbackID: String,
-        playbackOptions: PlaybackOptions
+        playbackOptions: PlaybackOptions = PlaybackOptions()
     ) {
         prepare(
             playerItem: AVPlayerItem(
