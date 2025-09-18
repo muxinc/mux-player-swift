@@ -12,14 +12,42 @@ class DRMExampleViewController: UIViewController {
 
     // MARK: Player View Controller
 
-    lazy var playerViewController = AVPlayerViewController(
-        playbackID: playbackID,
-        playbackOptions: PlaybackOptions(
-            playbackToken: playbackToken,
-            drmToken: drmToken,
-            customDomain: customDomain
+    private var observations: [NSKeyValueObservation] = []
+
+    lazy var playerViewController = {
+        let viewController = AVPlayerViewController(
+            playbackID: playbackID,
+            playbackOptions: playbackOptions
         )
-    )
+
+        shimForPlayerObjectObserving(viewController: viewController)
+
+        let errorObservation = viewController.observe(\.player?.error, options: .initial) { [weak self] viewController, _ in
+            if let error = viewController.player?.error as? AVError, error.code == .mediaServicesWereReset {
+                self?.handleMediaServicesReset()
+            }
+        }
+        observations.append(errorObservation)
+
+        return viewController
+    }()
+
+    func handleMediaServicesReset() {
+        // Recreate the current item
+        let playerItem = AVPlayerItem(
+            playbackID: playbackID,
+            playbackOptions: playbackOptions)
+
+        // Restore any state on the item and player. This may vary for each app's use case
+        if let currentTime = playerViewController.player?.currentItem?.currentTime() {
+            playerItem.seek(to: currentTime, completionHandler: nil)
+        }
+
+        let player = AVPlayer(playerItem: playerItem)
+
+        // With the player object observing shim, monitoring will resume automatically:
+        playerViewController.player = player
+    }
 
     // MARK: Mux Data Monitoring Parameters
 
@@ -49,6 +77,12 @@ class DRMExampleViewController: UIViewController {
     var customDomain: String? {
         ProcessInfo.processInfo.customDomain ?? nil
     }
+
+    lazy var playbackOptions = PlaybackOptions(
+        playbackToken: playbackToken,
+        drmToken: drmToken,
+        customDomain: customDomain
+    )
 
     // MARK: Status Bar Appearance
 
