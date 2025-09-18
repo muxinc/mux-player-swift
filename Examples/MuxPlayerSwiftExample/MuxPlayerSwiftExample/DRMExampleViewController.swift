@@ -116,3 +116,21 @@ extension DRMExampleViewController: AVPlayerViewControllerDelegate{
         completionHandler(true)
     }
 }
+
+import MUXSDKStats // only for the shim below
+
+extension DRMExampleViewController {
+    // This should be moved to our AVPlayerViewController initializer, and something similar for AVPlayerLayer
+    func shimForPlayerObjectObserving(viewController: AVPlayerViewController) {
+        let playerObservation = viewController.observe(\.player) { viewController, _ in
+            if let player = viewController.player {
+                // should actually be attachPlayer:
+                MUXSDKStats.update(viewController, withPlayerName: viewController.muxDataName!)
+            } else {
+                // should actually be detachPlayer:
+                MUXSDKStats.destroyPlayer(viewController.muxDataName!)
+            }
+        }
+        observations.append(playerObservation)
+    }
+}
