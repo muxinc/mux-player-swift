@@ -14,13 +14,25 @@ class PlayerView: UIView {
         AVPlayerLayer.self
     }
 
-    var player: AVPlayer? {
+    @objc var playerLayer: AVPlayerLayer {
+        layer as! AVPlayerLayer
+    }
+
+    @objc var player: AVPlayer? {
         get {
-            (layer as? AVPlayerLayer)?.player
+            playerLayer.player
         }
         set {
-            (layer as? AVPlayerLayer)?.player = newValue
+            playerLayer.player = newValue
         }
+    }
+
+    @objc class var keyPathsForValuesAffectingPlayer: Set<String> {
+        ["playerLayer.player"]
+    }
+
+    deinit {
+        playerLayer.stopMonitoring()
     }
 }
 
@@ -148,9 +160,8 @@ class SinglePlayerLayerExampleViewController: UIViewController {
         playerView.player?.play()
     }
 
-    override func viewWillDisappear(_ animated: Bool) {
+    override func viewDidDisappear(_ animated: Bool) {
         playerView.player?.pause()
-        playerLayer.stopMonitoring()
-        super.viewWillDisappear(animated)
+        super.viewDidDisappear(animated)
     }
 }

@@ -141,10 +141,9 @@ class SmartCacheExampleViewController: UIViewController {
         self.playerViewController.player?.play()
     }
 
-    override func viewWillDisappear(_ animated: Bool) {
+    override func viewDidDisappear(_ animated: Bool) {
         playerViewController.player?.pause()
-        playerViewController.stopMonitoring()
-        super.viewWillDisappear(animated)
+        super.viewDidDisappear(animated)
     }
 
     // MARK: Player Lifecycle
@@ -178,4 +177,7 @@ class SmartCacheExampleViewController: UIViewController {
         playerViewController.removeFromParent()
     }
 
+    deinit {
+        playerViewController.stopMonitoring()
+    }
 }

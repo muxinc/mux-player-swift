@@ -101,6 +101,9 @@ class DRMExampleViewController: UIViewController {
         playerViewController.removeFromParent()
     }
 
+    deinit {
+        playerViewController.stopMonitoring()
+    }
 }
 
 extension DRMExampleViewController: AVPlayerViewControllerDelegate{
