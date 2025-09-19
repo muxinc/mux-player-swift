@@ -16,7 +16,7 @@ let package = Package(
     dependencies: [
         .package(
             url: "https://github.com/muxinc/mux-stats-sdk-avplayer",
-            .upToNextMajor(from: "4.0.0")
+            branch: "kc/player-prop-observing"
         ),
         .package(
             url: "https://github.com/apple/swift-docc-plugin",
