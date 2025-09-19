@@ -20,8 +20,6 @@ class DRMExampleViewController: UIViewController {
             playbackOptions: playbackOptions
         )
 
-        shimForPlayerObjectObserving(viewController: viewController)
-
         let errorObservation = viewController.observe(\.player?.error, options: .initial) { [weak self] viewController, _ in
             if let error = viewController.player?.error as? AVError, error.code == .mediaServicesWereReset {
                 self?.handleMediaServicesReset()
@@ -148,23 +146,5 @@ extension DRMExampleViewController: AVPlayerViewControllerDelegate{
         restoreUserInterfaceForPictureInPictureStopWithCompletionHandler completionHandler: @escaping (Bool) -> Void
     ) {
         completionHandler(true)
-    }
-}
-
-import MUXSDKStats // only for the shim below
-
-extension DRMExampleViewController {
-    // This should be moved to our AVPlayerViewController initializer, and something similar for AVPlayerLayer
-    func shimForPlayerObjectObserving(viewController: AVPlayerViewController) {
-        let playerObservation = viewController.observe(\.player) { viewController, _ in
-            if let player = viewController.player {
-                // should actually be attachPlayer:
-                MUXSDKStats.update(viewController, withPlayerName: viewController.muxDataName!)
-            } else {
-                // should actually be detachPlayer:
-                MUXSDKStats.destroyPlayer(viewController.muxDataName!)
-            }
-        }
-        observations.append(playerObservation)
     }
 }
