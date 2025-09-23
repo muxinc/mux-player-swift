@@ -388,7 +388,6 @@ class SinglePlayerExampleController: UIViewController {
 
     override func viewWillDisappear(_ animated: Bool) {
         playerViewController.player?.pause()
-        playerViewController.stopMonitoring()
         super.viewWillDisappear(animated)
     }
 
@@ -409,4 +408,7 @@ class SinglePlayerExampleController: UIViewController {
         )
     }
 
+    deinit {
+        playerViewController.stopMonitoring()
+    }
 }

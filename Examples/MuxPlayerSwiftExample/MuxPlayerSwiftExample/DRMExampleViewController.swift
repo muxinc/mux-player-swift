@@ -102,11 +102,6 @@ class DRMExampleViewController: UIViewController {
         displayPlayerViewController()
     }
 
-    override func viewDidDisappear(_ animated: Bool) {
-        playerViewController.stopMonitoring()
-        super.viewDidDisappear(animated)
-    }
-
     // MARK: Player Lifecycle
 
     func displayPlayerViewController() {
@@ -138,6 +133,9 @@ class DRMExampleViewController: UIViewController {
         playerViewController.removeFromParent()
     }
 
+    deinit {
+        playerViewController.stopMonitoring()
+    }
 }
 
 extension DRMExampleViewController: AVPlayerViewControllerDelegate{

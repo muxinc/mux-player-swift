@@ -22,6 +22,10 @@ class PlayerView: UIView {
             (layer as? AVPlayerLayer)?.player = newValue
         }
     }
+
+    deinit {
+        playerLayer.stopMonitoring()
+    }
 }
 
 /// Bare bones AVPlayerLayer example without controls or
@@ -150,7 +154,6 @@ class SinglePlayerLayerExampleViewController: UIViewController {
 
     override func viewWillDisappear(_ animated: Bool) {
         playerView.player?.pause()
-        playerLayer.stopMonitoring()
         super.viewWillDisappear(animated)
     }
 }
