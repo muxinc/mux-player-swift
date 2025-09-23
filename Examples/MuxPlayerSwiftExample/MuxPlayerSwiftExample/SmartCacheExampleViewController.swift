@@ -11,16 +11,27 @@ import MuxPlayerSwift
 
 class SmartCacheExampleViewController: UIViewController {
     
+    private var observations: [NSKeyValueObservation] = []
+
     // MARK: Player View Controller
 
-    lazy var playerViewController = AVPlayerViewController(
-        playbackID: playbackID,
-        playbackOptions: PlaybackOptions(
-            enableSmartCache: smartCacheEnabled,
-            singleRenditionResolutionTier: singleRenditionResolutionTier
-        ),
-        monitoringOptions: monitoringOptions
-    )
+    lazy var playerViewController: AVPlayerViewController = {
+        let viewController = AVPlayerViewController(
+            playbackID: playbackID,
+            playbackOptions: playbackOptions,
+            monitoringOptions: monitoringOptions
+        )
+
+        let errorObservation = viewController.observe(\.player?.error, options: .initial) { [weak self] viewController, _ in
+            if let error = viewController.player?.error as? AVError,
+               error.code == .mediaServicesWereReset {
+                self?.handleMediaServicesReset()
+            }
+        }
+        observations.append(errorObservation)
+
+        return viewController
+    }()
 
     // MARK: Mux Data Monitoring Parameters
 
@@ -49,29 +60,21 @@ class SmartCacheExampleViewController: UIViewController {
         ProcessInfo.processInfo.playbackID ?? "qxb01i6T202018GFS02vp9RIe01icTcDCjVzQpmaB00CUisJ4"
     }
 
+    var playbackOptions: PlaybackOptions {
+        PlaybackOptions(
+            enableSmartCache: smartCacheEnabled,
+            singleRenditionResolutionTier: singleRenditionResolutionTier)
+    }
+
     var smartCacheEnabled: Bool = true {
         didSet {
-            playerViewController.prepare(
-                playbackID: playbackID,
-                playbackOptions: PlaybackOptions(
-                    enableSmartCache: smartCacheEnabled,
-                    singleRenditionResolutionTier: singleRenditionResolutionTier
-                ),
-                monitoringOptions: monitoringOptions
-            )
+            preparePlayerViewController()
         }
     }
 
     var singleRenditionResolutionTier: SingleRenditionResolutionTier = .only720p {
         didSet {
-            playerViewController.prepare(
-                playbackID: playbackID,
-                playbackOptions: PlaybackOptions(
-                    enableSmartCache: smartCacheEnabled,
-                    singleRenditionResolutionTier: singleRenditionResolutionTier
-                ),
-                monitoringOptions: monitoringOptions
-            )
+            preparePlayerViewController()
         }
     }
 
@@ -141,9 +144,9 @@ class SmartCacheExampleViewController: UIViewController {
         self.playerViewController.player?.play()
     }
 
-    override func viewWillDisappear(_ animated: Bool) {
+    override func viewDidDisappear(_ animated: Bool) {
         playerViewController.player?.pause()
-        super.viewWillDisappear(animated)
+        super.viewDidDisappear(animated)
     }
 
     // MARK: Player Lifecycle
@@ -169,6 +172,19 @@ class SmartCacheExampleViewController: UIViewController {
             playerViewController.view.layoutMarginsGuide.bottomAnchor
                 .constraint(equalTo: view.bottomAnchor),
         ])
+    }
+
+    func preparePlayerViewController() {
+        playerViewController.prepare(
+            playbackID: playbackID,
+            playbackOptions: playbackOptions,
+            monitoringOptions: monitoringOptions
+        )
+    }
+
+    func handleMediaServicesReset() {
+        playerViewController.player = nil
+        preparePlayerViewController()
     }
 
     func hidePlayerViewController() {

@@ -21,7 +21,8 @@ class DRMExampleViewController: UIViewController {
         )
 
         let errorObservation = viewController.observe(\.player?.error, options: .initial) { [weak self] viewController, _ in
-            if let error = viewController.player?.error as? AVError, error.code == .mediaServicesWereReset {
+            if let error = viewController.player?.error as? AVError,
+               error.code == .mediaServicesWereReset {
                 self?.handleMediaServicesReset()
             }
         }
@@ -36,14 +37,17 @@ class DRMExampleViewController: UIViewController {
             playbackID: playbackID,
             playbackOptions: playbackOptions)
 
-        // Restore any state on the item and player. This may vary for each app's use case
+        // Restore any desired state on the item
         if let currentTime = playerViewController.player?.currentItem?.currentTime() {
             playerItem.seek(to: currentTime, completionHandler: nil)
         }
 
+        // Recreate the player
         let player = AVPlayer(playerItem: playerItem)
 
-        // With the new changes on the MUXSDKStats branch, monitoring will resume automatically"
+        // Restore any desired state on the player
+
+        // With the new changes on the MUXSDKStats branch, monitoring will resume automatically:
         playerViewController.player = player
     }
 

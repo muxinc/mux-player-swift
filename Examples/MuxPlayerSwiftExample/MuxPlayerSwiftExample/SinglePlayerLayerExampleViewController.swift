@@ -14,13 +14,21 @@ class PlayerView: UIView {
         AVPlayerLayer.self
     }
 
-    var player: AVPlayer? {
+    @objc var playerLayer: AVPlayerLayer {
+        layer as! AVPlayerLayer
+    }
+
+    @objc var player: AVPlayer? {
         get {
-            (layer as? AVPlayerLayer)?.player
+            playerLayer.player
         }
         set {
-            (layer as? AVPlayerLayer)?.player = newValue
+            playerLayer.player = newValue
         }
+    }
+
+    @objc class var keyPathsForValuesAffectingPlayer: Set<String> {
+        ["playerLayer.player"]
     }
 
     deinit {
@@ -31,6 +39,8 @@ class PlayerView: UIView {
 /// Bare bones AVPlayerLayer example without controls or
 /// other affordances
 class SinglePlayerLayerExampleViewController: UIViewController {
+
+    private var observations: [NSKeyValueObservation] = []
 
     // MARK: Mux Data Monitoring Parameters
 
@@ -59,55 +69,55 @@ class SinglePlayerLayerExampleViewController: UIViewController {
         ProcessInfo.processInfo.playbackID ?? "qxb01i6T202018GFS02vp9RIe01icTcDCjVzQpmaB00CUisJ4"
     }
 
-    // MARK: AVPlayerLayer Container
-    lazy var playerView = PlayerView()
-
-    lazy var playerLayer: AVPlayerLayer = AVPlayerLayer()
+    var playbackOptions: PlaybackOptions {
+        PlaybackOptions(
+            maximumResolutionTier: maximumResolutionTier,
+            minimumResolutionTier: minimumResolutionTier,
+            renditionOrder: renditionOrder
+        )
+    }
 
     var minimumResolutionTier: MinResolutionTier = .default {
         didSet {
-            playerLayer.prepare(
-                playbackID: playbackID,
-                playbackOptions: PlaybackOptions(
-                    maximumResolutionTier: maximumResolutionTier,
-                    minimumResolutionTier: minimumResolutionTier,
-                    renditionOrder: renditionOrder
-                ),
-                monitoringOptions: monitoringOptions
-            )
+            preparePlayerView()
         }
     }
 
     var maximumResolutionTier: MaxResolutionTier = .default {
         didSet {
-            playerLayer.prepare(
-                playbackID: playbackID,
-                playbackOptions: PlaybackOptions(
-                    maximumResolutionTier: maximumResolutionTier,
-                    minimumResolutionTier: minimumResolutionTier,
-                    renditionOrder: renditionOrder
-                ),
-                monitoringOptions: monitoringOptions
-            )
+            preparePlayerView()
         }
     }
 
     var renditionOrder: RenditionOrder = .default {
         didSet {
-            playerLayer.prepare(
-                playbackID: playbackID,
-                playbackOptions: PlaybackOptions(
-                    maximumResolutionTier: maximumResolutionTier,
-                    minimumResolutionTier: minimumResolutionTier,
-                    renditionOrder: renditionOrder
-                ),
-                monitoringOptions: monitoringOptions
-            )
+            preparePlayerView()
         }
+    }
+
+    // MARK: AVPlayerLayer Container
+    private(set) weak var playerView: PlayerView?
+
+    func preparePlayerView() {
+        playerView?.playerLayer.prepare(
+            playbackID: playbackID,
+            playbackOptions: playbackOptions,
+            monitoringOptions: monitoringOptions)
     }
 
     override func viewDidLoad() {
         super.viewDidLoad()
+
+        let playerView = PlayerView()
+        self.playerView = playerView
+
+        let errorObservation = playerView.observe(\.player?.error, options: .initial) { [weak self] playerView, _ in
+            if let error = playerView.player?.error as? AVError,
+               error.code == .mediaServicesWereReset {
+                self?.handleMediaServicesReset()
+            }
+        }
+        observations.append(errorObservation)
 
         playerView.backgroundColor = .black
         view.accessibilityLabel = "A single player example that uses AVPlayerLayer"
@@ -130,30 +140,21 @@ class SinglePlayerLayerExampleViewController: UIViewController {
             ),
         ])
 
-        guard let playerLayer = playerView.layer as? AVPlayerLayer else {
-            return
-        }
+        preparePlayerView()
+    }
 
-        self.playerLayer = playerLayer
-
-        playerLayer.prepare(
-            playbackID: playbackID,
-            playbackOptions: PlaybackOptions(
-                maximumResolutionTier: maximumResolutionTier,
-                minimumResolutionTier: minimumResolutionTier,
-                renditionOrder: renditionOrder
-            ),
-            monitoringOptions: monitoringOptions
-        )
+    func handleMediaServicesReset() {
+        playerView?.player = nil
+        preparePlayerView()
     }
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        playerView.player?.play()
+        playerView?.player?.play()
     }
 
-    override func viewWillDisappear(_ animated: Bool) {
-        playerView.player?.pause()
-        super.viewWillDisappear(animated)
+    override func viewDidDisappear(_ animated: Bool) {
+        playerView?.player?.pause()
+        super.viewDidDisappear(animated)
     }
 }
