@@ -9,11 +9,24 @@ import UIKit
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        let audioSession = AVAudioSession.sharedInstance()
-        do {
-            try audioSession.setCategory(AVAudioSession.Category.playback)
-        } catch {
-            print("Setting category to AVAudioSessionCategoryPlayback failed.")
+        Task {
+            let audioSession = AVAudioSession.sharedInstance()
+
+            var mediaServicesResetNotifications = NotificationCenter.default
+                .notifications(named: AVAudioSession.mediaServicesWereResetNotification,
+                               object: audioSession)
+                .compactMap { _ in }
+                .makeAsyncIterator()
+
+            repeat {
+                do {
+                    try audioSession.setCategory(.playback)
+                } catch {
+                    print("Setting category to AVAudioSessionCategoryPlayback failed.")
+                }
+
+                await mediaServicesResetNotifications.next()
+            } while true
         }
 
         return true
