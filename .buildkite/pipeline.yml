@@ -16,6 +16,6 @@ steps:
       - "./Examples/MuxPlayerSwiftExample/DistributionSummary.plist"
       - "./Examples/MuxPlayerSwiftExample/MuxPlayerSwiftExampleUITests-Runner.ipa"
   - wait
-  - command: "echo $BUILDKITE_HOOKS_PATH && ls -ls $BUILDKITE_HOOKS_PATH && buildkite-agent artifact download \"Examples/MuxPlayerSwiftExample/MuxPlayerSwiftExample.ipa\" \"$PWD\" && buildkite-agent artifact download \"Examples/MuxPlayerSwiftExample/MuxPlayerSwiftExampleUITests-Runner.ipa\" \"$PWD\" && ./scripts/upload-example-application-to-sauce-labs.sh"
+  - command: "echo $BUILDKITE_HOOKS_PATH && ls -ls $BUILDKITE_HOOKS_PATH && buildkite-agent artifact download \"Examples/MuxPlayerSwiftExample/MuxPlayerSwiftExample.ipa\" . && buildkite-agent artifact download \"Examples/MuxPlayerSwiftExample/MuxPlayerSwiftExampleUITests-Runner.ipa\" . && ./scripts/upload-example-application-to-sauce-labs.sh"
     label: ":saucelabs: UI Tests Pass on Real Device"
 
