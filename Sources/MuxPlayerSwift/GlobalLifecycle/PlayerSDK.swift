@@ -10,6 +10,7 @@ import os
 // internal class to manage dependency injection
 class PlayerSDK {
     #if DEBUG
+    @TaskLocal
     static var shared = PlayerSDK()
     #else
     static let shared = PlayerSDK()

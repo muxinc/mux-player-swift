@@ -631,34 +631,35 @@ class FairPlaySessionManagerTests : XCTestCase {
         let credentialClient = TestFairPlayStreamingSessionCredentialClient(failsWith: .unexpected(message: "unimplemented"))
         let testRegistry = TestDRMAssetRegistry()
         let testManager = TestFairPlayStreamingSessionManager(credentialClient: credentialClient, drmAssetRegistry: testRegistry)
-
-        PlayerSDK.shared = PlayerSDK(
+        let testSDK = PlayerSDK(
             fairPlayStreamingSessionManager: testManager,
             monitor: Monitor()
         )
 
-        var registeredAsset: AVURLAsset!
+        PlayerSDK.$shared.withValue(testSDK) {
+            var registeredAsset: AVURLAsset!
 
-        let registeredExpectation = XCTestExpectation(description: "DRM asset should be registered")
-        testRegistry.onDRMAsset = { urlAsset, playbackID, options, rootDomain in
-            registeredExpectation.fulfill()
-            registeredAsset = urlAsset
-            XCTAssertEqual(playbackID, "abc")
-            XCTAssertEqual(options.playbackToken, "def")
-            XCTAssertEqual(options.drmToken, "ghi")
-            XCTAssertEqual(rootDomain, "mux.com")
-        }
+            let registeredExpectation = XCTestExpectation(description: "DRM asset should be registered")
+            testRegistry.onDRMAsset = { urlAsset, playbackID, options, rootDomain in
+                registeredExpectation.fulfill()
+                registeredAsset = urlAsset
+                XCTAssertEqual(playbackID, "abc")
+                XCTAssertEqual(options.playbackToken, "def")
+                XCTAssertEqual(options.drmToken, "ghi")
+                XCTAssertEqual(rootDomain, "mux.com")
+            }
 
-        let playerItem = AVPlayerItem(
-            playbackID: "abc",
-            playbackOptions: PlaybackOptions(
-                playbackToken: "def",
-                drmToken: "ghi"
+            let playerItem = AVPlayerItem(
+                playbackID: "abc",
+                playbackOptions: PlaybackOptions(
+                    playbackToken: "def",
+                    drmToken: "ghi"
+                )
             )
-        )
 
-        wait(for: [registeredExpectation], timeout: 0)
+            wait(for: [registeredExpectation], timeout: 0)
 
-        XCTAssert(playerItem.asset === registeredAsset)
+            XCTAssert(playerItem.asset === registeredAsset)
+        }
     }
 }
