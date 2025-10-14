@@ -19,50 +19,29 @@ protocol FairPlayStreamingSessionCredentialClient: AnyObject {
 
     // Requests the App Certificate for a playback id
     func requestCertificate(
-        fromDomain rootDomain: String,
         playbackID: String,
-        drmToken: String,
-        completion requestCompletion: @escaping (Result<Data, Error>) -> Void
+        completion requestCompletion: @escaping (Result<Data, FairPlaySessionError>) -> Void
     )
     // Requests a license to play based on the given SPC data
     // - parameter offline - Not currently used, may not ever be used in short-term, maybe delete?
     func requestLicense(
         spcData: Data,
         playbackID: String,
-        drmToken: String,
-        rootDomain: String,
         offline _: Bool,
-        completion requestCompletion: @escaping (Result<Data, Error>) -> Void
+        completion requestCompletion: @escaping (Result<Data, FairPlaySessionError>) -> Void
     )
 
     var logger: Logger { get set }
 }
 
-// MARK: - PlaybackOptionsRegistry
-
-protocol PlaybackOptionsRegistry: AnyObject {
-    /// Registers a ``PlaybackOptions`` for DRM playback, associated with the given playbackID
-    func registerPlaybackOptions(_ opts: PlaybackOptions, for playbackID: String)
-    /// Gets a DRM token previously registered via ``registerPlaybackOptions``
-    func findRegisteredPlaybackOptions(for playbackID: String) -> PlaybackOptions?
-    /// Unregisters a ``PlaybackOptions`` for DRM playback, given the assiciated playback ID
-    func unregisterPlaybackOptions(for playbackID: String)
-}
-
-// MARK: - ContentKeyRecipientRegistry
-
 // Intended for registering drm-protected AVURLAssets
-protocol ContentKeyRecipientRegistry {
-    /// Adds a ``AVContentKeyRecipient`` (probably an ``AVURLAsset``)  that must be played
-    /// with DRM protection. This call is necessary for DRM playback to succeed
-    func addContentKeyRecipient(_ recipient: AVContentKeyRecipient)
-    /// Removes a ``AVContentKeyRecipient`` previously added by ``addContentKeyRecipient``
-    func removeContentKeyRecipient(_ recipient: AVContentKeyRecipient)
+protocol DRMAssetRegistry {
+    func addDRMAsset(_ urlAsset: AVURLAsset, playbackID: String, options: PlaybackOptions.DRMPlaybackOptions, rootDomain: String)
 }
 
 // MARK: - FairPlayStreamingSessionManager
 
-typealias FairPlayStreamingSessionManager = FairPlayStreamingSessionCredentialClient & PlaybackOptionsRegistry & ContentKeyRecipientRegistry
+typealias FairPlayStreamingSessionManager = FairPlayStreamingSessionCredentialClient & DRMAssetRegistry
 
 // MARK: - Content Key Provider
 
@@ -76,20 +55,45 @@ protocol ContentKeyProvider {
     func addContentKeyRecipient(_ recipient: any AVContentKeyRecipient)
 
     func removeContentKeyRecipient(_ recipient: any AVContentKeyRecipient)
+
+    func recreate() -> Self
 }
 
-// AVContentKeySession already has built-in definitions for
-// these methods so this declaration can be empty
-extension AVContentKeySession: ContentKeyProvider { }
+extension AVContentKeySession: ContentKeyProvider {
+    func recreate() -> Self {
+        if let storageURL {
+            return Self(keySystem: keySystem, storageDirectoryAt: storageURL)
+        } else {
+            return Self(keySystem: keySystem)
+        }
+    }
+}
 
 // MARK: - DefaultFairPlayStreamingSessionManager
 
 class DefaultFairPlayStreamingSessionManager<
     ContentKeySession: ContentKeyProvider
 >: FairPlayStreamingSessionManager {
+    private let queue: DispatchQueue
 
-    var playbackOptionsByPlaybackID: [String: PlaybackOptions] = [:]
-    let contentKeySession: ContentKeySession
+    private var notificationObservers = [NSObjectProtocol]()
+
+    private struct DRMConfig {
+        let options: PlaybackOptions.DRMPlaybackOptions
+        let rootDomain: String
+    }
+    /// should be accessed on `queue`
+    private var configLookup: [String: DRMConfig] = [:]
+
+    private var contentKeySession: ContentKeySession {
+        willSet {
+            contentKeySession.setDelegate(nil, queue: nil)
+        }
+        didSet {
+            contentKeySession.setDelegate(sessionDelegate, queue: queue)
+        }
+    }
+
     let errorDispatcher: (any ErrorDispatcher)
 
     #if DEBUG
@@ -109,32 +113,37 @@ class DefaultFairPlayStreamingSessionManager<
         didSet {
             contentKeySession.setDelegate(
                 sessionDelegate,
-                queue: DispatchQueue(
-                    label: "com.mux.player.fairplay"
-                )
+                queue: queue
             )
         }
     }
 
     private let urlSession: URLSession
     
-    func addContentKeyRecipient(_ recipient: AVContentKeyRecipient) {
-        contentKeySession.addContentKeyRecipient(recipient)
-    }
-    
-    func removeContentKeyRecipient(_ recipient: AVContentKeyRecipient) {
-        contentKeySession.removeContentKeyRecipient(recipient)
-    }
-    
     // MARK: Requesting licenses and certs
     
     /// Requests the App Certificate for a playback id
     func requestCertificate(
-        fromDomain rootDomain: String,
         playbackID: String,
-        drmToken: String,
-        completion requestCompletion: @escaping (Result<Data, Error>) -> Void
+        completion requestCompletion: @escaping (Result<Data, FairPlaySessionError>) -> Void
     ) {
+        guard let config = configLookup[playbackID] else {
+            logger.debug(
+                "No registered DRM configuration for playbackID \(playbackID)."
+            )
+            requestCompletion(
+                .failure(
+                    FairPlaySessionError.unexpected(
+                        message: "No registered DRM configuration for playbackID \(playbackID)"
+                    )
+                )
+            )
+            return
+        }
+
+        let rootDomain = config.rootDomain
+        let drmToken = config.options.drmToken
+
         guard let url = URLComponents(
             playbackID: playbackID,
             drmToken: drmToken,
@@ -183,7 +192,7 @@ class DefaultFairPlayStreamingSessionManager<
                     encoding: .utf8
                 ) {
                     self.logger.debug(
-                        "Application certificate error: \(utfData)"
+                        "Application certificate data: \(utfData)"
                     )
                 }
 
@@ -191,7 +200,7 @@ class DefaultFairPlayStreamingSessionManager<
             // error case: I/O failed
             if let error = error {
                 self.logger.debug(
-                    "Applicate certificate request failed with error: \(error.localizedDescription)"
+                    "Application certificate request failed with error: \(error.localizedDescription)"
                 )
                 let error = FairPlaySessionError.because(cause: error)
                 requestCompletion(Result.failure(
@@ -206,7 +215,7 @@ class DefaultFairPlayStreamingSessionManager<
             // error case: I/O finished with non-successful response
             guard responseCode == 200 else {
                 self.logger.debug(
-                    "Applicate certificate request failed with response code: \(String(describing: responseCode))"
+                    "Application certificate request failed with response code: \(String(describing: responseCode))"
                 )
                 let error = FairPlaySessionError.httpFailed(
                     responseStatusCode: responseCode ?? 0
@@ -229,7 +238,7 @@ class DefaultFairPlayStreamingSessionManager<
                     message: "No cert data with 200 OK response"
                 )
                 self.logger.debug(
-                    "Applicate certificate request completed with missing data and response code \(responseCode.debugDescription)"
+                    "Application certificate request completed with missing data and response code \(responseCode.debugDescription)"
                 )
                 requestCompletion(
                     Result.failure(
@@ -256,11 +265,26 @@ class DefaultFairPlayStreamingSessionManager<
     func requestLicense(
         spcData: Data,
         playbackID: String,
-        drmToken: String,
-        rootDomain: String,
-        offline _: Bool,
-        completion requestCompletion: @escaping (Result<Data, Error>) -> Void
+        offline: Bool,
+        completion requestCompletion: @escaping (Result<Data, FairPlaySessionError>) -> Void
     ) {
+        guard let config = configLookup[playbackID] else {
+            logger.debug(
+                "No registered DRM configuration for playbackID \(playbackID)."
+            )
+            requestCompletion(
+                .failure(
+                    FairPlaySessionError.unexpected(
+                        message: "No registered DRM configuration for playbackID \(playbackID)"
+                    )
+                )
+            )
+            return
+        }
+
+        let drmToken = config.options.drmToken
+        let rootDomain = config.rootDomain
+
         guard let url = URLComponents(
             playbackID: playbackID,
             drmToken: drmToken,
@@ -363,40 +387,70 @@ class DefaultFairPlayStreamingSessionManager<
     }
     
     // MARK: registering assets
-    
-    /// Registers a ``PlaybackOptions`` for DRM playback, associated with the given playbackID
-    func registerPlaybackOptions(
-        _ options: PlaybackOptions,
-        for playbackID: String
+
+    // may be called from anywhere, playback must be possible by the time this function exits
+    func addDRMAsset(
+        _ urlAsset: AVURLAsset,
+        playbackID: String,
+        options: PlaybackOptions.DRMPlaybackOptions,
+        rootDomain: String
     ) {
-        logger.debug("Registering playbackID \(playbackID)")
-        playbackOptionsByPlaybackID[playbackID] = options
+        // contentKeySession delegate callbacks will eventually need this, submit before starting the flow
+        queue.async { [weak self] in
+            self?.configLookup[playbackID] = DRMConfig(
+                options: options,
+                rootDomain: rootDomain)
+        }
+        contentKeySession.addContentKeyRecipient(urlAsset)
     }
-    
-    /// Gets a DRM token previously registered via ``registerPlaybackOptions``
-    func findRegisteredPlaybackOptions(
-        for playbackID: String
-    ) -> PlaybackOptions? {
-        logger.debug("Finding playbackID \(playbackID)")
-        return playbackOptionsByPlaybackID[playbackID]
-    }
-    
-    /// Unregisters a ``PlaybackOptions`` for DRM playback, given the assiciated playback ID
-    func unregisterPlaybackOptions(for playbackID: String) {
-        logger.debug("UN-Registering playbackID \(playbackID)")
-        playbackOptionsByPlaybackID.removeValue(forKey: playbackID)
+
+    // MARK: error recovery
+
+    private func handleMediaServicesLost() {
+        queue.async { [weak self] in
+            self?.configLookup.removeAll()
+        }
+        contentKeySession = contentKeySession.recreate()
     }
 
     // MARK: initializers
 
     init(
         contentKeySession: ContentKeySession,
-        urlSession: URLSession,
-        errorDispatcher: any ErrorDispatcher
+        errorDispatcher: any ErrorDispatcher,
+        urlSessionConfiguration baseURLSessionConfig: URLSessionConfiguration = .default,
+        targetQueue: DispatchQueue = .global(qos: .default)
     ) {
         self.contentKeySession = contentKeySession
-        self.urlSession = urlSession
         self.errorDispatcher = errorDispatcher
+
+        queue = DispatchQueue(
+            label: "com.mux.player.fairplay",
+            qos: .userInitiated,
+            autoreleaseFrequency: .workItem,
+            target: targetQueue)
+
+        let operationQueue = OperationQueue()
+        operationQueue.underlyingQueue = queue
+        operationQueue.qualityOfService = .userInitiated
+
+        let urlSessionConfiguration = baseURLSessionConfig.copy() as! URLSessionConfiguration
+        urlSessionConfiguration.waitsForConnectivity = true
+        urlSessionConfiguration.networkServiceType = .responsiveData
+
+        urlSession = URLSession(
+            configuration: urlSessionConfiguration,
+            delegate: nil,
+            delegateQueue: operationQueue)
+
+        notificationObservers.append(
+            NotificationCenter.default.addObserver(
+                forName: AVAudioSession.mediaServicesWereLostNotification,
+                object: nil,
+                queue: nil) { [weak self] _ in
+                    self?.handleMediaServicesLost()
+                }
+        )
     }
 }
 

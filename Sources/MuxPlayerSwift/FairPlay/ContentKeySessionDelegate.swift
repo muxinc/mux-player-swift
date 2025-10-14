@@ -9,7 +9,7 @@ import AVFoundation
 import Foundation
 import os
 
-class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredentialClient & PlaybackOptionsRegistry> : NSObject, AVContentKeySessionDelegate {
+class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredentialClient> : NSObject, AVContentKeySessionDelegate {
     
     weak var sessionManager: SessionManager?
 
@@ -173,51 +173,42 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
             return
         }
 
-        guard let playbackOptions = sessionManager.findRegisteredPlaybackOptions(
-            for: playbackID
-        ), case .drm(let drmOptions) = playbackOptions.playbackPolicy else {
-            logger.debug(
-                "Unregistered DRM token. Make sure this is done right after AVPlayerItem is initialized."
-            )
-            request.processContentKeyResponseError(
-                FairPlaySessionError.unexpected(
-                    message: "Token was not registered, only happens during SDK errors"
-                )
-            )
-            return
-        }
-        
-        let rootDomain = playbackOptions.rootDomain()
-        
         // get app cert
-        var applicationCertificate: Data?
-        var appCertError: (any Error)?
-        //  the drmtoday example does this by joining a dispatch group, but is this best?
-        let group = DispatchGroup()
-        group.enter()
         sessionManager.requestCertificate(
-            fromDomain: rootDomain,
             playbackID: playbackID,
-            drmToken: drmOptions.drmToken,
-            completion: { result in
+            completion: { [weak self] result in
+                guard let self else {
+                    PlayerSDK.shared.diagnosticsLogger.debug(
+                        "Content key request completed: missing session delegate"
+                    )
+                    return
+                }
+
+                let applicationCertificate: Data
                 do {
                     applicationCertificate = try result.get()
                 } catch {
-                    appCertError = error
+                    request.processContentKeyResponseError(
+                        error
+                    )
+                    return
                 }
-                group.leave()
+
+                handleApplicationCertificate(
+                    applicationCertificate,
+                    contentIdentifier: utfEncodedRequestIdentifierString,
+                    playbackID: playbackID,
+                    request: request)
             }
         )
-        group.wait()
-        guard let applicationCertificate = applicationCertificate else {
-            request.processContentKeyResponseError(
-                FairPlaySessionError.because(
-                    cause: appCertError!
-                )
-            )
-            return
-        }
-        
+    }
+
+    func handleApplicationCertificate(
+        _ applicationCertificate: Data,
+        contentIdentifier utfEncodedRequestIdentifierString: Data,
+        playbackID: String,
+        request: any KeyRequest
+    ) {
         // exchange app cert for SPC using KeyRequest to give to CDM
         request.makeStreamingContentKeyRequestData(
             forApp: applicationCertificate,
@@ -242,8 +233,6 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
             handleSpcObtainedFromCDM(
                 spcData: spcData,
                 playbackID: playbackID,
-                drmToken: drmOptions.drmToken,
-                rootDomain: rootDomain,
                 request: request
             )
         }
@@ -252,8 +241,6 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
     func handleSpcObtainedFromCDM(
         spcData: Data,
         playbackID: String,
-        drmToken: String,
-        rootDomain: String, // without any "license." or "stream." prepended, eg mux.com, custom.1234.co.uk
         request: any KeyRequest
     ) {
         guard let sessionManager = self.sessionManager else {
@@ -261,43 +248,36 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
             return
         }
         
-        // todo - DRM Today example does this by joining a DispatchGroup. Is this really preferable??
-        var ckcData: Data? = nil
-        let group = DispatchGroup()
-        group.enter()
         sessionManager.requestLicense(
             spcData: spcData,
             playbackID: playbackID,
-            drmToken: drmToken,
-            rootDomain: rootDomain,
             offline: false
-        ) { result in
-            if let data = try? result.get() {
-                ckcData = data
+        ) { [weak self] result in
+            guard let self else {
+                return
             }
-            group.leave()
-        }
-        group.wait()
-        
-        guard let ckcData = ckcData else {
-            request.processContentKeyResponseError(
-                FairPlaySessionError.unexpected(
-                    message: "No CKC Data returned from CDM"
+
+            let ckcData: Data
+            do {
+                ckcData = try result.get()
+            } catch {
+                request.processContentKeyResponseError(
+                    error
                 )
+                return
+            }
+
+            logger.debug("Submitting CKC to system")
+            // Send CKC to CDM/wherever else so we can finally play our content
+            let keyResponse = request.makeContentKeyResponse(
+                data: ckcData
             )
-            return
+            request.processContentKeyResponse(
+                keyResponse
+            )
+            logger.debug("Protected content now available for processing")
+            // Done! no further interaction is required from us to play.
         }
-        
-        logger.debug("Submitting CKC to system")
-        // Send CKC to CDM/wherever else so we can finally play our content
-        let keyResponse = request.makeContentKeyResponse(
-            data: ckcData
-        )
-        request.processContentKeyResponse(
-            keyResponse
-        )
-        logger.debug("Protected content now available for processing")
-        // Done! no further interaction is required from us to play.
     }
 }
 
