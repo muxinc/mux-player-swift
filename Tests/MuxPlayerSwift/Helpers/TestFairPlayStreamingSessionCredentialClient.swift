@@ -16,7 +16,7 @@ class TestFairPlayStreamingSessionCredentialClient: FairPlayStreamingSessionCred
     
     private let fakeCert: Data?
     private let fakeLicense: Data?
-    private let failsWith: (any Error)!
+    private let failsWith: FairPlaySessionError!
 
     var logger: Logger = Logger(
         OSLog(
@@ -25,7 +25,7 @@ class TestFairPlayStreamingSessionCredentialClient: FairPlayStreamingSessionCred
         )
     )
 
-    func requestCertificate(fromDomain rootDomain: String, playbackID: String, drmToken: String, completion requestCompletion: @escaping (Result<Data, any Error>) -> Void) {
+    func requestCertificate(playbackID: String, completion requestCompletion: @escaping (Result<Data, FairPlaySessionError>) -> Void) {
         if let fakeCert = fakeCert {
             requestCompletion(Result.success(fakeCert))
         } else {
@@ -33,7 +33,7 @@ class TestFairPlayStreamingSessionCredentialClient: FairPlayStreamingSessionCred
         }
     }
     
-    func requestLicense(spcData: Data, playbackID: String, drmToken: String, rootDomain: String, offline _: Bool, completion requestCompletion: @escaping (Result<Data, any Error>) -> Void) {
+    func requestLicense(spcData: Data, playbackID: String, offline _: Bool, completion requestCompletion: @escaping (Result<Data, FairPlaySessionError>) -> Void) {
         if let fakeLicense = fakeLicense {
             requestCompletion(Result.success(fakeLicense))
         } else {
@@ -45,14 +45,14 @@ class TestFairPlayStreamingSessionCredentialClient: FairPlayStreamingSessionCred
         self.init(fakeCert: fakeCert, fakeLicense: fakeLicense, failsWith: nil)
     }
     
-    convenience init(failsWith: any Error) {
+    convenience init(failsWith: FairPlaySessionError) {
         self.init(fakeCert: nil, fakeLicense: nil, failsWith: failsWith)
     }
     
     private init(
         fakeCert: Data?,
         fakeLicense: Data?,
-        failsWith: (any Error)?
+        failsWith: FairPlaySessionError?
     ) {
         self.fakeCert = fakeCert
         self.fakeLicense = fakeLicense

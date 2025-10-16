@@ -386,10 +386,9 @@ class SinglePlayerExampleController: UIViewController {
         )
     }
 
-    override func viewWillDisappear(_ animated: Bool) {
+    override func viewDidDisappear(_ animated: Bool) {
         playerViewController.player?.pause()
-        playerViewController.stopMonitoring()
-        super.viewWillDisappear(animated)
+        super.viewDidDisappear(animated)
     }
 
     // MARK: Player Lifecycle
@@ -409,4 +408,7 @@ class SinglePlayerExampleController: UIViewController {
         )
     }
 
+    deinit {
+        playerViewController.stopMonitoring()
+    }
 }

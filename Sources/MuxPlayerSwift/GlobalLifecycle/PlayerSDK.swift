@@ -10,6 +10,7 @@ import os
 // internal class to manage dependency injection
 class PlayerSDK {
     #if DEBUG
+    @TaskLocal
     static var shared = PlayerSDK()
     #else
     static let shared = PlayerSDK()
@@ -36,7 +37,6 @@ class PlayerSDK {
         self.init(
             fairPlayStreamingSessionManager: DefaultFairPlayStreamingSessionManager(
                 contentKeySession: AVContentKeySession(keySystem: .clearKey),
-                urlSession: .shared,
                 errorDispatcher: monitor
             ),
             monitor: monitor
@@ -44,7 +44,6 @@ class PlayerSDK {
         #else
         let sessionManager = DefaultFairPlayStreamingSessionManager(
             contentKeySession: AVContentKeySession(keySystem: .fairPlayStreaming),
-            urlSession: .shared,
             errorDispatcher: monitor
         )
         sessionManager.sessionDelegate = ContentKeySessionDelegate(
@@ -134,16 +133,13 @@ class PlayerSDK {
         playbackOptions: PlaybackOptions
     ) {
         // as? AVURLAsset check should never fail
-        if case .drm = playbackOptions.playbackPolicy,
+        if case .drm(let drmOptions) = playbackOptions.playbackPolicy,
            let urlAsset = playerItem.asset as? AVURLAsset {
-            fairPlaySessionManager.registerPlaybackOptions(
-                playbackOptions,
-                for: playbackID
-            )
-            // asset must be attached as early as possible to avoid crashes when attaching later
-            fairPlaySessionManager.addContentKeyRecipient(
-                urlAsset
-            )
+            fairPlaySessionManager.addDRMAsset(
+                urlAsset,
+                playbackID: playbackID,
+                options: drmOptions,
+                rootDomain: playbackOptions.rootDomain())
         }
     }
 

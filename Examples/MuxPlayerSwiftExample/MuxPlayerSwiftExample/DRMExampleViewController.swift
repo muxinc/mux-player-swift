@@ -87,10 +87,10 @@ class DRMExampleViewController: UIViewController {
             playerViewController.view.trailingAnchor.constraint(
                 equalTo: view.trailingAnchor
             ),
-            playerViewController.view.layoutMarginsGuide.topAnchor.constraint(
+            playerViewController.view.topAnchor.constraint(
                 equalTo: view.topAnchor
             ),
-            playerViewController.view.layoutMarginsGuide.bottomAnchor
+            playerViewController.view.bottomAnchor
                 .constraint(equalTo: view.bottomAnchor),
         ])
     }
@@ -101,6 +101,9 @@ class DRMExampleViewController: UIViewController {
         playerViewController.removeFromParent()
     }
 
+    deinit {
+        playerViewController.stopMonitoring()
+    }
 }
 
 extension DRMExampleViewController: AVPlayerViewControllerDelegate{

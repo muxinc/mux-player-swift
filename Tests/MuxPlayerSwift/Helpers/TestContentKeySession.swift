@@ -31,7 +31,11 @@ class TestContentKeySession: ContentKeyProvider {
         // no-op
     }
     
-	init() {
-	
+    func recreate() -> Self {
+        Self()
+    }
+
+	required init() {
+
 	}
 }

@@ -10,10 +10,10 @@ import AVFoundation
 import os
 @testable import MuxPlayerSwift
 
-class TestFairPlayStreamingSessionManager : FairPlayStreamingSessionCredentialClient & PlaybackOptionsRegistry {
+class TestFairPlayStreamingSessionManager : FairPlayStreamingSessionCredentialClient & DRMAssetRegistry {
     
     let credentialClient: FairPlayStreamingSessionCredentialClient
-    let optionsRegistry: PlaybackOptionsRegistry
+    let drmAssetRegistry: DRMAssetRegistry
 
     var logger: Logger = Logger(
         OSLog(
@@ -22,29 +22,21 @@ class TestFairPlayStreamingSessionManager : FairPlayStreamingSessionCredentialCl
         )
     )
 
-    func requestCertificate(fromDomain rootDomain: String, playbackID: String, drmToken: String, completion requestCompletion: @escaping (Result<Data, any Error>) -> Void) {
-        credentialClient.requestCertificate(fromDomain: rootDomain, playbackID: playbackID, drmToken: drmToken, completion: requestCompletion)
+    func requestCertificate(playbackID: String, completion requestCompletion: @escaping (Result<Data, FairPlaySessionError>) -> Void) {
+        credentialClient.requestCertificate(playbackID: playbackID, completion: requestCompletion)
     }
-   
-    func requestLicense(spcData: Data, playbackID: String, drmToken: String, rootDomain: String, offline: Bool, completion requestCompletion: @escaping (Result<Data, any Error>) -> Void) {
-        credentialClient.requestLicense(spcData: spcData, playbackID: playbackID, drmToken: drmToken, rootDomain: rootDomain, offline: offline, completion: requestCompletion)
+
+    func requestLicense(spcData: Data, playbackID: String, offline: Bool, completion requestCompletion: @escaping (Result<Data, FairPlaySessionError>) -> Void) {
+        credentialClient.requestLicense(spcData: spcData, playbackID: playbackID, offline: offline, completion: requestCompletion)
     }
-    
-    func registerPlaybackOptions(_ opts: MuxPlayerSwift.PlaybackOptions, for playbackID: String) {
-        optionsRegistry.registerPlaybackOptions(opts, for: playbackID)
-    }
-    
-    func findRegisteredPlaybackOptions(for playbackID: String) -> MuxPlayerSwift.PlaybackOptions? {
-        optionsRegistry.findRegisteredPlaybackOptions(for: playbackID)
-    }
-    
-    func unregisterPlaybackOptions(for playbackID: String) {
-        optionsRegistry.unregisterPlaybackOptions(for: playbackID)
+
+    func addDRMAsset(_ urlAsset: AVURLAsset, playbackID: String, options: PlaybackOptions.DRMPlaybackOptions, rootDomain: String) {
+        drmAssetRegistry.addDRMAsset(urlAsset, playbackID: playbackID, options: options, rootDomain: rootDomain)
     }
    
     init(credentialClient: any FairPlayStreamingSessionCredentialClient,
-         optionsRegistry: any PlaybackOptionsRegistry) {
+         drmAssetRegistry: any DRMAssetRegistry) {
         self.credentialClient = credentialClient
-        self.optionsRegistry = optionsRegistry
+        self.drmAssetRegistry = drmAssetRegistry
     }
 }

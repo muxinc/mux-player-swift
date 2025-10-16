@@ -5,13 +5,14 @@
 //  Created by Emily Dixon on 5/7/24.
 //
 
+import AVFoundation
 import Foundation
 import XCTest
 @testable import MuxPlayerSwift
 
 class ContentKeySessionDelegateTests : XCTestCase {
     
-    var testPlaybackOptionsRegistry: TestPlaybackOptionsRegistry!
+    var testDRMAssetRegistry: TestDRMAssetRegistry!
     var testCredentialClient: TestFairPlayStreamingSessionCredentialClient!
     var testSessionManager: TestFairPlayStreamingSessionManager!
     
@@ -24,14 +25,14 @@ class ContentKeySessionDelegateTests : XCTestCase {
         setUpForSuccess()
     }
     
-    private func setUpForFailure(error: any Error) {
+    private func setUpForFailure(error: FairPlaySessionError) {
         testCredentialClient = TestFairPlayStreamingSessionCredentialClient(
             failsWith: error
         )
-        testPlaybackOptionsRegistry = TestPlaybackOptionsRegistry()
+        testDRMAssetRegistry = TestDRMAssetRegistry()
         testSessionManager = TestFairPlayStreamingSessionManager(
             credentialClient: testCredentialClient,
-            optionsRegistry: testPlaybackOptionsRegistry
+            drmAssetRegistry: testDRMAssetRegistry
         )
         
         contentKeySessionDelegate = ContentKeySessionDelegate(
@@ -44,11 +45,12 @@ class ContentKeySessionDelegateTests : XCTestCase {
             fakeCert: "default fake cert".data(using: .utf8)!,
             fakeLicense: "default fake license".data(using: .utf8)!
         )
-        testPlaybackOptionsRegistry = TestPlaybackOptionsRegistry()
         
+        testDRMAssetRegistry = TestDRMAssetRegistry()
+
         testSessionManager = TestFairPlayStreamingSessionManager(
             credentialClient: testCredentialClient,
-            optionsRegistry: testPlaybackOptionsRegistry
+            drmAssetRegistry: testDRMAssetRegistry
         )
         
         contentKeySessionDelegate = ContentKeySessionDelegate(
@@ -79,9 +81,7 @@ class ContentKeySessionDelegateTests : XCTestCase {
     
     func testKeyRequestNoPlaybackId() throws {
         let mockRequest = MockKeyRequest(
-            fakeIdentifier: makeFakeSkdUrl(
-                fakePlaybackID: makeFakeSkdUrlIncorrect()
-            )
+            fakeIdentifier: makeFakeSkdUrlIncorrect()
         )
         
         contentKeySessionDelegate.handleContentKeyRequest(request: mockRequest)
@@ -97,7 +97,7 @@ class ContentKeySessionDelegateTests : XCTestCase {
     }
     
     func testKeyRequestCertError() throws {
-        setUpForFailure(error: FakeError(tag: "fake error"))
+        setUpForFailure(error: .unexpected(message: "fake error"))
         let mockRequest = MockKeyRequest(
             fakeIdentifier: makeFakeSkdUrl(fakePlaybackID: "fake-playback")
         )
@@ -119,11 +119,12 @@ class ContentKeySessionDelegateTests : XCTestCase {
                 fakePlaybackID: "fake-playback"
             )
         )
-        testPlaybackOptionsRegistry.registerPlaybackOptions(
-            PlaybackOptions(playbackToken: "playback-token", drmToken: "drm-token"),
-            for: "fake-playback"
-        )
-        
+        testDRMAssetRegistry.addDRMAsset(
+            AVURLAsset(url: URL(string: "https://example.com/playlist.m3u8")!),
+            playbackID: "fake-playback",
+            options: .init(playbackToken: "playback-token", drmToken: "drm-token"),
+            rootDomain: "example.com")
+
         contentKeySessionDelegate.handleContentKeyRequest(request: mockRequest)
         
         XCTAssertTrue(
@@ -135,7 +136,7 @@ class ContentKeySessionDelegateTests : XCTestCase {
     }
     
     func testSPCForCKCFailedLicense() throws {
-        setUpForFailure(error: FakeError(tag: "fake error"))
+        setUpForFailure(error: .unexpected(message: "fake error"))
         let mockRequest = MockKeyRequest(
             fakeIdentifier: makeFakeSkdUrl(fakePlaybackID: "fake-playback")
         )
@@ -143,8 +144,6 @@ class ContentKeySessionDelegateTests : XCTestCase {
         contentKeySessionDelegate.handleSpcObtainedFromCDM(
             spcData: "fake-spc-data".data(using: .utf8)!,
             playbackID: "fake-playback",
-            drmToken: "fake-drm-token",
-            rootDomain: "mux.com",
             request: mockRequest
         )
         
@@ -164,16 +163,15 @@ class ContentKeySessionDelegateTests : XCTestCase {
                 fakePlaybackID: "fake-playback"
             )
         )
-        testPlaybackOptionsRegistry.registerPlaybackOptions(
-            PlaybackOptions(playbackToken: "playback-token", drmToken: "drm-token"),
-            for: "fake-playback"
-        )
-        
+        testDRMAssetRegistry.addDRMAsset(
+            AVURLAsset(url: URL(string: "https://example.com/playlist.m3u8")!),
+            playbackID: "fake-playback",
+            options: .init(playbackToken: "playback-token", drmToken: "drm-token"),
+            rootDomain: "example.com")
+
         contentKeySessionDelegate.handleSpcObtainedFromCDM(
             spcData: "fake-spc-data".data(using: .utf8)!,
             playbackID: "fake-playback",
-            drmToken: "fake-drm-token",
-            rootDomain: "mux.com",
             request: mockRequest
         )
         

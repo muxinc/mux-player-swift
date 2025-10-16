@@ -13,30 +13,30 @@ import os
 
 class FairPlaySessionManagerTests : XCTestCase {
     
-    // mocks
-    private var mockURLSession: URLSession!
-
-    
     // object under test
     private var sessionManager: FairPlayStreamingSessionManager!
     
+    // FairPlayStreamingSessionManager expects most of these calls to come from AVContentKeySession,
+    // so send them from this queue to avoid memory corruption in the DRM config lookup
+    private var targetQueue: DispatchQueue!
+
     override func setUp() {
         super.setUp()
         let mockURLSessionConfig = URLSessionConfiguration.default
         mockURLSessionConfig.protocolClasses = [MockURLProtocol.self]
-        self.mockURLSession = URLSession.init(configuration: mockURLSessionConfig)
         let session = TestContentKeySession()
+        let queue = DispatchQueue(label: "test target queue")
+        self.targetQueue = queue
         let defaultFairPlaySessionManager = DefaultFairPlayStreamingSessionManager(
-            // .clearKey is used because .fairPlay requires a physical device
             contentKeySession: session,
-            urlSession: mockURLSession,
-            errorDispatcher: Monitor()
+            errorDispatcher: Monitor(),
+            urlSessionConfiguration: mockURLSessionConfig,
+            targetQueue: queue
         )
         self.sessionManager = defaultFairPlaySessionManager
         defaultFairPlaySessionManager.sessionDelegate = ContentKeySessionDelegate(
             sessionManager: defaultFairPlaySessionManager
         )
-
     }
 
     func testDefaultLicenseURL() throws {
@@ -98,8 +98,15 @@ class FairPlaySessionManagerTests : XCTestCase {
     func testAppCertificateRequestBody() throws {
         let fakeRootDomain = "custom.domain.com"
         let fakePlaybackId = "fake_playback_id"
+        let fakePlaybackToken = "fake_playback_token"
         let fakeDrmToken = "fake_drm_token"
         
+        sessionManager.addDRMAsset(
+            AVURLAsset(url: URL(string: "https://example.com/playlist.m3u8")!),
+            playbackID: fakePlaybackId,
+            options: .init(playbackToken: fakePlaybackToken, drmToken: fakeDrmToken),
+            rootDomain: fakeRootDomain)
+
         var urlRequest: URLRequest!
         MockURLProtocol.requestHandler = { request in
             urlRequest = request
@@ -108,13 +115,13 @@ class FairPlaySessionManagerTests : XCTestCase {
         }
         
         let requestEnds = XCTestExpectation(description: "request ends")
-        sessionManager.requestCertificate(
-            fromDomain: fakeRootDomain,
-            playbackID: fakePlaybackId,
-            drmToken: fakeDrmToken
-        ) { result in
-            // we recorded the request so we should be ok
-            requestEnds.fulfill()
+        targetQueue.async {
+            self.sessionManager.requestCertificate(
+                playbackID: fakePlaybackId,
+            ) { result in
+                // we recorded the request so we should be ok
+                requestEnds.fulfill()
+            }
         }
         wait(for: [requestEnds])
         
@@ -138,10 +145,17 @@ class FairPlaySessionManagerTests : XCTestCase {
     func testLicenseRequestBody() throws {
         let fakeRootDomain = "custom.domain.com"
         let fakePlaybackId = "fake_playback_id"
+        let fakePlaybackToken = "fake_playback_token"
         let fakeDrmToken = "fake_drm_token"
         // real SPC's are opaque binary to us, the fake one can be whatever
         let fakeSpcData = "fake-SPC-binary-data".data(using: .utf8)!
         
+        sessionManager.addDRMAsset(
+            AVURLAsset(url: URL(string: "https://example.com/playlist.m3u8")!),
+            playbackID: fakePlaybackId,
+            options: .init(playbackToken: fakePlaybackToken, drmToken: fakeDrmToken),
+            rootDomain: fakeRootDomain)
+
         var urlRequest: URLRequest!
         MockURLProtocol.requestHandler = { request in
             urlRequest = request
@@ -157,15 +171,15 @@ class FairPlaySessionManagerTests : XCTestCase {
         }
         
         let requestEnds = XCTestExpectation(description: "request ends")
-        sessionManager.requestLicense(
-            spcData: fakeSpcData,
-            playbackID: fakePlaybackId,
-            drmToken: fakeDrmToken,
-            rootDomain: fakeRootDomain,
-            offline: false
-        ) { result in
-            // we recorded the request so we should be ok
-            requestEnds.fulfill()
+        targetQueue.async {
+            self.sessionManager.requestLicense(
+                spcData: fakeSpcData,
+                playbackID: fakePlaybackId,
+                offline: false
+            ) { result in
+                // we recorded the request so we should be ok
+                requestEnds.fulfill()
+            }
         }
         wait(for: [requestEnds])
         
@@ -198,14 +212,22 @@ class FairPlaySessionManagerTests : XCTestCase {
         XCTAssertEqual(Int(contentLengthHeader!)!, fakeSpcData.count)
         XCTAssertEqual(contentTypeHeader, "application/octet-stream")
     }
+
     func testRequestCertificateSuccess() throws {
         let fakeRootDomain = "custom.domain.com"
         let fakePlaybackId = "fake_playback_id"
+        let fakePlaybackToken = "fake_playback_token"
         let fakeDrmToken = "fake_drm_token"
         // real app certs are opaque binary to us, the fake one can be whatever
         let fakeAppCert = "fake-application-cert-binary-data".data(using: .utf8)
         
-        let requestSuccess = XCTestExpectation(description: "request certificate successfully")
+        sessionManager.addDRMAsset(
+            AVURLAsset(url: URL(string: "https://example.com/playlist.m3u8")!),
+            playbackID: fakePlaybackId,
+            options: .init(playbackToken: fakePlaybackToken, drmToken: fakeDrmToken),
+            rootDomain: fakeRootDomain)
+
+        let requestCompleted = XCTestExpectation(description: "request certificate completion")
         MockURLProtocol.requestHandler = { request in
             let response = HTTPURLResponse(
                 url: request.url!,
@@ -217,30 +239,32 @@ class FairPlaySessionManagerTests : XCTestCase {
             return (response, fakeAppCert)
         }
         
-        var foundAppCert: Data?
-        sessionManager.requestCertificate(
-            fromDomain: fakeRootDomain,
-            playbackID: fakePlaybackId,
-            drmToken: fakeDrmToken
-        ) { result in
-            guard let result = try? result.get() else {
-                XCTFail("Should not report failure for the given request")
-                return
+        var requestResult: Result<Data, FairPlaySessionError>!
+        targetQueue.async {
+            self.sessionManager.requestCertificate(
+                playbackID: fakePlaybackId,
+            ) { result in
+                requestResult = result
+                requestCompleted.fulfill()
             }
-            
-            foundAppCert = result
-            requestSuccess.fulfill()
         }
-        wait(for: [requestSuccess])
-        XCTAssertEqual(foundAppCert, fakeAppCert)
+        wait(for: [requestCompleted])
+        XCTAssertEqual(try requestResult.get(), fakeAppCert)
     }
     
     func testRequestCertificateHttpError() throws {
         let fakeRootDomain = "custom.domain.com"
         let fakePlaybackId = "fake_playback_id"
+        let fakePlaybackToken = "fake_playback_token"
         let fakeDrmToken = "fake_drm_token"
         let fakeHTTPStatus = 500 // all codes are handled the same way, by failing
         
+        sessionManager.addDRMAsset(
+            AVURLAsset(url: URL(string: "https://example.com/playlist.m3u8")!),
+            playbackID: fakePlaybackId,
+            options: .init(playbackToken: fakePlaybackToken, drmToken: fakeDrmToken),
+            rootDomain: fakeRootDomain)
+
         let requestFails = XCTestExpectation(description: "request certificate successfully")
         MockURLProtocol.requestHandler = { request in
             let response = HTTPURLResponse(
@@ -262,19 +286,19 @@ class FairPlaySessionManagerTests : XCTestCase {
         }
         
         var reqError: Error?
-        sessionManager.requestCertificate(
-            fromDomain: fakeRootDomain,
-            playbackID: fakePlaybackId,
-            drmToken: fakeDrmToken
-        ) { result in
-            do {
-                _ = try result.get()
-                XCTFail("failure should have been reported")
-            } catch {
-                reqError = error
+        targetQueue.async {
+            self.sessionManager.requestCertificate(
+                playbackID: fakePlaybackId,
+            ) { result in
+                do {
+                    _ = try result.get()
+                    XCTFail("failure should have been reported")
+                } catch {
+                    reqError = error
+                }
+                requestFails.fulfill()
+
             }
-            requestFails.fulfill()
-            
         }
         wait(for: [requestFails])
         
@@ -293,26 +317,33 @@ class FairPlaySessionManagerTests : XCTestCase {
     func testRequestCertificateIOError() throws {
         let fakeRootDomain = "custom.domain.com"
         let fakePlaybackId = "fake_playback_id"
+        let fakePlaybackToken = "fake_playback_token"
         let fakeDrmToken = "fake_drm_token"
-        
+
+        sessionManager.addDRMAsset(
+            AVURLAsset(url: URL(string: "https://example.com/playlist.m3u8")!),
+            playbackID: fakePlaybackId,
+            options: .init(playbackToken: fakePlaybackToken, drmToken: fakeDrmToken),
+            rootDomain: fakeRootDomain)
+
         let requestFails = XCTestExpectation(description: "request certificate successfully")
         MockURLProtocol.requestHandler = { request in
             throw FakeError()
         }
         
         var reqError: Error?
-        sessionManager.requestCertificate(
-            fromDomain: fakeRootDomain,
-            playbackID: fakePlaybackId,
-            drmToken: fakeDrmToken
-        ) { result in
-            do {
-                _ = try result.get()
-                XCTFail("failure should have been reported")
-            } catch {
-                reqError = error
+        targetQueue.async {
+            self.sessionManager.requestCertificate(
+                playbackID: fakePlaybackId,
+            ) { result in
+                do {
+                    _ = try result.get()
+                    XCTFail("failure should have been reported")
+                } catch {
+                    reqError = error
+                }
+                requestFails.fulfill()
             }
-            requestFails.fulfill()
         }
         wait(for: [requestFails])
         
@@ -332,9 +363,16 @@ class FairPlaySessionManagerTests : XCTestCase {
     func testRequestCertificateBlankWithSusStatusCode() throws {
         let fakeRootDomain = "custom.domain.com"
         let fakePlaybackId = "fake_playback_id"
+        let fakePlaybackToken = "fake_playback_token"
         let fakeDrmToken = "fake_drm_token"
         // In this case, there's a successful response but no body
         
+        sessionManager.addDRMAsset(
+            AVURLAsset(url: URL(string: "https://example.com/playlist.m3u8")!),
+            playbackID: fakePlaybackId,
+            options: .init(playbackToken: fakePlaybackToken, drmToken: fakeDrmToken),
+            rootDomain: fakeRootDomain)
+
         let requestFails = XCTestExpectation(description: "request certificate suspicious 200/OK should be treated as failure")
         MockURLProtocol.requestHandler = { request in
             let response = HTTPURLResponse(
@@ -349,17 +387,17 @@ class FairPlaySessionManagerTests : XCTestCase {
         
         // Expected behavior: URLTask does something odd, requestCertificate returns error
         var reqError: Error?
-        sessionManager.requestCertificate(
-            fromDomain: fakeRootDomain,
-            playbackID: fakePlaybackId,
-            drmToken: fakeDrmToken
-        ) { result in
-            do {
-                _ = try result.get()
-                XCTFail("failure should have been reported")
-            } catch {
-                reqError = error
-                requestFails.fulfill()
+        targetQueue.async {
+            self.sessionManager.requestCertificate(
+                playbackID: fakePlaybackId,
+            ) { result in
+                do {
+                    _ = try result.get()
+                    XCTFail("failure should have been reported")
+                } catch {
+                    reqError = error
+                    requestFails.fulfill()
+                }
             }
         }
         wait(for: [requestFails])
@@ -369,20 +407,28 @@ class FairPlaySessionManagerTests : XCTestCase {
             return
         }
         
-        guard case .unexpected(_) = fpsError else {
+        guard case .unexpected(let message) = fpsError else {
             XCTFail("An Unexpected error should be returned")
             return
         }
+        XCTAssert(message == "No cert data with 200 OK response")
     }
     
     func testRequestLicenseSuccess() throws {
         let fakeRootDomain = "custom.domain.com"
         let fakePlaybackId = "fake_playback_id"
+        let fakePlaybackToken = "fake_playback_token"
         let fakeDrmToken = "fake_drm_token"
         let fakeSpcData = "fake-spc-data".data(using: .utf8)!
         // to be returned by call under test
         let fakeLicense = "fake-license-binary-data".data(using: .utf8)
         
+        sessionManager.addDRMAsset(
+            AVURLAsset(url: URL(string: "https://example.com/playlist.m3u8")!),
+            playbackID: fakePlaybackId,
+            options: .init(playbackToken: fakePlaybackToken, drmToken: fakeDrmToken),
+            rootDomain: fakeRootDomain)
+
         let requestSuccess = XCTestExpectation(description: "request license successfully")
         MockURLProtocol.requestHandler = { request in
             let response = HTTPURLResponse(
@@ -395,34 +441,36 @@ class FairPlaySessionManagerTests : XCTestCase {
             return (response, fakeLicense)
         }
         
-        var foundAppCert: Data?
-        sessionManager.requestLicense(
-            spcData: fakeSpcData,
-            playbackID: fakePlaybackId,
-            drmToken: fakeDrmToken,
-            rootDomain: fakeRootDomain,
-            offline: false
-        ) { result in
-            guard let result = try? result.get() else {
-                XCTFail("Should not report failure for the given request")
-                return
+        var requestResult: Result<Data, FairPlaySessionError>!
+        targetQueue.async {
+            self.sessionManager.requestLicense(
+                spcData: fakeSpcData,
+                playbackID: fakePlaybackId,
+                offline: false
+            ) { result in
+                requestResult = result
+                requestSuccess.fulfill()
             }
-            
-            foundAppCert = result
-            requestSuccess.fulfill()
         }
         wait(for: [requestSuccess])
-        XCTAssertEqual(foundAppCert, fakeLicense)
+        XCTAssertEqual(try requestResult.get(), fakeLicense)
     }
     
     func testLicenseRequestHttpError() throws {
         let fakeRootDomain = "custom.domain.com"
         let fakePlaybackId = "fake_playback_id"
+        let fakePlaybackToken = "fake_playback_token"
         let fakeDrmToken = "fake_drm_token"
         let fakeHTTPStatus = 500 // all codes are handled the same way, by failing
         // real SPCs are opaque binary to us, the fake one can be whatever
         let fakeSpcData = "fake-spc-data".data(using: .utf8)!
         
+        sessionManager.addDRMAsset(
+            AVURLAsset(url: URL(string: "https://example.com/playlist.m3u8")!),
+            playbackID: fakePlaybackId,
+            options: .init(playbackToken: fakePlaybackToken, drmToken: fakeDrmToken),
+            rootDomain: fakeRootDomain)
+
         let requestFails = XCTestExpectation(description: "request certificate successfully")
         MockURLProtocol.requestHandler = { request in
             let response = HTTPURLResponse(
@@ -444,21 +492,20 @@ class FairPlaySessionManagerTests : XCTestCase {
         }
         
         var reqError: Error?
-        sessionManager.requestLicense(
-            spcData: fakeSpcData,
-            playbackID: fakePlaybackId,
-            drmToken: fakeDrmToken,
-            rootDomain: fakeRootDomain,
-            offline: false
-        ) { result in
-            do {
-                _ = try result.get()
-                XCTFail("failure should have been reported")
-            } catch {
-                reqError = error
+        targetQueue.async {
+            self.sessionManager.requestLicense(
+                spcData: fakeSpcData,
+                playbackID: fakePlaybackId,
+                offline: false
+            ) { result in
+                do {
+                    _ = try result.get()
+                    XCTFail("failure should have been reported")
+                } catch {
+                    reqError = error
+                }
+                requestFails.fulfill()
             }
-            requestFails.fulfill()
-            
         }
         wait(for: [requestFails])
         
@@ -477,8 +524,15 @@ class FairPlaySessionManagerTests : XCTestCase {
     func testRequestLicenseIOError() throws {
         let fakeRootDomain = "custom.domain.com"
         let fakePlaybackId = "fake_playback_id"
+        let fakePlaybackToken = "fake_playback_token"
         let fakeDrmToken = "fake_drm_token"
         let fakeSpcData = "fake-spc-data".data(using: .utf8)!
+
+        sessionManager.addDRMAsset(
+            AVURLAsset(url: URL(string: "https://example.com/playlist.m3u8")!),
+            playbackID: fakePlaybackId,
+            options: .init(playbackToken: fakePlaybackToken, drmToken: fakeDrmToken),
+            rootDomain: fakeRootDomain)
 
         let requestFails = XCTestExpectation(description: "request certificate successfully")
         MockURLProtocol.requestHandler = { request in
@@ -486,20 +540,20 @@ class FairPlaySessionManagerTests : XCTestCase {
         }
         
         var reqError: Error?
-        sessionManager.requestLicense(
-            spcData: fakeSpcData,
-            playbackID: fakePlaybackId,
-            drmToken: fakeDrmToken,
-            rootDomain: fakeRootDomain,
-            offline: false
-        ) { result in
-            do {
-                let data = try result.get()
-                XCTFail("failure should have been reported, but got \(String(describing: data))")
-            } catch {
-                reqError = error
+        targetQueue.async {
+            self.sessionManager.requestLicense(
+                spcData: fakeSpcData,
+                playbackID: fakePlaybackId,
+                offline: false
+            ) { result in
+                do {
+                    let data = try result.get()
+                    XCTFail("failure should have been reported, but got \(String(describing: data))")
+                } catch {
+                    reqError = error
+                }
+                requestFails.fulfill()
             }
-            requestFails.fulfill()
         }
         wait(for: [requestFails])
         
@@ -519,9 +573,16 @@ class FairPlaySessionManagerTests : XCTestCase {
     func testRequestLicenseBlankWithSusStatusCode() throws {
         let fakeRootDomain = "custom.domain.com"
         let fakePlaybackId = "fake_playback_id"
+        let fakePlaybackToken = "fake_playback_token"
         let fakeDrmToken = "fake_drm_token"
         // In this case, there's a successful response but no body
         let fakeSpcData = "fake-spc-data".data(using: .utf8)!
+
+        sessionManager.addDRMAsset(
+            AVURLAsset(url: URL(string: "https://example.com/playlist.m3u8")!),
+            playbackID: fakePlaybackId,
+            options: .init(playbackToken: fakePlaybackToken, drmToken: fakeDrmToken),
+            rootDomain: fakeRootDomain)
 
         let requestFails = XCTestExpectation(description: "request certificate suspicious 200/OK should be treated as failure")
         MockURLProtocol.requestHandler = { request in
@@ -537,20 +598,20 @@ class FairPlaySessionManagerTests : XCTestCase {
         
         // Expected behavior: URLTask does something odd, requestCertificate returns error
         var reqError: Error?
-        sessionManager.requestLicense(
-            spcData: fakeSpcData,
-            playbackID: fakePlaybackId,
-            drmToken: fakeDrmToken,
-            rootDomain: fakeRootDomain,
-            offline: false
-        ) { result in
-            do {
-                _ = try result.get()
-                XCTFail("failure should have been reported")
-            } catch {
-                reqError = error
+        targetQueue.async {
+            self.sessionManager.requestLicense(
+                spcData: fakeSpcData,
+                playbackID: fakePlaybackId,
+                offline: false
+            ) { result in
+                do {
+                    _ = try result.get()
+                    XCTFail("failure should have been reported")
+                } catch {
+                    reqError = error
+                }
+                requestFails.fulfill()
             }
-            requestFails.fulfill()
         }
         wait(for: [requestFails])
         
@@ -559,86 +620,46 @@ class FairPlaySessionManagerTests : XCTestCase {
             return
         }
         
-        guard case .unexpected(_) = fpsError else {
+        guard case .unexpected(let message) = fpsError else {
             XCTFail("unexpected failure should be returned")
             return
         }
+        XCTAssert(message == "No license data with 200 response")
     }
 
     func testPlaybackOptionsRegistered() throws {
-
-        #if DEBUG
-        let mockURLSessionConfig = URLSessionConfiguration.default
-        mockURLSessionConfig.protocolClasses = [MockURLProtocol.self]
-        self.mockURLSession = URLSession.init(configuration: mockURLSessionConfig)
-        // .clearKey is used because .fairPlay requires a physical device
-        let session = AVContentKeySession(
-            keySystem: .clearKey
-        )
-        let defaultFairPlaySessionManager = DefaultFairPlayStreamingSessionManager(
-            contentKeySession: session,
-            urlSession: mockURLSession,
-            errorDispatcher: Monitor()
-        )
-        self.sessionManager = defaultFairPlaySessionManager
-        let sessionDelegate = ContentKeySessionDelegate(
-            sessionManager: defaultFairPlaySessionManager
-        )
-        defaultFairPlaySessionManager.sessionDelegate = sessionDelegate
-
-        let fakeLicense = "fake-license-binary-data".data(using: .utf8)
-        let fakeAppCert = "fake-application-cert-binary-data".data(using: .utf8)
-        MockURLProtocol.requestHandler = { request in
-
-            guard let url = request.url else {
-                fatalError()
-            }
-
-            if (url.absoluteString.contains("appcert")) {
-                let response = HTTPURLResponse(
-                    url: request.url!,
-                    statusCode: 200,
-                    httpVersion: "HTTP/1.1",
-                    headerFields: nil
-                )!
-
-                return (response, fakeAppCert)
-            } else {
-                let response = HTTPURLResponse(
-                    url: request.url!,
-                    statusCode: 200,
-                    httpVersion: "HTTP/1.1",
-                    headerFields: nil
-                )!
-
-
-                return (response, fakeLicense)
-            }
-        }
-
-
-        PlayerSDK.shared = PlayerSDK(
-            fairPlayStreamingSessionManager: defaultFairPlaySessionManager,
+        let credentialClient = TestFairPlayStreamingSessionCredentialClient(failsWith: .unexpected(message: "unimplemented"))
+        let testRegistry = TestDRMAssetRegistry()
+        let testManager = TestFairPlayStreamingSessionManager(credentialClient: credentialClient, drmAssetRegistry: testRegistry)
+        let testSDK = PlayerSDK(
+            fairPlayStreamingSessionManager: testManager,
             monitor: Monitor()
         )
 
-        let _ = AVPlayerItem(
-            playbackID: "abc",
-            playbackOptions: PlaybackOptions(
-                playbackToken: "def",
-                drmToken: "ghi"
-            )
-        )
+        PlayerSDK.$shared.withValue(testSDK) {
+            var registeredAsset: AVURLAsset!
 
-        XCTAssertEqual(
-            defaultFairPlaySessionManager.playbackOptionsByPlaybackID.count,
-            1
-        )
-        #else
-        XCTExpectFailure(
-            "This test can only be run under a debug build configuration"
-        )
-        XCTAssert(false)
-        #endif
+            let registeredExpectation = XCTestExpectation(description: "DRM asset should be registered")
+            testRegistry.onDRMAsset = { urlAsset, playbackID, options, rootDomain in
+                registeredExpectation.fulfill()
+                registeredAsset = urlAsset
+                XCTAssertEqual(playbackID, "abc")
+                XCTAssertEqual(options.playbackToken, "def")
+                XCTAssertEqual(options.drmToken, "ghi")
+                XCTAssertEqual(rootDomain, "mux.com")
+            }
+
+            let playerItem = AVPlayerItem(
+                playbackID: "abc",
+                playbackOptions: PlaybackOptions(
+                    playbackToken: "def",
+                    drmToken: "ghi"
+                )
+            )
+
+            wait(for: [registeredExpectation], timeout: 0)
+
+            XCTAssert(playerItem.asset === registeredAsset)
+        }
     }
 }
