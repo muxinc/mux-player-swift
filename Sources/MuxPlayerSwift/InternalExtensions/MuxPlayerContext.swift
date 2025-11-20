@@ -8,8 +8,14 @@ import MUXSDKStats
 //  - can be used in a container VC along with a VC in order to manage there (create new context when VC player is assigned)
 //  - can be used as an associated object with our extensions instead of the dictionary maze we currently have
 //  - (in the future, when VC/View no longer needed) can be used in a SwiftUI view as a state object to contain the player/playerbinding
-class MuxPlayerContext {
-    public let player: AVPlayer
+class MuxPlayerContext<Player: AVPlayer> {
+    
+    public let player: Player
+    public var muxDataPlayerID: String? {
+        get {
+            return monitoringInfo?.monitoringId
+        }
+    }
     
     private var monitoringInfo: MonitoringInfo?
     
@@ -65,6 +71,7 @@ class MuxPlayerContext {
     
     
     /// end Mux Data monitoring early
+    @MainActor
     func endMonitoring() {
         if let monitoringInfo = self.monitoringInfo {
             MUXSDKStats.destroyPlayer(monitoringInfo.monitoringId)
@@ -72,21 +79,25 @@ class MuxPlayerContext {
         }
     }
     
-    func unbind() {
-        endMonitoring()
-        player.replaceCurrentItem(with: nil)
-    }
-    
     private static func generateMonitoringID() -> String {
         return UUID().uuidString
     }
     
-    init(player: AVPlayer) {
+    init(player: Player) {
         self.player = player;
     }
     
     deinit {
-        unbind()
+        player.replaceCurrentItem(with: nil)
+        
+        // Must unbind from Mux Data on the main thread. Send playerID and binding so this context can die
+        if let monitoringInfo = self.monitoringInfo {
+            Task.detached { @MainActor [monitoringInfo] in
+                MUXSDKStats.destroyPlayer(monitoringInfo.monitoringId)
+            }
+        }
+
+        self.monitoringInfo = nil
     }
 }
 
