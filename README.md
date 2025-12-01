@@ -2,8 +2,6 @@
 
 A collection of helpful utilities for using AVKit and AVFoundation to stream video from Mux.
 
-We'd love to hear your feedback, shoot us a note at avplayer@mux.com with any feature requests, API feedback, or to tell us about what you'd like to build.
-
 #### Mux Video DRM Beta
 
 This SDK supports Mux Video's DRM feature, which is currently in closed beta. If you are interested in using our DRM features, please sign up on our [beta page](https://www.mux.com/beta/drm)
