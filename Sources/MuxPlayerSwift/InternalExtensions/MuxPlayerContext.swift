@@ -7,7 +7,8 @@ import MUXSDKStats
 // Connect a PlayerBinding to Player (and UI object, as required by Data SDK)
 //  - can be used in a container VC along with a VC in order to manage there (create new context when VC player is assigned)
 //  - can be used as an associated object with our extensions instead of the dictionary maze we currently have
-//  - (in the future, when VC/View no longer needed) can be used in a SwiftUI view as a state object to contain the player/playerbinding
+//  - can be used with AVPlayerLayer as an inner delegate of some customer-facing object, intended to be a sibling of the AVPlayerLayer in their custom VC
+//  - can be used in a SwiftUI view as a state object to contain the player/playerbinding (requires minor data sdk changes)
 class MuxPlayerContext<Player: AVPlayer> {
     
     public let player: Player
@@ -90,7 +91,7 @@ class MuxPlayerContext<Player: AVPlayer> {
     deinit {
         player.replaceCurrentItem(with: nil)
         
-        // Must unbind from Mux Data on the main thread. Send playerID and binding so this context can die
+        // Must unbind from Mux Data on the main thread. Send playerID + binding so the rest of the object can die peacefully
         if let monitoringInfo = self.monitoringInfo {
             Task.detached { [monitoringInfo] in
                 await MainActor.run { MUXSDKStats.destroyPlayer(monitoringInfo.monitoringId) }
