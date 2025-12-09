@@ -92,8 +92,8 @@ class MuxPlayerContext<Player: AVPlayer> {
         
         // Must unbind from Mux Data on the main thread. Send playerID and binding so this context can die
         if let monitoringInfo = self.monitoringInfo {
-            Task.detached { @MainActor [monitoringInfo] in
-                MUXSDKStats.destroyPlayer(monitoringInfo.monitoringId)
+            Task.detached { [monitoringInfo] in
+                await MainActor.run { MUXSDKStats.destroyPlayer(monitoringInfo.monitoringId) }
             }
         }
 
