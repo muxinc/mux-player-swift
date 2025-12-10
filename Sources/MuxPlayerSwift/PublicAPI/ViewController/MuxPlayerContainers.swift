@@ -33,7 +33,7 @@ public class MuxPlayerContainerViewController : UIViewController {
     }
     public let playerViewController: AVPlayerViewController
     
-    private var playerContext: MuxPlayerContext<AVPlayer>?
+    private var playerContext: MuxPlayerContext?
     
     // todo : setCurrentItem with PlaybackOptions
     

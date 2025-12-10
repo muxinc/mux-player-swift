@@ -9,9 +9,9 @@ import MUXSDKStats
 //  - can be used as an associated object with our extensions instead of the dictionary maze we currently have
 //  - can be used with AVPlayerLayer as an inner delegate of some customer-facing object, intended to be a sibling of the AVPlayerLayer in their custom VC
 //  - can be used in a SwiftUI view as a state object to contain the player/playerbinding (requires minor data sdk changes)
-class MuxPlayerContext<Player: AVPlayer> {
+class MuxPlayerContext {
     
-    public let player: Player
+    public let player: AVPlayer
     public var muxDataPlayerID: String? {
         get {
             return monitoringInfo?.monitoringId
@@ -84,7 +84,7 @@ class MuxPlayerContext<Player: AVPlayer> {
         return UUID().uuidString
     }
     
-    init(player: Player) {
+    init(player: AVPlayer) {
         self.player = player;
     }
     
