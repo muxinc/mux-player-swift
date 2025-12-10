@@ -89,6 +89,7 @@ class MuxPlayerContext {
     }
     
     deinit {
+        // ensure the rendering pipeline underneath is clean up as quickly as possible
         player.replaceCurrentItem(with: nil)
         
         // Must unbind from Mux Data on the main thread. Send playerID + binding so the rest of the object can die peacefully
