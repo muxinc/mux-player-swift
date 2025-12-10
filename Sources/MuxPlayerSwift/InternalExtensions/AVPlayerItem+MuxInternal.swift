@@ -42,5 +42,9 @@ internal extension AVPlayerItem {
             playbackID: playbackID,
             playbackOptions: playbackOptions
         )
+        
+        if playbackOptions.enableSmartCache {
+            playerSDK.reverseProxyServer.start()
+        }
     }
 }
