@@ -27,15 +27,15 @@
                                             <rect key="frame" x="0.0" y="0.0" width="393" height="88"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
-                                                <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" insetsLayoutMarginsFromSafeArea="NO" text="Single Player Example" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="2B6-Ra-0LL" userLabel="Single Player Example">
-                                                    <rect key="frame" x="20" y="21.333333333333329" width="192" height="24"/>
+                                                <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" insetsLayoutMarginsFromSafeArea="NO" text="Container ViewController Example" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="2B6-Ra-0LL" userLabel="ContainerViewController Example">
+                                                    <rect key="frame" x="20" y="21.333333333333329" width="298.33333333333331" height="24"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="20"/>
                                                     <nil key="textColor"/>
                                                     <nil key="highlightedColor"/>
                                                 </label>
-                                                <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" insetsLayoutMarginsFromSafeArea="NO" text="Using AVPlayerViewController" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="cxz-Z0-1aZ">
-                                                    <rect key="frame" x="20" y="49" width="169.33333333333334" height="14.333333333333334"/>
+                                                <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" insetsLayoutMarginsFromSafeArea="NO" text="Using MuxPlayerContainerViewController" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="cxz-Z0-1aZ">
+                                                    <rect key="frame" x="19.999999999999986" y="49" width="232.66666666666666" height="14.333333333333334"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="0.0"/>
                                                     <nil key="textColor"/>
@@ -45,11 +45,36 @@
                                         </tableViewCellContentView>
                                         <accessibility key="accessibilityConfiguration" identifier="SinglePlayerExample"/>
                                         <connections>
-                                            <segue destination="BYZ-38-t0r" kind="show" id="dET-KM-oHN"/>
+                                            <segue destination="Nf2-yb-lBq" kind="show" id="IeS-pK-aDG"/>
                                         </connections>
                                     </tableViewCell>
-                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" textLabel="xkN-F9-pLN" detailTextLabel="7HI-AU-2S9" rowHeight="88" style="IBUITableViewCellStyleSubtitle" id="ab1-hf-fKH">
+                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" textLabel="wEF-Y9-77I" detailTextLabel="9cf-4i-qvz" rowHeight="88" style="IBUITableViewCellStyleSubtitle" id="EZ4-Ad-Abs">
                                         <rect key="frame" x="0.0" y="138" width="393" height="88"/>
+                                        <autoresizingMask key="autoresizingMask"/>
+                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="EZ4-Ad-Abs" id="d8c-Ti-Ocu">
+                                            <rect key="frame" x="0.0" y="0.0" width="393" height="88"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                            <subviews>
+                                                <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" insetsLayoutMarginsFromSafeArea="NO" text="Single Player Example" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="wEF-Y9-77I" userLabel="Single Player Example">
+                                                    <rect key="frame" x="20" y="21.333333333333329" width="192" height="24"/>
+                                                    <autoresizingMask key="autoresizingMask"/>
+                                                    <fontDescription key="fontDescription" type="system" pointSize="20"/>
+                                                    <nil key="textColor"/>
+                                                    <nil key="highlightedColor"/>
+                                                </label>
+                                                <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" insetsLayoutMarginsFromSafeArea="NO" text="Using AVPlayerViewController" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="9cf-4i-qvz">
+                                                    <rect key="frame" x="20" y="49" width="169.33333333333334" height="14.333333333333334"/>
+                                                    <autoresizingMask key="autoresizingMask"/>
+                                                    <fontDescription key="fontDescription" type="system" pointSize="0.0"/>
+                                                    <nil key="textColor"/>
+                                                    <nil key="highlightedColor"/>
+                                                </label>
+                                            </subviews>
+                                        </tableViewCellContentView>
+                                        <accessibility key="accessibilityConfiguration" identifier="SinglePlayerExample"/>
+                                    </tableViewCell>
+                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" textLabel="xkN-F9-pLN" detailTextLabel="7HI-AU-2S9" rowHeight="88" style="IBUITableViewCellStyleSubtitle" id="ab1-hf-fKH">
+                                        <rect key="frame" x="0.0" y="226" width="393" height="88"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="ab1-hf-fKH" id="NZP-hO-bjF">
                                             <rect key="frame" x="0.0" y="0.0" width="393" height="88"/>
@@ -76,7 +101,7 @@
                                         </connections>
                                     </tableViewCell>
                                     <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" textLabel="3V8-cN-wHE" detailTextLabel="vof-0E-Ts3" rowHeight="88" style="IBUITableViewCellStyleSubtitle" id="7Ub-rm-FrO">
-                                        <rect key="frame" x="0.0" y="226" width="393" height="88"/>
+                                        <rect key="frame" x="0.0" y="314" width="393" height="88"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="7Ub-rm-FrO" id="rm2-cf-faX">
                                             <rect key="frame" x="0.0" y="0.0" width="393" height="88"/>
@@ -104,7 +129,7 @@
                                         </connections>
                                     </tableViewCell>
                                     <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" textLabel="OjC-bp-Jb4" detailTextLabel="bKF-tz-9d2" rowHeight="88" style="IBUITableViewCellStyleSubtitle" id="odP-sm-cIe">
-                                        <rect key="frame" x="0.0" y="314" width="393" height="88"/>
+                                        <rect key="frame" x="0.0" y="402" width="393" height="88"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="odP-sm-cIe" id="dOo-zJ-LIx">
                                             <rect key="frame" x="0.0" y="0.0" width="393" height="88"/>
@@ -158,7 +183,7 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="RFi-ME-QBi" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="608" y="-116"/>
+            <point key="canvasLocation" x="1126" y="21"/>
         </scene>
         <!--Experimental Cache View Controller-->
         <scene sceneID="e4E-2r-LPD">
@@ -174,7 +199,7 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="bVQ-tc-Mee" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-1095" y="754"/>
+            <point key="canvasLocation" x="-1937" y="1083"/>
         </scene>
         <!--Single Player Layer Example View Controller-->
         <scene sceneID="Uuu-F8-ITi">
@@ -190,7 +215,7 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Uka-0a-JlQ" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-161" y="271"/>
+            <point key="canvasLocation" x="68" y="411"/>
         </scene>
         <!--Example View Controller-->
         <scene sceneID="U4Y-IB-cxt">
@@ -206,7 +231,7 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="vny-A5-ZSO" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="434" y="573"/>
+            <point key="canvasLocation" x="1015" y="996"/>
         </scene>
         <!--Navigation Controller-->
         <scene sceneID="2gk-Ck-Rao">
@@ -224,20 +249,30 @@
             </objects>
             <point key="canvasLocation" x="-2271" y="-93"/>
         </scene>
-        <!--Mux Player Container View Controller-->
+        <!--Container View Controller Example-->
         <scene sceneID="LMA-AZ-wCO">
             <objects>
-                <viewController id="Nf2-yb-lBq" customClass="MuxPlayerContainerViewController" customModule="MuxPlayerSwift" sceneMemberID="viewController">
+                <viewController id="Nf2-yb-lBq" customClass="ContainerViewControllerExample" customModule="MuxPlayerSwiftExample" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="SW5-9D-LE8">
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <containerView opaque="NO" contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Sgx-1j-0ex">
+                                <rect key="frame" x="0.0" y="172" width="393" height="304"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
+                                <connections>
+                                    <segue destination="4Kz-m2-yVx" kind="embed" identifier="EmbedPlayerVC" id="UQ3-gI-07L"/>
+                                </connections>
+                            </containerView>
+                        </subviews>
                         <viewLayoutGuide key="safeArea" id="dtb-g0-yV3"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                     </view>
+                    <navigationItem key="navigationItem" id="qyH-cN-YoC"/>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="sZ5-Cv-4q7" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-2207" y="620"/>
+            <point key="canvasLocation" x="739.69465648854964" y="-746.47887323943667"/>
         </scene>
         <!--Single Player Example Controller-->
         <scene sceneID="tne-QT-ifu">
@@ -253,7 +288,21 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-83" y="-595"/>
+            <point key="canvasLocation" x="-45" y="-256"/>
+        </scene>
+        <!--Mux Player Container View Controller-->
+        <scene sceneID="qDJ-Za-f2L">
+            <objects>
+                <viewController id="4Kz-m2-yVx" customClass="MuxPlayerContainerViewController" customModule="MuxPlayerSwift" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="0hq-Qb-zzp">
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="304"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="IkL-A9-2uS" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="1564" y="-746"/>
         </scene>
     </scenes>
     <resources>

@@ -4,11 +4,16 @@ import AVKit
 import MuxCore
 import MUXSDKStats
 
-/// Contains an AVPlayerViewController, set up for monitoring by Mux
+//typealias MuxAVQueuePlayerViewController = MuxPlayerContainerViewController<AVQueuePlayer>
+//typealias MuxAVPlayerViewController = MuxPlayerContainerViewController<AVPlayer>
+
+
+/// Contains an AVPlayerViewController, set up for monitoring by Mux.
+///  To set PlaybackParams, use ``AVKit/AVPlayerItem/init(playbackID:playbackOptions:)``
 @MainActor
-public class MuxPlayerContainerViewController<Player: AVPlayer> : UIViewController {
+public class MuxPlayerContainerViewController : UIViewController {
     
-    public var player: Player? {
+    public var player: AVPlayer? {
         set(value) {
             if let value {
                 playerContext = MuxPlayerContext(player: value)
@@ -28,7 +33,9 @@ public class MuxPlayerContainerViewController<Player: AVPlayer> : UIViewControll
     }
     public let playerViewController: AVPlayerViewController
     
-    private var playerContext: MuxPlayerContext<Player>?
+    private var playerContext: MuxPlayerContext<AVPlayer>?
+    
+    // todo : setCurrentItem with PlaybackOptions
     
     public func updateMuxMetadata(_ data: MUXSDKCustomerData) {
         if let playerContext, let playerID = playerContext.muxDataPlayerID {
@@ -36,22 +43,34 @@ public class MuxPlayerContainerViewController<Player: AVPlayer> : UIViewControll
         }
     }
     
+    public override func viewDidLoad() {
+        super.viewDidLoad()
+        addPlayerVCAsChild()
+    }
+    
+    private func addPlayerVCAsChild() {
+        addChild(self.playerViewController)
+        view.addSubview(self.playerViewController.view)
+        self.playerViewController.view.frame = self.view.bounds
+        self.playerViewController.didMove(toParent: self)
+    }
+    
     convenience init() {
         self.init(muxMetadata: MUXSDKCustomerData())
     }
     
     public init(muxMetadata: MUXSDKCustomerData) {
-        playerViewController = AVPlayerViewController()
+        self.playerViewController = AVPlayerViewController()
         super.init()
         
         updateMuxMetadata(muxMetadata)
-        addChild(playerViewController)
+//        addPlayerVCAsChild()
     }
     
     public required init?(coder: NSCoder) {
-        playerViewController = AVPlayerViewController()
+        self.playerViewController = AVPlayerViewController()
         super.init(coder: coder)
         
-        addChild(playerViewController)
+//        addPlayerVCAsChild()
     }
 }
