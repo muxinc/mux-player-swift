@@ -18,6 +18,7 @@ class MuxPlayerContext {
         }
     }
     
+    private var timeControlObservation: NSKeyValueObservation?
     private var monitoringInfo: MonitoringInfo?
     
     @MainActor
@@ -84,12 +85,34 @@ class MuxPlayerContext {
         return UUID().uuidString
     }
     
+    private func handleTimeControlStatus(_ status: AVPlayer.TimeControlStatus) {
+        // If playing or trying to play, try to set the audio session to active. If paused, don't hog it
+        switch (status) {
+        case .paused:
+            try? AVAudioSession.sharedInstance().setActive(false)
+        case .playing, .waitingToPlayAtSpecifiedRate:
+            try? AVAudioSession.sharedInstance().setActive(true, options: .notifyOthersOnDeactivation)
+        }
+    }
+    
+    
     init(player: AVPlayer) {
         self.player = player;
+        defer {
+            self.timeControlObservation = player.observe(\.timeControlStatus, options: [.initial, .new]) { [weak self] object, change in
+                if let self, let timeControlStatus = change.newValue {
+                    self.handleTimeControlStatus(timeControlStatus)
+                }
+            }
+        }
     }
     
     deinit {
-        // ensure the rendering pipeline underneath is clean up as quickly as possible
+        timeControlObservation?.invalidate()
+        // just in case we didn't handle the .pause
+        try? AVAudioSession.sharedInstance().setActive(false)
+        
+        // ensure the rendering pipeline underneath is cleaned up as quickly as possible
         player.replaceCurrentItem(with: nil)
         
         // Must unbind from Mux Data on the main thread. Send playerID + binding so the rest of the object can die peacefully

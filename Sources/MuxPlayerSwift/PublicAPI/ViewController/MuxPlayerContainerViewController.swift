@@ -35,8 +35,6 @@ public class MuxPlayerContainerViewController : UIViewController {
     
     private var playerContext: MuxPlayerContext?
     
-    // todo : setCurrentItem with PlaybackOptions
-    
     public func updateMuxMetadata(_ data: MUXSDKCustomerData) {
         if let playerContext, let playerID = playerContext.muxDataPlayerID {
             MUXSDKStats.setCustomerData(data, forPlayer: playerID)
