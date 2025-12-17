@@ -6,7 +6,7 @@ import MUXSDKStats
 
 // Connect a PlayerBinding to Player (and UI object, as required by Data SDK)
 //  - can be used in a container VC along with a VC in order to manage there (create new context when VC player is assigned)
-//  - can be used as an associated object with our extensions instead of the dictionary maze we currently have
+//  - can be used as an associated object with our extensions instead of the dictionary maze we currently have for tracking our player bindings, KeyValueObservations, and so on
 //  - can be used with AVPlayerLayer as an inner delegate of some customer-facing object, intended to be a sibling of the AVPlayerLayer in their custom VC
 //  - can be used in a SwiftUI view as a state object to contain the player/playerbinding (requires minor data sdk changes)
 class MuxPlayerContext {
@@ -19,6 +19,7 @@ class MuxPlayerContext {
     }
     
     private var timeControlObservation: NSKeyValueObservation?
+    private var errorObservation: NSKeyValueObservation?
     private var monitoringInfo: MonitoringInfo?
     
     @MainActor
@@ -95,6 +96,12 @@ class MuxPlayerContext {
         }
     }
     
+    private func handlePlayerError(_ error: Error) {
+        // might change the AVPlayerItem:
+        //  if we're using the proxy cache and there was a playback error then we try again with the original origin URL
+        PlayerSDK.shared.handlePlayerError(self.player)
+    }
+    
     
     init(player: AVPlayer) {
         self.player = player;
@@ -104,12 +111,19 @@ class MuxPlayerContext {
                     self.handleTimeControlStatus(timeControlStatus)
                 }
             }
+            self.errorObservation = player.observe(\.error, options: [.new]) { [weak self] object, change in
+                if let self, let error = change.newValue, let error {
+                    handlePlayerError(error)
+                }
+            }
         }
     }
     
     deinit {
-        timeControlObservation?.invalidate()
-        // just in case we didn't handle the .pause
+        self.timeControlObservation?.invalidate()
+        self.errorObservation?.invalidate()
+        
+        // try just in case, since we're about to clear the player item anyway
         try? AVAudioSession.sharedInstance().setActive(false)
         
         // ensure the rendering pipeline underneath is cleaned up as quickly as possible
