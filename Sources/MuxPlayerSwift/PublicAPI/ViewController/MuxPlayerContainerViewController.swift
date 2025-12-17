@@ -4,10 +4,6 @@ import AVKit
 import MuxCore
 import MUXSDKStats
 
-//typealias MuxAVQueuePlayerViewController = MuxPlayerContainerViewController<AVQueuePlayer>
-//typealias MuxAVPlayerViewController = MuxPlayerContainerViewController<AVPlayer>
-
-
 /// Contains an AVPlayerViewController, set up for monitoring by Mux.
 ///  To set PlaybackParams, use ``AVKit/AVPlayerItem/init(playbackID:playbackOptions:)``
 @MainActor
