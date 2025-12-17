@@ -8,7 +8,7 @@ import MUXSDKStats
 //  - can be used in a container VC along with a VC in order to manage there (create new context when VC player is assigned)
 //  - can be used as an associated object with our extensions instead of the dictionary maze we currently have for tracking our player bindings, KeyValueObservations, and so on
 //  - can be used with AVPlayerLayer as an inner delegate of some customer-facing object, intended to be a sibling of the AVPlayerLayer in their custom VC
-//  - can be used in a SwiftUI view as a state object to contain the player/playerbinding (requires minor data sdk changes)
+//  - can be used in a SwiftUI view as a state object to contain the player/playerbinding (requires minor data sdk changes to get player size for this case)
 class MuxPlayerContext {
     
     public let player: AVPlayer
@@ -92,13 +92,13 @@ class MuxPlayerContext {
         case .paused:
             try? AVAudioSession.sharedInstance().setActive(false)
         case .playing, .waitingToPlayAtSpecifiedRate:
-            try? AVAudioSession.sharedInstance().setActive(true, options: .notifyOthersOnDeactivation)
+            try? AVAudioSession.sharedInstance().setActive(true)
         }
     }
     
     private func handlePlayerError(_ error: Error) {
         // might change the AVPlayerItem:
-        //  if we're using the proxy cache and there was a playback error then we try again with the original origin URL
+        //  if we're using the proxy cache and there was a playback error then we try again with the original outside URL
         PlayerSDK.shared.handlePlayerError(self.player)
     }
     
@@ -106,14 +106,14 @@ class MuxPlayerContext {
     init(player: AVPlayer) {
         self.player = player;
         defer {
-            self.timeControlObservation = player.observe(\.timeControlStatus, options: [.initial, .new]) { [weak self] object, change in
+            self.timeControlObservation = player.observe(\.timeControlStatus, options: [.initial, .new]) { [weak self] _, change in
                 if let self, let timeControlStatus = change.newValue {
                     self.handleTimeControlStatus(timeControlStatus)
                 }
             }
-            self.errorObservation = player.observe(\.error, options: [.new]) { [weak self] object, change in
+            self.errorObservation = player.observe(\.error, options: [.new]) { [weak self] _, change in
                 if let self, let error = change.newValue, let error {
-                    handlePlayerError(error)
+                    self.handlePlayerError(error)
                 }
             }
         }

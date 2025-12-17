@@ -62,13 +62,10 @@ public class MuxPlayerContainerViewController : UIViewController {
         super.init()
         
         updateMuxMetadata(muxMetadata)
-//        addPlayerVCAsChild()
     }
     
     public required init?(coder: NSCoder) {
         self.playerViewController = AVPlayerViewController()
         super.init(coder: coder)
-        
-//        addPlayerVCAsChild()
     }
 }
