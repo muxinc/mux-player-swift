@@ -5,8 +5,8 @@ import MuxCore
 import MUXSDKStats
 
 /// Contains an AVPlayerViewController, set up for monitoring by Mux.
-/// - Note Instead of setting an `AVPlayer` onto ``playerViewController``, set it on this object's ``player`` property
 ///  To set PlaybackParams, use ``AVKit/AVPlayerItem/init(playbackID:playbackOptions:)``
+/// - Note Instead of setting an `AVPlayer` onto ``playerViewController``, set it on this object's ``player`` property
 @MainActor
 public class MuxPlayerContainerViewController : UIViewController {
     
