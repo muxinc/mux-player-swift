@@ -82,8 +82,14 @@ public struct InstantClipping: Equatable {
     var assetStartTimeInSeconds: Double
     var assetEndTimeInSeconds: Double
 
+    var programStartTimeEpochInSeconds: Double
+    var programEndTimeEpochInSeconds: Double
+
     var noInstantClipping: Bool {
-        return self.assetStartTimeInSeconds.isNaN && self.assetEndTimeInSeconds.isNaN
+        return self.assetStartTimeInSeconds.isNaN &&
+        self.assetEndTimeInSeconds.isNaN &&
+        self.programStartTimeEpochInSeconds.isNaN &&
+        self.programEndTimeEpochInSeconds.isNaN
     }
 
     /// Omits instant clipping when loading a playback ID.
@@ -92,6 +98,8 @@ public struct InstantClipping: Equatable {
     init() {
         self.assetStartTimeInSeconds = .nan
         self.assetEndTimeInSeconds = .nan
+        self.programStartTimeEpochInSeconds = .nan
+        self.programEndTimeEpochInSeconds = .nan
     }
 
     /// Streams a clip whose starting time are based on
@@ -125,6 +133,8 @@ public struct InstantClipping: Equatable {
     ) {
         self.assetStartTimeInSeconds = assetStartTimeInSeconds
         self.assetEndTimeInSeconds = assetEndTimeInSeconds
+        self.programStartTimeEpochInSeconds = .nan
+        self.programEndTimeEpochInSeconds = .nan
     }
 
     /// Streams a clip whose starting time is based on
@@ -140,6 +150,8 @@ public struct InstantClipping: Equatable {
     ) {
         self.assetStartTimeInSeconds = assetStartTimeInSeconds
         self.assetEndTimeInSeconds = .nan
+        self.programStartTimeEpochInSeconds = .nan
+        self.programEndTimeEpochInSeconds = .nan
     }
 
     /// Streams a clip with an ending time based on the
@@ -154,6 +166,58 @@ public struct InstantClipping: Equatable {
     ) {
         self.assetStartTimeInSeconds = .nan
         self.assetEndTimeInSeconds = assetEndTimeInSeconds
+        self.programStartTimeEpochInSeconds = .nan
+        self.programEndTimeEpochInSeconds = .nan
+    }
+
+
+    /// Streams a clip with a start and end time based
+    /// on the program date time exposed in the video stream
+    /// metadata. Only supported for use with livestream-
+    /// originating assets.
+    /// - Parameters:
+    ///   - programStartTimeEpochInSeconds: program date and
+    ///   time epoch timestamp with which to start the clip
+    ///   - programEndTimeEpochInSeconds: program date and
+    ///   time epoch timestamp with which to end the clip
+    public init(
+        programStartTimeEpochInSeconds: Double,
+        programEndTimeEpochInSeconds: Double
+    ) {
+        self.assetStartTimeInSeconds = .nan
+        self.assetEndTimeInSeconds = .nan
+        self.programStartTimeEpochInSeconds = programStartTimeEpochInSeconds
+        self.programEndTimeEpochInSeconds = programEndTimeEpochInSeconds
+    }
+
+    /// Streams a clip with a start time based on the program
+    /// date time exposed in the video stream metadata. Only
+    /// supported for use with livestream-originating assets.
+    /// - Parameters:
+    ///   - programStartTimeEpochInSeconds: program date and
+    ///   time epoch timestamp with which to start the clip
+    public init(
+        programStartTimeEpochInSeconds: Double
+    ) {
+        self.assetStartTimeInSeconds = .nan
+        self.assetEndTimeInSeconds = .nan
+        self.programStartTimeEpochInSeconds = programStartTimeEpochInSeconds
+        self.programEndTimeEpochInSeconds = .nan
+    }
+
+    /// Streams a clip with a start time based on the program
+    /// date time exposed in the video stream metadata. Only
+    /// supported for use with livestream-originating assets.
+    /// - Parameters:
+    ///   - programEndTimeEpochInSeconds: program date and
+    ///   time epoch timestamp with which to start the clip
+    public init(
+        programEndTimeEpochInSeconds: Double
+    ) {
+        self.assetStartTimeInSeconds = .nan
+        self.assetEndTimeInSeconds = .nan
+        self.programStartTimeEpochInSeconds = .nan
+        self.programEndTimeEpochInSeconds = programEndTimeEpochInSeconds
     }
 }
 
