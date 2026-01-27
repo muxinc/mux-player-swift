@@ -4,11 +4,9 @@ import AVFoundation
 import UIKit
 import MUXSDKStats
 
-// Connect a PlayerBinding to Player (and UI object, as required by Data SDK)
-//  - can be used in a container VC along with a VC in order to manage there (create new context when VC player is assigned)
-//  - can be used as an associated object with our extensions instead of the dictionary maze we currently have for tracking our player bindings, KeyValueObservations, and so on
-//  - can be used with AVPlayerLayer as an inner delegate of some customer-facing object, intended to be a sibling of the AVPlayerLayer in their custom VC
-//  - can be used in a SwiftUI view as a state object to contain the player/playerbinding (requires minor data sdk changes to get player size for this case)
+// Connect a PlayerBinding to Player (and UI object, as required by the Mux Data SDK)
+//  - An instance of this lives in MuxPlayerContainerViewController to manage Mux Data integration
+//  - can be used as a sibling of an AVPlayerLayer to use Mux functionality in a custom player view
 class MuxPlayerContext {
     
     public let player: AVPlayer
@@ -48,7 +46,7 @@ class MuxPlayerContext {
     }
     
     @MainActor
-    func bindLayer(
+    func bindPlayerLayer(
         _ layer: AVPlayerLayer,
         playerID: String = generateMonitoringID(),
         customerData: MUXSDKCustomerData = MUXSDKCustomerData(),
