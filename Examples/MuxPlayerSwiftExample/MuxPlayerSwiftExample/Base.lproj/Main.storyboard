@@ -43,7 +43,7 @@
                                                 </label>
                                             </subviews>
                                         </tableViewCellContentView>
-                                        <accessibility key="accessibilityConfiguration" identifier="SinglePlayerExample"/>
+                                        <accessibility key="accessibilityConfiguration" identifier="ContainerVCExample"/>
                                         <connections>
                                             <segue destination="Nf2-yb-lBq" kind="show" id="IeS-pK-aDG"/>
                                         </connections>
