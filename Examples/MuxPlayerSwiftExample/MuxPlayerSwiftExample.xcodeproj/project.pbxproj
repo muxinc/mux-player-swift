@@ -21,6 +21,7 @@
 		19DD16B12BEC028C00F4DF4F /* SmartCacheExampleViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19DD16B02BEC028C00F4DF4F /* SmartCacheExampleViewController.swift */; };
 		19DD16B32BEC048300F4DF4F /* SinglePlayerLayerExampleViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19DD16B22BEC048300F4DF4F /* SinglePlayerLayerExampleViewController.swift */; };
 		19F6A1CE2C2F23EC00EE408A /* DRMExampleViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19F6A1CD2C2F23EC00EE408A /* DRMExampleViewController.swift */; };
+		359DA8042EE8F8E400491BCE /* ContainerViewControllerExample.swift in Sources */ = {isa = PBXBuildFile; fileRef = 359DA8032EE8F8D600491BCE /* ContainerViewControllerExample.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -59,6 +60,7 @@
 		19DD16B02BEC028C00F4DF4F /* SmartCacheExampleViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartCacheExampleViewController.swift; sourceTree = "<group>"; };
 		19DD16B22BEC048300F4DF4F /* SinglePlayerLayerExampleViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SinglePlayerLayerExampleViewController.swift; sourceTree = "<group>"; };
 		19F6A1CD2C2F23EC00EE408A /* DRMExampleViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DRMExampleViewController.swift; sourceTree = "<group>"; };
+		359DA8032EE8F8D600491BCE /* ContainerViewControllerExample.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContainerViewControllerExample.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -111,6 +113,7 @@
 		193228B92ACF6AC700966FE1 /* MuxPlayerSwiftExample */ = {
 			isa = PBXGroup;
 			children = (
+				359DA8032EE8F8D600491BCE /* ContainerViewControllerExample.swift */,
 				193228BA2ACF6AC700966FE1 /* AppDelegate.swift */,
 				193228BC2ACF6AC700966FE1 /* SceneDelegate.swift */,
 				19DD16AE2BEC010400F4DF4F /* SinglePlayerExampleController.swift */,
@@ -285,6 +288,7 @@
 				193228BB2ACF6AC700966FE1 /* AppDelegate.swift in Sources */,
 				19DD16B12BEC028C00F4DF4F /* SmartCacheExampleViewController.swift in Sources */,
 				19DD16AF2BEC010400F4DF4F /* SinglePlayerExampleController.swift in Sources */,
+				359DA8042EE8F8E400491BCE /* ContainerViewControllerExample.swift in Sources */,
 				1966C5302BEB4740005486D5 /* ProcessInfo+EnvironmentVariables.swift in Sources */,
 				193228BD2ACF6AC700966FE1 /* SceneDelegate.swift in Sources */,
 			);
