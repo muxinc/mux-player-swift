@@ -7,7 +7,7 @@ import MUXSDKStats
 // Connect a PlayerBinding to Player (and UI object, as required by the Mux Data SDK)
 //  - An instance of this lives in MuxPlayerContainerViewController to manage Mux Data integration
 //  - can be used as a sibling of an AVPlayerLayer to use Mux functionality in a custom player view
-class MuxPlayerContext {
+public class MuxPlayerContext {
     
     public let player: AVPlayer
     public var muxDataPlayerID: String? {
@@ -21,7 +21,7 @@ class MuxPlayerContext {
     private var monitoringInfo: MonitoringInfo?
     
     @MainActor
-    func bindViewController(
+    public func bindViewController(
         _ vc: AVPlayerViewController,
         playerID: String = generateMonitoringID(),
         customerData: MUXSDKCustomerData = MUXSDKCustomerData(),
@@ -46,7 +46,7 @@ class MuxPlayerContext {
     }
     
     @MainActor
-    func bindPlayerLayer(
+    public func bindPlayerLayer(
         _ layer: AVPlayerLayer,
         playerID: String = generateMonitoringID(),
         customerData: MUXSDKCustomerData = MUXSDKCustomerData(),
@@ -73,14 +73,14 @@ class MuxPlayerContext {
     
     /// end Mux Data monitoring early
     @MainActor
-    func endMonitoring() {
+    public func endMonitoring() {
         if let monitoringInfo = self.monitoringInfo {
             MUXSDKStats.destroyPlayer(monitoringInfo.monitoringId)
             self.monitoringInfo = nil
         }
     }
     
-    private static func generateMonitoringID() -> String {
+    public static func generateMonitoringID() -> String {
         return UUID().uuidString
     }
     
