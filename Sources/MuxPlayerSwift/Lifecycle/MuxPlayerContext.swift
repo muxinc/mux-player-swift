@@ -106,8 +106,9 @@ public class MuxPlayerContext {
     private func observePlayerItem(_ playerItem: AVPlayerItem) {
         self.itemErrorObservation = playerItem.observe(\.error, options: [.new]) { [weak self] _, change in
             if let self, let error = change.newValue, let error {
+                self.currentItemObservation?.invalidate()
                 // same path as AVPlayer.error (may want to change this if we add more error handling later)
-                handlePlayerError(error)
+                self.handlePlayerError(error)
             }
         }
     }
