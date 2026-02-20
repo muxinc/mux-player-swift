@@ -4,74 +4,64 @@
 
 import Foundation
 
-/// The max resolution tier you'd like your asset to be streamed at
+/// The max resolution tier you'd like your asset to be streamed at.
 public enum MaxResolutionTier {
     /// By default no resolution tier is specified and Mux
     /// selects the optimal resolution and bitrate based on
     /// network and player conditions.
     case `default`
-    /// The asset will stream with a resolution that does
-    /// not exceed 720p (720 x 1280)
+    /// The asset will stream with a resolution that does not exceed 720p (1280 x 720).
     case upTo720p
-    /// The asset will stream with a resolution that does
-    /// not exceed 1080p (1080 x 1920)
+    /// The asset will stream with a resolution that does not exceed 1080p (1920 x 1080).
     case upTo1080p
-    /// The asset will stream with a resolution that does
-    /// not exceed 1440p (1440 x 2560)
+    /// The asset will stream with a resolution that does not exceed 1440p (2560 x 1440).
     case upTo1440p
-    /// The asset will stream with a resolution that does
-    /// not exceed 2160 (2160 x 4096)
+    /// The asset will stream with a resolution that does not exceed 2160p (3840 x 2160).
     case upTo2160p
 }
 
-/// The min resolution tier you'd like your asset to be streamed at
+/// The min resolution tier you'd like your asset to be streamed at.
 public enum MinResolutionTier {
     /// By default no resolution tier is specified and Mux
     /// selects the optimal resolution and bitrate based on
     /// network and player conditions.
     case `default`
-    /// The asset will stream with a resolution that does
-    /// not exceed 480p (640 x 480)
+    /// The asset will stream with a resolution that is at least 480p (854 x 480).
     case atLeast480p
-    /// The asset will stream with a resolution that does
-    /// not exceed 540p (960 x 540)
+    /// The asset will stream with a resolution that is at least 540p (960 x 540).
     case atLeast540p
-    /// The asset will stream with a resolution that does
-    /// not exceed 720p (1080 x 720)
+    /// The asset will stream with a resolution that is at least 720p (1280 x 720).
     case atLeast720p
-    /// The asset will stream with a resolution that does
-    /// not exceed 1080p (1920 x 1080)
+    /// The asset will stream with a resolution that is at least 1080p (1920 x 1080).
     case atLeast1080p
-    /// The asset will stream with a resolution that does
-    /// not exceed 1440p (1440 x 2560)
+    /// The asset will stream with a resolution that is at least 1440p (2560 x 1440).
     case atLeast1440p
-    /// The asset will stream with a resolution that does
-    /// not exceed 2160p (2160 x 4096)
+    /// The asset will stream with a resolution that is at least 2160p (3840 x 2160).
     case atLeast2160p
 }
 
 /// The order of the available renditions provided to the
-/// player
+/// player.
 public enum RenditionOrder {
-    /// By default no rendition order is specified
+    /// By default no rendition order is specified.
     case `default`
-    /// The asset will choose renditions in descending order
+    /// The asset will choose renditions in descending order.
     case descending
 }
 
 
-/// Limit playback to a single resolution tier
+/// Limit playback to a single resolution tier.
 public enum SingleRenditionResolutionTier {
-    /// The asset will be played at only 720p (1080 x 720).
+    /// The asset will be played at only 720p (1280 x 720).
     case only720p
 
     /// The asset will be played at only 1080p (1920 x 1080).
     case only1080p
 
-    /// The asset will be played at only 1440p (1440 x 2560)
+    /// The asset will be played at only 1440p (2560 x 1440).
     case only1440p
 
-    /// The asset will be played at only 2160p (2160 x 4096).
+    /// The asset will be played at only 2160p (3840 x 2160).
     case only2160p
 }
 
@@ -116,9 +106,9 @@ public struct InstantClipping: Equatable {
     ///
     /// - Parameters:
     ///   - assetStartTimeInSeconds: the starting time
-    ///   of the clip relative to the asset time
+    ///   of the clip relative to the asset time.
     ///   - assetEndTimeInSeconds: the ending time of
-    ///   the clip relative to the asset time
+    ///   the clip relative to the asset time.
     public init(
         assetStartTimeInSeconds: Double,
         assetEndTimeInSeconds: Double
@@ -134,7 +124,7 @@ public struct InstantClipping: Equatable {
     ///
     /// - Parameters:
     ///   - assetStartTimeInSeconds: the starting time
-    ///   of the clip relative to the asset time
+    ///   of the clip relative to the asset time.
     public init(
         assetStartTimeInSeconds: Double
     ) {
@@ -148,7 +138,7 @@ public struct InstantClipping: Equatable {
     ///
     /// - Parameters:
     ///   - assetEndTimeInSeconds: the ending time
-    ///   of the clip relative to the asset time
+    ///   of the clip relative to the asset time.
     public init(
         assetEndTimeInSeconds: Double
     ) {
@@ -206,7 +196,7 @@ extension RenditionOrder {
     }
 }
 
-/// Options for playback
+/// Options for playback.
 public struct PlaybackOptions {
 
     struct PublicPlaybackOptions {
@@ -246,14 +236,14 @@ extension PlaybackOptions {
     
     // MARK: - Initializers
 
-    /// Initializes playback options for a public playback ID
+    /// Initializes playback options for a public playback ID.
     /// - Parameters:
     ///   - maximumResolutionTier: maximum resolution of the
-    ///   video the player will download
+    ///   video the player will download.
     ///   - minimumResolutionTier: maximum resolution of the
-    ///   video the player will download
+    ///   video the player will download.
     ///   - renditionOrder: ordering of available renditions
-    ///   presented to the player
+    ///   presented to the player.
     public init(
         maximumResolutionTier: MaxResolutionTier = .default,
         minimumResolutionTier: MinResolutionTier = .default,
@@ -271,15 +261,15 @@ extension PlaybackOptions {
         self.enableSmartCache = false
     }
 
-    /// Initializes playback options for a public playback ID
+    /// Initializes playback options for a public playback ID.
     /// - Parameters:
     ///   - maximumResolutionTier: maximum resolution of the
-    ///   video the player will download
+    ///   video the player will download.
     ///   - minimumResolutionTier: maximum resolution of the
-    ///   video the player will download
+    ///   video the player will download.
     ///   - renditionOrder: ordering of available renditions
-    ///   presented to the player
-    ///   - clipping:
+    ///   presented to the player.
+    ///   - clipping: instant clipping options.
     public init(
         maximumResolutionTier: MaxResolutionTier = .default,
         minimumResolutionTier: MinResolutionTier = .default,
@@ -299,14 +289,14 @@ extension PlaybackOptions {
     }
 
 
-    /// Initializes playback options for a public playback ID
+    /// Initializes playback options for a public playback ID.
     /// - Parameters:
     ///   - singleRenditionResolutionTier: a single resolution
     ///   tier that the player will request. At this time
     ///   the smart cache can only be enabled when playback
-    ///   is constrained to a single resolution tier
+    ///   is constrained to a single resolution tier.
     ///   - renditionOrder: ordering of available renditions
-    ///   presented to the player
+    ///   presented to the player.
     public init(
         singleRenditionResolutionTier: SingleRenditionResolutionTier,
         renditionOrder: RenditionOrder = .default
@@ -319,16 +309,16 @@ extension PlaybackOptions {
     }
 
 
-    /// Initializes playback options for a public playback ID
+    /// Initializes playback options for a public playback ID.
     /// - Parameters:
     ///   - enableSmartCache: if set to `true` enables caching
-    ///   of your video data locally
+    ///   of your video data locally.
     ///   - singleRenditionResolutionTier: a single resolution
     ///   tier that the player will request. At this time
     ///   the smart cache can only be enabled when playback
-    ///   is constrained to a single resolution tier
+    ///   is constrained to a single resolution tier.
     ///   - renditionOrder: ordering of available renditions
-    ///   presented to the player
+    ///   presented to the player.
     public init(
         enableSmartCache: Bool,
         singleRenditionResolutionTier: SingleRenditionResolutionTier,
@@ -381,7 +371,7 @@ extension PlaybackOptions {
 
 
     /// Initializes playback options for a public
-    /// playback ID
+    /// playback ID.
     /// - Parameters:
     ///   - customDomain: custom playback domain, custom domains
     ///   need to be configured as described [here](https://docs.mux.com/guides/video/use-a-custom-domain-for-streaming#use-your-own-domain-for-delivering-videos-and-images) first.
@@ -392,11 +382,11 @@ extension PlaybackOptions {
     ///   URLs will use https://stream.media.example.com/ as
     ///   their base URL.
     ///   - maximumResolutionTier: maximum resolution of the
-    ///   video the player will download
+    ///   video the player will download.
     ///   - minimumResolutionTier: maximum resolution of the
-    ///   video the player will download
+    ///   video the player will download.
     ///   - renditionOrder: ordering of available renditions
-    ///   presented to the player
+    ///   presented to the player.
     public init(
         customDomain: String,
         maximumResolutionTier: MaxResolutionTier = .default,
@@ -416,10 +406,9 @@ extension PlaybackOptions {
         self.enableSmartCache = false
     }
     
-    /// Initializes playback options for use with a signed playback token
-    /// signed playback token
+    /// Initializes playback options for use with a signed playback token.
     /// - Parameter playbackToken: JSON web token signed
-    /// with a signing key
+    /// with a signing key.
     public init(
         playbackToken: String
     ) {
@@ -428,10 +417,10 @@ extension PlaybackOptions {
         )
     }
 
-    /// Initializes playback options for use with Mux Video DRM
+    /// Initializes playback options for use with Mux Video DRM.
     /// - Parameter playbackToken: JSON web token signed
-    /// with a signing key
-    /// - Parameter drmToken: JSON web token for DRM playback
+    /// with a signing key.
+    /// - Parameter drmToken: JSON web token for DRM playback.
     public init(
         playbackToken: String,
         drmToken: String,
@@ -448,7 +437,7 @@ extension PlaybackOptions {
     }
 
     /// Initializes playback options with a
-    /// signed playback token
+    /// signed playback token.
     /// - Parameters:
     ///   - customDomain: custom playback domain, custom domains
     ///   need to be configured as described [here](https://docs.mux.com/guides/video/use-a-custom-domain-for-streaming#use-your-own-domain-for-delivering-videos-and-images) first.
@@ -459,7 +448,7 @@ extension PlaybackOptions {
     ///   URLs will use https://stream.media.example.com/ as
     ///   their base URL.
     ///   - playbackToken: JSON web token signed
-    /// with a signing key
+    /// with a signing key.
     public init(
         customDomain: String,
         playbackToken: String
@@ -476,7 +465,7 @@ extension PlaybackOptions {
     
     /// Gets the root domain to be used when constructing URLs for playback, keys, etc.
     /// If there is a custom domain, this function returns that value, otherwise it returns the
-    /// default `mux.com`
+    /// default `mux.com`.
     internal func rootDomain() -> String {
         return customDomain ?? "mux.com"
     }
