@@ -18,6 +18,9 @@ public class MuxPlayerContext {
     
     private var timeControlObservation: NSKeyValueObservation?
     private var errorObservation: NSKeyValueObservation?
+    private var currentItemObservation: NSKeyValueObservation?
+    private var itemErrorObservation: NSKeyValueObservation?
+    
     private var monitoringInfo: MonitoringInfo?
     
     @MainActor
@@ -100,6 +103,15 @@ public class MuxPlayerContext {
         PlayerSDK.shared.handlePlayerError(self.player)
     }
     
+    private func observePlayerItem(_ playerItem: AVPlayerItem) {
+        self.itemErrorObservation = playerItem.observe(\.error, options: [.new]) { [weak self] _, change in
+            if let self, let error = change.newValue, let error {
+                self.currentItemObservation?.invalidate()
+                // same path as AVPlayer.error (may want to change this if we add more error handling later)
+                self.handlePlayerError(error)
+            }
+        }
+    }
     
     init(player: AVPlayer) {
         self.player = player;
@@ -114,10 +126,17 @@ public class MuxPlayerContext {
                     self.handlePlayerError(error)
                 }
             }
+            self.currentItemObservation = player.observe(\.currentItem, options: [.initial, .new]) { [weak self] _, change in
+                if let self, let item = change.newValue, let item {
+                    self.observePlayerItem(item)
+                }
+            }
         }
     }
     
     deinit {
+        self.currentItemObservation?.invalidate()
+        self.itemErrorObservation?.invalidate()
         self.timeControlObservation?.invalidate()
         self.errorObservation?.invalidate()
         
