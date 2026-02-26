@@ -22,6 +22,7 @@
 		19DD16B32BEC048300F4DF4F /* SinglePlayerLayerExampleViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19DD16B22BEC048300F4DF4F /* SinglePlayerLayerExampleViewController.swift */; };
 		19F6A1CE2C2F23EC00EE408A /* DRMExampleViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19F6A1CD2C2F23EC00EE408A /* DRMExampleViewController.swift */; };
 		359DA8042EE8F8E400491BCE /* ContainerViewControllerExample.swift in Sources */ = {isa = PBXBuildFile; fileRef = 359DA8032EE8F8D600491BCE /* ContainerViewControllerExample.swift */; };
+		35C09B342F4FCE1300AB13B2 /* OfflineAccessExampleViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35C09B332F4FCE1300AB13B2 /* OfflineAccessExampleViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -61,6 +62,7 @@
 		19DD16B22BEC048300F4DF4F /* SinglePlayerLayerExampleViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SinglePlayerLayerExampleViewController.swift; sourceTree = "<group>"; };
 		19F6A1CD2C2F23EC00EE408A /* DRMExampleViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DRMExampleViewController.swift; sourceTree = "<group>"; };
 		359DA8032EE8F8D600491BCE /* ContainerViewControllerExample.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContainerViewControllerExample.swift; sourceTree = "<group>"; };
+		35C09B332F4FCE1300AB13B2 /* OfflineAccessExampleViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineAccessExampleViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -125,6 +127,7 @@
 				193228C52ACF6AC800966FE1 /* LaunchScreen.storyboard */,
 				193228C82ACF6AC800966FE1 /* Info.plist */,
 				1966C52F2BEB4740005486D5 /* ProcessInfo+EnvironmentVariables.swift */,
+				35C09B332F4FCE1300AB13B2 /* OfflineAccessExampleViewController.swift */,
 			);
 			path = MuxPlayerSwiftExample;
 			sourceTree = "<group>";
@@ -284,6 +287,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				19F6A1CE2C2F23EC00EE408A /* DRMExampleViewController.swift in Sources */,
+				35C09B342F4FCE1300AB13B2 /* OfflineAccessExampleViewController.swift in Sources */,
 				19DD16B32BEC048300F4DF4F /* SinglePlayerLayerExampleViewController.swift in Sources */,
 				193228BB2ACF6AC700966FE1 /* AppDelegate.swift in Sources */,
 				19DD16B12BEC028C00F4DF4F /* SmartCacheExampleViewController.swift in Sources */,
