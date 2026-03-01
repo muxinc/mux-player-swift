@@ -595,4 +595,98 @@ final class PlaybackURLTests: XCTestCase {
             })
         )
     }
+
+    func testClippingProgramStartTime() throws {
+        let item = AVPlayerItem(
+            playbackID: "abc123",
+            playbackOptions: PlaybackOptions(
+                clipping: InstantClipping(
+                    programStartTimeEpochInSeconds: 1730214200
+                )
+            )
+        )
+
+        let url = try XCTUnwrap(
+            (item.asset as? AVURLAsset)?.url,
+            "Expected player item with URL"
+        )
+
+        let queryItems = try XCTUnwrap(
+            URLComponents(
+                url: url,
+                resolvingAgainstBaseURL: false
+            )?.queryItems
+        )
+
+        XCTAssertNotNil(
+            queryItems.first(where: {
+                $0.name == "program_start_time"
+            })
+        )
+    }
+
+    func testClippingProgramEndTime() throws {
+        let item = AVPlayerItem(
+            playbackID: "abc123",
+            playbackOptions: PlaybackOptions(
+                clipping: InstantClipping(
+                    programEndTimeEpochInSeconds: 1730217200
+                )
+            )
+        )
+
+        let url = try XCTUnwrap(
+            (item.asset as? AVURLAsset)?.url,
+            "Expected player item with URL"
+        )
+
+        let queryItems = try XCTUnwrap(
+            URLComponents(
+                url: url,
+                resolvingAgainstBaseURL: false
+            )?.queryItems
+        )
+
+        XCTAssertNotNil(
+            queryItems.first(where: {
+                $0.name == "program_end_time"
+            })
+        )
+    }
+
+    func testClippingProgramStartAndEndTime() throws {
+        let item = AVPlayerItem(
+            playbackID: "abc123",
+            playbackOptions: PlaybackOptions(
+                clipping: InstantClipping(
+                    programStartTimeEpochInSeconds: 1730214200,
+                    programEndTimeEpochInSeconds: 1730217200
+                )
+            )
+        )
+
+        let url = try XCTUnwrap(
+            (item.asset as? AVURLAsset)?.url,
+            "Expected player item with URL"
+        )
+
+        let queryItems = try XCTUnwrap(
+            URLComponents(
+                url: url,
+                resolvingAgainstBaseURL: false
+            )?.queryItems
+        )
+
+        XCTAssertNotNil(
+            queryItems.first(where: {
+                $0.name == "program_start_time"
+            })
+        )
+
+        XCTAssertNotNil(
+            queryItems.first(where: {
+                $0.name == "program_end_time"
+            })
+        )
+    }
 }
