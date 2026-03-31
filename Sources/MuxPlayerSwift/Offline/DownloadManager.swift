@@ -39,7 +39,7 @@ actor DownloadManager: NSObject, AVAssetDownloadDelegate {
 
     private let index = DownloadIndex()
     private var downloadTasksByPlaybackID: [String: AVAssetDownloadTask] = [:]
-    private var subjectsByPlaybackID: [String: PassthroughSubject<DownloadEvent, Error>] = [:]
+    private var subjectsByPlaybackID: [String: CurrentValueSubject<DownloadEvent, Error>] = [:]
     
     func findDownloadedAsset(playbackID: String) async -> DownloadedAsset? {
         guard let storedAsset = await index.get(playbackID: playbackID) else {
@@ -104,8 +104,6 @@ actor DownloadManager: NSObject, AVAssetDownloadDelegate {
         } else {
             let subject = subject(for: playbackID)
             if downloadTasksByPlaybackID[playbackID] == nil {
-                subject.send(.started)
-                
                 // Do before starting. Better to have index entry without files than files without index entries
                 await index.upsert(StoredAsset.forNewDownload(playbackID: playbackID, options: options))
                 
@@ -215,9 +213,9 @@ actor DownloadManager: NSObject, AVAssetDownloadDelegate {
         await index.delete(playbackID: playbackID)
     }
     
-    private func subject(for playbackID: String) -> PassthroughSubject<DownloadEvent, Error> {
+    private func subject(for playbackID: String) -> CurrentValueSubject<DownloadEvent, Error> {
         if let s = subjectsByPlaybackID[playbackID] { return s }
-        let s = PassthroughSubject<DownloadEvent, Error>()
+        let s = CurrentValueSubject<DownloadEvent, Error>(.started)
         subjectsByPlaybackID[playbackID] = s
         return s
     }
