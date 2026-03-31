@@ -20,48 +20,27 @@ public class MuxOfflineAccessManager {
     ///   - playbackID: The Mux playback ID
     ///   - playbackOptions: Configuration for playback
     ///   - downloadOptions: Configuration for the download
-    /// - Returns: A publisher that emits download events
-    public func startDownload(
-        playbackID: String,
-        playbackOptions: PlaybackOptions,
-        downloadOptions: DownloadOptions
-    ) async -> AnyPublisher<DownloadEvent, Error> {
-        let url = URLComponents(playbackID: playbackID, playbackOptions: playbackOptions).url!
-        let asset = AVURLAsset(url: url)
-        return await manager.startDownloadWithPublisher(playbackID: playbackID, avAsset: asset, options: downloadOptions)
-    }
-    
-    /// Start downloading a video for offline access
-    /// - Parameters:
-    ///   - playbackID: The Mux playback ID
-    ///   - playbackOptions: Configuration for playback
-    ///   - downloadOptions: Configuration for the download
     /// - Returns: An async stream that emits download events
     public func startDownloadAsync(
         playbackID: String,
         playbackOptions: PlaybackOptions,
         downloadOptions: DownloadOptions
     ) async -> AsyncThrowingStream<DownloadEvent, Error> {
-        let publisher = await startDownload(
+        let url = URLComponents(playbackID: playbackID, playbackOptions: playbackOptions).url!
+        let asset = AVURLAsset(url: url)
+        let publisher = await manager.startDownloadWithPublisher(
             playbackID: playbackID,
-            playbackOptions: playbackOptions,
-            downloadOptions: downloadOptions
+            avAsset: asset,
+            options: downloadOptions
         )
         return publisher.toAsyncThrowingStream()
     }
     
     /// Observe an already started download
     /// - Parameter playbackID: The Mux playback ID
-    /// - Returns: A publisher that emits download events, or nil if no download is in progress
-    public func observeStartedDownload(playbackID: String) async -> AnyPublisher<DownloadEvent, Error>? {
-        return await manager.publisherForDownload(playbackID: playbackID)
-    }
-    
-    /// Observe an already started download
-    /// - Parameter playbackID: The Mux playback ID
     /// - Returns: An async stream that emits download events, or nil if no download is in progress
     public func observeStartedDownloadAsync(playbackID: String) async -> AsyncThrowingStream<DownloadEvent, Error>? {
-        guard let publisher = await observeStartedDownload(playbackID: playbackID) else {
+        guard let publisher = await manager.publisherForDownload(playbackID: playbackID) else {
             return nil
         }
         return publisher.toAsyncThrowingStream()
@@ -72,16 +51,10 @@ public class MuxOfflineAccessManager {
         Task { await manager.reattachPendingDownloadPublishers() }
     }
     
-    /// Resume any pending download tasks from last app session
-    /// - Returns: A dictionary mapping playback IDs to publishers of download events
-    public func resumePendingDownloadsWithEvents() async -> [String: AnyPublisher<DownloadEvent, Error>] {
-        return await manager.reattachPendingDownloadPublishers()
-    }
-    
     /// Resume any pending download tasks from last app session, returning AsyncThrowingStreams
     /// - Returns: A dictionary mapping playback IDs to async streams of download events
     public func resumePendingDownloadsWithEventsAsync() async -> [String: AsyncThrowingStream<DownloadEvent, Error>] {
-        let publishers = await resumePendingDownloadsWithEvents()
+        let publishers = await manager.reattachPendingDownloadPublishers()
         return publishers.mapValues { $0.toAsyncThrowingStream() }
     }
     
