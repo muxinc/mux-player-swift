@@ -103,9 +103,10 @@ actor DownloadManager: NSObject, AVAssetDownloadDelegate {
                 .eraseToAnyPublisher()
         } else {
             let subject = subject(for: playbackID)
-            subject.send(.started)
             if downloadTasksByPlaybackID[playbackID] == nil {
-                // Do first. Better to have index entry without files than files without index entries
+                subject.send(.started)
+                
+                // Do before starting. Better to have index entry without files than files without index entries
                 await index.upsert(StoredAsset.forNewDownload(playbackID: playbackID, options: options))
                 
                 let config = AVAssetDownloadConfiguration(asset: avAsset, title: options.readableTitle)
