@@ -57,7 +57,7 @@ actor DownloadManager: NSObject, AVAssetDownloadDelegate {
         // TODO: Check DRM expiration
         
         let fileURL = URL(fileURLWithPath: file, relativeTo: URL(fileURLWithPath: NSHomeDirectory()))
-        if assetFileExists(at: fileURL) {
+        if assetFileExists(at: fileURL), !storedAsset.completedWithError {
             return DownloadedAsset(
                 playbackID: playbackID,
                 assetStatus: .playable(asset: AVURLAsset(url: fileURL)),
