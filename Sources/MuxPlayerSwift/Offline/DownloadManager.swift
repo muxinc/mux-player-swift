@@ -78,10 +78,10 @@ actor DownloadManager: NSObject, AVAssetDownloadDelegate {
         options: DownloadOptions
     ) async -> AnyPublisher<DownloadEvent, Error> {
         let storedAsset = await index.get(playbackID: playbackID)
-        if let storedAsset, storedAsset.isComplete {
+        if let storedAsset, storedAsset.isComplete, !storedAsset.completedWithError {
             // If we already have a completed download, just return that
             let assetStatus: AssetStatus
-            if let file = storedAsset.localPath {
+            if let file = storedAsset.localPath, !storedAsset.completedWithError {
                 let fileURL = URL(fileURLWithPath: file, relativeTo: URL(fileURLWithPath: NSHomeDirectory()))
                 if assetFileExists(at: fileURL) {
                     assetStatus = .playable(asset: AVURLAsset(url: fileURL))
@@ -125,7 +125,7 @@ actor DownloadManager: NSObject, AVAssetDownloadDelegate {
             task.cancel()
             downloadTasksByPlaybackID[playbackID] = nil
         }
-        await deleteDownloadedFiles(playbackID: playbackID)
+        await deleteDownloadedFiles(playbackID: playbackID, removeFromIndex: true)
     }
     
     func allCompletedAssets() async -> [DownloadedAsset] {
@@ -139,7 +139,7 @@ actor DownloadManager: NSObject, AVAssetDownloadDelegate {
                 let assetURL = URL(fileURLWithPath: assetPath, relativeTo: URL(fileURLWithPath: NSHomeDirectory()))
                 
                 // TODO: Check DRM expiration too
-                if assetFileExists(at: assetURL) {
+                if assetFileExists(at: assetURL), !completedAsset.completedWithError {
                     return DownloadedAsset(
                         playbackID: completedAsset.playbackID,
                         assetStatus: .playable(asset: AVURLAsset(url: assetURL)),
@@ -192,7 +192,7 @@ actor DownloadManager: NSObject, AVAssetDownloadDelegate {
         return await downloadSession.allTasks
     }
 
-    private func deleteDownloadedFiles(playbackID: String) async {
+    private func deleteDownloadedFiles(playbackID: String, removeFromIndex: Bool) async {
         // Attempt to delete the local media file and CKC sidecar if present (if not present, it's fine)
         if let stored = await index.get(playbackID: playbackID) {
             let fm = FileManager.default
@@ -209,8 +209,9 @@ actor DownloadManager: NSObject, AVAssetDownloadDelegate {
             }
         }
         
-        // Remove from index regardless
-        await index.delete(playbackID: playbackID)
+        if removeFromIndex {
+            await index.delete(playbackID: playbackID)
+        }
     }
     
     private func subject(for playbackID: String) -> CurrentValueSubject<DownloadEvent, Error> {
@@ -265,7 +266,7 @@ actor DownloadManager: NSObject, AVAssetDownloadDelegate {
         }
     }
 
-    func handleError(for task: URLSessionTask, error: (any Error)?) {
+    func handleError(for task: URLSessionTask, error: (any Error)?) async {
         logger.error("[Mux-Offline] handleError: Error for task with ID \(task.taskIdentifier): \(String(describing: error))")
         
         guard let playbackID = task.taskDescription else {
@@ -274,11 +275,12 @@ actor DownloadManager: NSObject, AVAssetDownloadDelegate {
         }
         if let error {
             sendError(error, for: playbackID)
+            await index.updateIsComplete(playbackID: playbackID, isComplete: true, completeWithError: true)
         } else {
             finishEvents(for: playbackID)
         }
         downloadTasksByPlaybackID[playbackID] = nil
-        Task { await deleteDownloadedFiles(playbackID: playbackID) }
+        Task { await deleteDownloadedFiles(playbackID: playbackID, removeFromIndex: false) }
     }
     
     func handleDownloadLocation(task: AVAssetDownloadTask, relativeLocation: String) async {
@@ -290,12 +292,14 @@ actor DownloadManager: NSObject, AVAssetDownloadDelegate {
     }
     
     func handleFinishedDownload(task: AVAssetDownloadTask, location: URL) async {
+        logger.info("[Mux-Offline] handleFinishedDownload: For playbackID (taskDescription) for task id=\(task.taskIdentifier)")
+        
         guard let playbackID = task.taskDescription else {
             logger.warning("[Mux-Offline] handleFinishedDownload: Missing playbackID (taskDescription) for task id=\(task.taskIdentifier)")
             return
         }
         let asset = AVURLAsset(url: location)
-        let storedAsset = await index.updateIsComplete(playbackID: playbackID, isComplete: true)
+        let storedAsset = await index.updateIsComplete(playbackID: playbackID, isComplete: true, completeWithError: false)
         guard let storedAsset else {
             logger.warning("[Mux-Offline] handleFinishedDownload: Index entry missing for playbackID \(playbackID) (may be removed due to reentrancy)")
             return
@@ -318,6 +322,7 @@ actor DownloadManager: NSObject, AVAssetDownloadDelegate {
 // internal DTO for our index of downloaded assets
 struct StoredAsset: Codable {
     let isComplete: Bool
+    let completedWithError: Bool
     
     let playbackID: String
     let localPath: String?
@@ -337,6 +342,7 @@ extension StoredAsset {
     static func forNewDownload(playbackID: String, options: DownloadOptions) -> StoredAsset {
        return StoredAsset(
         isComplete: false,
+        completedWithError: false,
         playbackID: playbackID,
         localPath: nil,
         readableTitle: options.readableTitle,
@@ -433,7 +439,7 @@ actor DownloadIndex {
 
     // MARK: - Partial Updates
 
-    func updateIsComplete(playbackID: String, isComplete: Bool) -> StoredAsset? {
+    func updateIsComplete(playbackID: String, isComplete: Bool, completeWithError: Bool) -> StoredAsset? {
         // not an error case. Deletion can occur re-entrantly before the delegate callback that calls this
         guard let existing = assets[playbackID] else {
             logger.warning("[Mux-Offline] DownloadIndex.updateIsComplete: No existing asset for playbackID \(playbackID)")
@@ -441,6 +447,7 @@ actor DownloadIndex {
         }
         let updated = StoredAsset(
             isComplete: isComplete,
+            completedWithError: completeWithError,
             playbackID: existing.playbackID,
             localPath: existing.localPath,
             readableTitle: existing.readableTitle,
@@ -465,6 +472,7 @@ actor DownloadIndex {
         }
         let updated = StoredAsset(
             isComplete: existing.isComplete,
+            completedWithError: existing.completedWithError,
             playbackID: existing.playbackID,
             localPath: existing.localPath,
             readableTitle: existing.readableTitle,
@@ -489,6 +497,7 @@ actor DownloadIndex {
         }
         let updated = StoredAsset(
             isComplete: existing.isComplete,
+            completedWithError: existing.completedWithError,
             playbackID: existing.playbackID,
             localPath: localPath,
             readableTitle: existing.readableTitle,
