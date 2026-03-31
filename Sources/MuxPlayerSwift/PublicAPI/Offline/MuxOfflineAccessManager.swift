@@ -164,7 +164,7 @@ public enum AssetStatus {
     case playable(asset: AVURLAsset)
     /// The asset needs to be re-downloaded when online
     case redownloadWhenOnline
-    /// The asset has expired
+    /// The asset's playback period has expired. This value is only applicable to DRM-protected content
     case expired
 }
 

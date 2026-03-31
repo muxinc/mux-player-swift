@@ -12,7 +12,7 @@ import Combine
 // MARK: - DownloadManager
 
 // Operations on Downloads, including tasks in-progress, key requests, key storage, and indexing downloaded
-// media are isolated here internally. This actor is intended to be called from the external API, `MuxOfflineAccessManager`,
+// media are isolated here internally. This actor is intended to be called from the external API, `Mux-OfflineAccessManager`,
 // which calls through to this actor without introducing reentrancy issues, or requiring any particular concurrency
 // management from the caller
 actor DownloadManager: NSObject, AVAssetDownloadDelegate {
@@ -39,11 +39,10 @@ actor DownloadManager: NSObject, AVAssetDownloadDelegate {
             return nil
         }
         guard storedAsset.isComplete else {
-            // TODO: Checked separately to log separately
             return nil
         }
         guard let file = storedAsset.localPath else {
-            // TODO: Log separately (intenral error to have complete download and no fileURL)
+            print("[Mux-Offline] findDownloadedAsset: No local path saved for completed asset")
             return nil
         }
         // TODO: Check DRM expiration
@@ -114,7 +113,7 @@ actor DownloadManager: NSObject, AVAssetDownloadDelegate {
             .filter { $0.isComplete }
             .compactMap { completedAsset -> DownloadedAsset? in
                 guard let assetPath = completedAsset.localPath else {
-                    // TODO: Error but we still want to return the rest (Log this)
+                    print("[Mux-Offline] allCompletedAssets: No local path saved for completed asset")
                     return nil
                 }
                 let assetURL = URL(fileURLWithPath: assetPath, relativeTo: URL(fileURLWithPath: NSHomeDirectory()))
@@ -143,13 +142,10 @@ actor DownloadManager: NSObject, AVAssetDownloadDelegate {
             guard let assetTask = task as? AVAssetDownloadTask else { continue }
             guard let playbackID = assetTask.taskDescription, !playbackID.isEmpty else { continue }
 
-            // Remember the task
             downloadTasksByPlaybackID[playbackID] = assetTask
-
             let subject = subject(for: playbackID)
             publishers[playbackID] = subject.eraseToAnyPublisher()
 
-            // Ensure the task is running
             assetTask.resume()
         }
         return publishers
@@ -171,7 +167,7 @@ actor DownloadManager: NSObject, AVAssetDownloadDelegate {
     private func deleteDownloadedFiles(playbackID: String) async {
         print("[Mux-Offline] deleteDownloadedFiles: called for playbackID \(playbackID)")
         
-        // Attempt to delete the local media file and CKC sidecar if present
+        // Attempt to delete the local media file and CKC sidecar if present (if not present, it's fine)
         if let stored = await index.get(playbackID: playbackID) {
             let fm = FileManager.default
             // Delete media file
@@ -260,7 +256,7 @@ actor DownloadManager: NSObject, AVAssetDownloadDelegate {
         let asset = AVURLAsset(url: location)
         let storedAsset = await index.updateIsComplete(playbackID: playbackID, isComplete: true)
         guard let storedAsset else {
-            // TODO: Log this case (possibly not an error depending on when cancellation happened)
+            // not an error case. removeDownload() at the right time can pre-empt this due to reentrancy
             return
         }
         let downloadedAsset = DownloadedAsset(
@@ -364,7 +360,7 @@ actor DownloadIndex {
                 assets = snapshot.assets
             }
         } catch {
-            print("[MuxOffline] DownloadIndex init load error: \(error)")
+            print("[Mux-Offline] DownloadIndex init load error: \(error)")
         }
     }
 
@@ -391,8 +387,7 @@ actor DownloadIndex {
     // MARK: - Partial Updates
 
     func updateIsComplete(playbackID: String, isComplete: Bool) -> StoredAsset? {
-        // If the asset wasn't present, it could be deleted, so it's not really an error
-        // TODO: Log this case though
+        // not an error case. Deletion can occur re-entrantly before the delegate callback that calls this
         guard let existing = assets[playbackID] else { return nil }
         let updated = StoredAsset(
             isComplete: isComplete,
@@ -413,8 +408,7 @@ actor DownloadIndex {
     }
 
     func updateCKCFileURL(playbackID: String, ckcFilePath: String) -> StoredAsset? {
-        // TODO: Log this case
-        // If the asset wasn't present, it could be deleted, so it's not really an error
+        // not an error case. Deletion can occur re-entrantly before the delegate callback that calls this
         guard let existing = assets[playbackID] else { return nil }
         let updated = StoredAsset(
             isComplete: existing.isComplete,
@@ -435,8 +429,7 @@ actor DownloadIndex {
     }
 
     func updateLocalPathURL(playbackID: String, localPath: String) -> StoredAsset? {
-        // TODO: Log this guard case
-        // If the asset wasn't present, it could be deleted, so it's not really an error
+        // not an error case. Deletion can occur re-entrantly before the delegate callback that calls this
         guard let existing = assets[playbackID] else { return nil }
         let updated = StoredAsset(
             isComplete: existing.isComplete,
@@ -461,7 +454,7 @@ actor DownloadIndex {
         do {
             try saveSnapshot(IndexSnapshot(version: Self.plistVersion, assets: assets))
         } catch {
-            print("[MuxOffline] Failed to save index snapshot: \(error)")
+            print("[Mux-Offline] Failed to save index snapshot: \(error)")
         }
     }
 
@@ -557,7 +550,7 @@ fileprivate class DownloadTaskDelegate: NSObject, AVAssetDownloadDelegate {
     // MARK: AVAssetDownloadDelegate
 
     func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: (any Error)?) {
-        print("[MuxOffline] didCompleteWithError: taskId=\(task.taskIdentifier) error=\(String(describing: error))")
+        print("[Mux-Offline] didCompleteWithError: taskId=\(task.taskIdentifier) error=\(String(describing: error))")
         if let error {
             Task { [downloadManager] in
                 await downloadManager.handleError(for: task, error: error)
@@ -566,7 +559,7 @@ fileprivate class DownloadTaskDelegate: NSObject, AVAssetDownloadDelegate {
     }
 
     func urlSession(_ session: URLSession, assetDownloadTask: AVAssetDownloadTask, didFinishDownloadingTo location: URL) {
-        print("[MuxOffline] didFinishDownloadingTo: taskId=\(assetDownloadTask.taskIdentifier) location=\(location.path)")
+        print("[Mux-Offline] didFinishDownloadingTo: taskId=\(assetDownloadTask.taskIdentifier) location=\(location.path)")
         Task { [downloadManager] in
             await downloadManager.handleFinishedDownload(task: assetDownloadTask, location: location)
         }
@@ -574,7 +567,7 @@ fileprivate class DownloadTaskDelegate: NSObject, AVAssetDownloadDelegate {
     
     // Called when a task becomes a download task (general URLSession delegate)
     func urlSession(_ session: URLSession, taskIsWaitingForConnectivity task: URLSessionTask) {
-        print("[MuxOffline] Task waiting for connectivity: id=\(task.taskIdentifier)")
+        print("[Mux-Offline] Task waiting for connectivity: id=\(task.taskIdentifier)")
         Task { [downloadManager] in
             await downloadManager.handleWaitingForConnectivity(for: task)
         }
@@ -585,7 +578,7 @@ fileprivate class DownloadTaskDelegate: NSObject, AVAssetDownloadDelegate {
                     timeRangeExpectedToLoad: CMTimeRange) {
         let loaded = loadedTimeRanges.map { $0.timeRangeValue }
         let loadedDescription = loaded.map { "[start: \($0.start.seconds), dur: \($0.duration.seconds)]" }.joined(separator: ", ")
-        print("[MuxOffline] didLoad timeRange start=\(timeRange.start.seconds) dur=\(timeRange.duration.seconds) expectedDur=\(timeRangeExpectedToLoad.duration.seconds) loaded=\(loadedDescription)")
+        print("[Mux-Offline] didLoad timeRange start=\(timeRange.start.seconds) dur=\(timeRange.duration.seconds) expectedDur=\(timeRangeExpectedToLoad.duration.seconds) loaded=\(loadedDescription)")
         Task { [downloadManager] in
             await downloadManager.handleProgress(task: assetDownloadTask, loadedTimeRanges: loaded, expectedTimeRange: timeRangeExpectedToLoad)
         }
@@ -593,7 +586,7 @@ fileprivate class DownloadTaskDelegate: NSObject, AVAssetDownloadDelegate {
 
     func urlSession(_ session: URLSession, assetDownloadTask: AVAssetDownloadTask,
                     willDownloadTo location: URL) {
-        print("[MuxOffline] willDownloadTo [Relative]: \(location.relativePath)")
+        print("[Mux-Offline] willDownloadTo [Relative]: \(location.relativePath)")
         Task { [downloadManager] in
             await downloadManager.handleDownloadLocation(task: assetDownloadTask, relativeLocation: location.relativePath)
         }
