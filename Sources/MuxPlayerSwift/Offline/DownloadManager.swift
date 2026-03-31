@@ -16,7 +16,7 @@ import os
 // media are isolated here internally. This actor is intended to be called from the external API, `Mux-OfflineAccessManager`,
 // which calls through to this actor without introducing reentrancy issues, or requiring any particular concurrency
 // management from the caller
-actor DownloadManager: NSObject, AVAssetDownloadDelegate {
+actor DownloadManager {
     private let delegateQueue: OperationQueue = {
         let q = OperationQueue()
         q.name = "com.mux.offline.delegate"
