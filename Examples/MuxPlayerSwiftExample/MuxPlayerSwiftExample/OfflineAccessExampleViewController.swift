@@ -34,10 +34,6 @@ class OfflineAccessExampleViewController: UIViewController, UITableViewDataSourc
             title: "Elephant's Dream"
         ),
         ExampleAsset(
-            playbackID: "ifx3E1R6cpyg5f8c3F9LIjwGI5QHvS01ex2p8KWH3Bnk",
-            title: "Inside Emily's Purse"
-        ),
-        ExampleAsset(
             playbackID: "Q3ikJX28joohwD02j01Ew7yyPYeraJwRjVVXrwZjt9xUo",
             title: "Making of Sintel"
         ),
@@ -53,7 +49,8 @@ class OfflineAccessExampleViewController: UIViewController, UITableViewDataSourc
     
     // Track download states by playback ID
     private var downloadStates: [String: AssetDownloadState] = [:]
-    private var cancellables = Set<AnyCancellable>()
+    /// One subscription per playback ID; removed when the download finishes, fails, or is cancelled so we do not retain completed sinks indefinitely.
+    private var downloadSubscriptions: [String: AnyCancellable] = [:]
     
     // MARK: - Lifecycle
     
@@ -125,13 +122,13 @@ class OfflineAccessExampleViewController: UIViewController, UITableViewDataSourc
     }
     
     private func subscribeToDownload(playbackID: String, publisher: AnyPublisher<DownloadEvent, Error>) {
-        publisher
+        downloadSubscriptions[playbackID] = publisher
             .receive(on: DispatchQueue.main)
             .sink(
                 receiveCompletion: { [weak self] completion in
+                    self?.downloadSubscriptions.removeValue(forKey: playbackID)
                     switch completion {
                     case .finished:
-                        // Download completed successfully
                         break
                     case .failure(let error):
                         self?.handleDownloadError(error, for: playbackID)
@@ -141,7 +138,6 @@ class OfflineAccessExampleViewController: UIViewController, UITableViewDataSourc
                     self?.handleDownloadEvent(event, for: playbackID)
                 }
             )
-            .store(in: &cancellables)
     }
     
     private func handleDownloadEvent(_ event: DownloadEvent, for playbackID: String) {
@@ -170,12 +166,16 @@ class OfflineAccessExampleViewController: UIViewController, UITableViewDataSourc
     }
     
     private func handleDownloadError(_ error: Error, for playbackID: String) {
+        if error is CancellationError {
+            return
+        }
         print("\tDownload failed for \(playbackID): \(error)")
         downloadStates[playbackID] = .error(error)
         tableView.reloadData()
     }
     
     private func cancelOrDeleteDownload(for playbackID: String) {
+        downloadSubscriptions.removeValue(forKey: playbackID)
         Task {
             await MuxOfflineAccessManager.shared.removeDownload(playbackID: playbackID)
             await MainActor.run {
