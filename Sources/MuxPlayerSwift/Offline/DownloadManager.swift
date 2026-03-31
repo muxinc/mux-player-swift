@@ -77,20 +77,32 @@ actor DownloadManager: NSObject, AVAssetDownloadDelegate {
         avAsset: AVURLAsset,
         options: DownloadOptions
     ) async -> AnyPublisher<DownloadEvent, Error> {
-        let subject = subject(for: playbackID)
-
         let storedAsset = await index.get(playbackID: playbackID)
         if let storedAsset, storedAsset.isComplete {
             // If we already have a completed download, just return that
+            let assetStatus: AssetStatus
+            if let file = storedAsset.localPath {
+                let fileURL = URL(fileURLWithPath: file, relativeTo: URL(fileURLWithPath: NSHomeDirectory()))
+                if assetFileExists(at: fileURL) {
+                    assetStatus = .playable(asset: AVURLAsset(url: fileURL))
+                } else {
+                    assetStatus = .redownloadWhenOnline
+                }
+            } else {
+                print("[Mux-Offline] startDownloadWithPublisher: No local path saved for completed asset")
+                assetStatus = .redownloadWhenOnline
+            }
+
             let downloadedAsset = DownloadedAsset(
                 playbackID: playbackID,
-                assetStatus: .playable(asset: avAsset),
+                assetStatus: assetStatus,
                 downloadOptions: DownloadOptions(from: storedAsset)
             )
-            subject.send(.completed(downloadedAsset))
-            subject.send(completion: .finished)
-            return subject.eraseToAnyPublisher()
+            return Just(.completed(downloadedAsset))
+                .setFailureType(to: Error.self)
+                .eraseToAnyPublisher()
         } else {
+            let subject = subject(for: playbackID)
             subject.send(.started)
             if downloadTasksByPlaybackID[playbackID] == nil {
                 // Do first. Better to have index entry without files than files without index entries
@@ -167,7 +179,9 @@ actor DownloadManager: NSObject, AVAssetDownloadDelegate {
     }
     
     func publisherForDownload(playbackID: String) async -> AnyPublisher<DownloadEvent, Error>? {
-        let subject = subject(for: playbackID)
+        guard let subject = subjectsByPlaybackID[playbackID] else {
+            return nil
+        }
         return subject.eraseToAnyPublisher()
     }
     
