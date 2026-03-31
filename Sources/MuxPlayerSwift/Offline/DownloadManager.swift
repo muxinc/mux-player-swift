@@ -539,7 +539,11 @@ actor DownloadIndex {
         let url = try indexFileURL()
         let tmp = url.deletingLastPathComponent().appendingPathComponent(UUID().uuidString)
         try data.write(to: tmp, options: .atomic)
-        _ = try FileManager.default.replaceItemAt(url, withItemAt: tmp)
+        do {
+            _ = try FileManager.default.replaceItemAt(url, withItemAt: tmp)
+        } catch {
+            try data.write(to: url)
+        }
     }
 
     private func loadSnapshot() throws -> IndexSnapshot? {
