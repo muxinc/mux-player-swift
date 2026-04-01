@@ -18,11 +18,15 @@ public struct DownloadOptions {
     /// Language codes for secondary audio tracks (e.g., 'en' or 'en-US')
     public let secondaryAudioLanguages: [String]?
     
-    public init(readableTitle: String) {
+    public init(
+        readableTitle: String,
+        posterData: Data? = nil,
+        subtitleLanguages: [String]? = nil,
+        secondaryAudioLanguages: [String]? = nil
+    ) {
         self.readableTitle = readableTitle
-        
-        self.posterData = nil
-        self.subtitleLanguages = nil
-        self.secondaryAudioLanguages = nil
+        self.posterData = posterData
+        self.subtitleLanguages = subtitleLanguages
+        self.secondaryAudioLanguages = secondaryAudioLanguages
     }
 }
