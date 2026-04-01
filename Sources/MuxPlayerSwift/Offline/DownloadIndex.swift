@@ -152,7 +152,12 @@ actor DownloadIndex {
         var values = URLResourceValues()
         values.isExcludedFromBackup = true
         var mutableDir = dir
-        try? mutableDir.setResourceValues(values)
+        do {
+            try mutableDir.setResourceValues(values)
+        } catch {
+            // not generally an error condition. if the index is restored, callers will see .mustRedownload for all entries. not the end of the world
+            logger.warning("[Mux-Offline] failed to exclude \(mutableDir) from backup. continuing anyway")
+        }
         return dir
     }
 
