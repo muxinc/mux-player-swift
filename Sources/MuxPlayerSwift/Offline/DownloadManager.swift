@@ -184,13 +184,23 @@ actor DownloadManager {
             // Delete media file
             if let mediaPath = stored.localPath {
                 let mediaURL = URL(fileURLWithPath: mediaPath, relativeTo: URL(fileURLWithPath: NSHomeDirectory()))
-                try? fm.removeItem(at: mediaURL)
+                do {
+                    try fm.removeItem(at: mediaURL)
+                } catch {
+                    // not generally an error condition. file can be gone due to early cancellation or re-entrant calls to this method
+                    logger.trace("[Mux-Offline] Failed to delete media file at \(mediaURL.path): \(error)")
+                }
             }
             
             // Delete CKC sidecar if any
             if let ckcFilePath = stored.ckcFilePath {
                 let ckcFile = URL(fileURLWithPath: ckcFilePath, relativeTo: URL(fileURLWithPath: NSHomeDirectory()))
-                try? fm.removeItem(at: ckcFile)
+                do {
+                    try fm.removeItem(at: ckcFile)
+                } catch {
+                    // not generally an error condition. file can be gone due to early cancellation or re-entrant calls to this method
+                    logger.trace("[Mux-Offline] Failed to key id file at \(ckcFile.path): \(error)")
+                }
             }
         }
         
