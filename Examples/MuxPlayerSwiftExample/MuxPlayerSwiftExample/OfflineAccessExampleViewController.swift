@@ -121,6 +121,7 @@ class OfflineAccessExampleViewController: UIViewController, UITableViewDataSourc
         }
     }
     
+    @MainActor
     private func subscribeToDownload(playbackID: String, publisher: AnyPublisher<DownloadEvent, Error>) {
         downloadSubscriptions[playbackID] = publisher
             .receive(on: DispatchQueue.main)
