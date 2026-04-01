@@ -14,7 +14,7 @@ import os
 public class MuxOfflineAccessManager {
     public static let shared = MuxOfflineAccessManager()
     
-    private lazy var manager: DownloadManager = DownloadManager()
+    private let manager: DownloadManager = DownloadManager()
     
     #if DEBUG
     private let logger = Logger(OSLog(subsystem: "com.mux.player", category: "Mux-Offline"))
@@ -120,5 +120,3 @@ public class MuxOfflineAccessManager {
         return await manager.allCompletedAssets()
     }
 }
-
-
