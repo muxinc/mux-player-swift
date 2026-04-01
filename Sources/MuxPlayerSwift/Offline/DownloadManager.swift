@@ -252,22 +252,21 @@ actor DownloadManager {
         }
     }
 
-    func handleError(for task: URLSessionTask, error: (any Error)?) async {
+    func handleError(for task: URLSessionTask, error: (any Error)) async {
         logger.error("[Mux-Offline] handleError: Error for task with ID \(task.taskIdentifier): \(String(describing: error))")
         
         guard let playbackID = task.taskDescription else {
             logger.warning("[Mux-Offline] handleError: Missing playbackID (taskDescription) for task id=\(task.taskIdentifier)")
             return
         }
-        if let error {
-            sendError(error, for: playbackID)
-            await index.updateIsComplete(playbackID: playbackID, isComplete: true, completeWithError: true)
-        } else {
-            finishEvents(for: playbackID)
-        }
+        
+        await index.updateIsComplete(playbackID: playbackID, isComplete: true, completeWithError: true)
+        await deleteDownloadedFiles(playbackID: playbackID, removeFromIndex: false)
+        
+        // do these after the awaits, so callers that call startDownload to handle errors actually start one
+        sendError(error, for: playbackID)
         downloadTasksByPlaybackID[playbackID] = nil
         detachEvents(for: playbackID)
-        Task { await deleteDownloadedFiles(playbackID: playbackID, removeFromIndex: false) }
     }
     
     func handleDownloadLocation(task: AVAssetDownloadTask, relativeLocation: String) async {
