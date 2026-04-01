@@ -266,6 +266,7 @@ actor DownloadManager {
             finishEvents(for: playbackID)
         }
         downloadTasksByPlaybackID[playbackID] = nil
+        detachEvents(for: playbackID)
         Task { await deleteDownloadedFiles(playbackID: playbackID, removeFromIndex: false) }
     }
     
@@ -300,5 +301,6 @@ actor DownloadManager {
         send(.completed(downloadedAsset), for: playbackID)
         finishEvents(for: playbackID)
         downloadTasksByPlaybackID[playbackID] = nil
+        detachEvents(for: playbackID)
     }
 }
