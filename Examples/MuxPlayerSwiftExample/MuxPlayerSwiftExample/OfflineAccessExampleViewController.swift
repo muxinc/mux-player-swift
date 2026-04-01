@@ -167,9 +167,10 @@ class OfflineAccessExampleViewController: UIViewController, UITableViewDataSourc
     }
     
     private func handleDownloadError(_ error: Error, for playbackID: String) {
-        if error is CancellationError {
+        if let urlError = error as? URLError, urlError.code == .cancelled {
             return
         }
+        
         print("\tDownload failed for \(playbackID): \(error)")
         downloadStates[playbackID] = .error(error)
         tableView.reloadData()
