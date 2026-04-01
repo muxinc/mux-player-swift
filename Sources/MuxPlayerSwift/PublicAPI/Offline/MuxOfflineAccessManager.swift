@@ -8,12 +8,19 @@
 import Foundation
 import AVFoundation
 import Combine
+import os
 
 /// Manager for downloading and accessing Mux video content for offline playback
 public class MuxOfflineAccessManager {
     public static let shared = MuxOfflineAccessManager()
     
     private lazy var manager: DownloadManager = DownloadManager()
+    
+    #if DEBUG
+    private let logger = Logger(OSLog(subsystem: "com.mux.player", category: "Mux-Offline"))
+    #else
+    private let logger = Logger(.disabled)
+    #endif
     
     /// Start downloading a video for offline access
     /// - Parameters:
@@ -26,7 +33,13 @@ public class MuxOfflineAccessManager {
         playbackOptions: PlaybackOptions,
         downloadOptions: DownloadOptions
     ) async -> AnyPublisher<DownloadEvent, Error> {
-        let url = URLComponents(playbackID: playbackID, playbackOptions: playbackOptions).url!
+        let urlComponents = URLComponents(playbackID: playbackID, playbackOptions: playbackOptions)
+        guard let url = urlComponents.url else {
+            // If our own URLComponents init returns a poorly-formed URLComponents, fail (but this will not happen in practice)
+            logger.error("[Mux-Offline] internal error: Invalid URL constructed for playbackID: \(playbackID)")
+            return Fail<DownloadEvent, Error>(error: URLError(.badURL)).eraseToAnyPublisher()
+        }
+        
         let asset = AVURLAsset(url: url)
         return await manager.startDownloadWithPublisher(playbackID: playbackID, avAsset: asset, options: downloadOptions)
     }
