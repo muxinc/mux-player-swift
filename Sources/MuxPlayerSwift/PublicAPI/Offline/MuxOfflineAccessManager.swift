@@ -44,7 +44,10 @@ public class MuxOfflineAccessManager {
         return await manager.startDownloadWithPublisher(playbackID: playbackID, avAsset: asset, options: downloadOptions)
     }
     
-    /// Start downloading a video for offline access
+    /// Start downloading a video for offline access.
+    /// Only one download per playbackID may be saved at once. If you want to re-download media for the same playbackID
+    /// (eg, to recover from token expiration, or with different options), call ``removeDownload(playbackID:)`` first
+    ///
     /// - Parameters:
     ///   - playbackID: The Mux playback ID
     ///   - playbackOptions: Configuration for playback

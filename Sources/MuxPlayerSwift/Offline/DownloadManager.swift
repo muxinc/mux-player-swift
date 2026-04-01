@@ -72,50 +72,35 @@ actor DownloadManager {
         }
     }
     
+    /// Starts a new Download Task. If there was already a task in progress for this playbackID,
+    /// tracks that task's progress instead of starting a new one.
     func startDownloadWithPublisher(
         playbackID: String,
         avAsset: AVURLAsset,
         options: DownloadOptions
     ) async -> AnyPublisher<DownloadEvent, Error> {
-        let storedAsset = await index.get(playbackID: playbackID)
-        if let storedAsset, storedAsset.isComplete, !storedAsset.completedWithError {
-            // If we already have a completed download, just return that
-            let assetStatus: AssetStatus
-            if let file = storedAsset.localPath, !storedAsset.completedWithError {
-                let fileURL = URL(fileURLWithPath: file, relativeTo: URL(fileURLWithPath: NSHomeDirectory()))
-                if assetFileExists(at: fileURL) {
-                    assetStatus = .playable(asset: AVURLAsset(url: fileURL))
-                } else {
-                    assetStatus = .redownloadWhenOnline
-                }
-            } else {
-                print("[Mux-Offline] startDownloadWithPublisher: No local path saved for completed asset")
-                assetStatus = .redownloadWhenOnline
-            }
-
-            let downloadedAsset = DownloadedAsset(
-                playbackID: playbackID,
-                assetStatus: assetStatus,
-                downloadOptions: DownloadOptions(from: storedAsset)
-            )
-            return Just(.completed(downloadedAsset))
-                .setFailureType(to: Error.self)
-                .eraseToAnyPublisher()
-        } else {
-            let subject = subject(for: playbackID)
-            if downloadTasksByPlaybackID[playbackID] == nil {
-                // Do before starting. Better to have index entry without files than files without index entries
-                await index.upsert(StoredAsset.forNewDownload(playbackID: playbackID, options: options))
-                
-                let config = AVAssetDownloadConfiguration(asset: avAsset, title: options.readableTitle)
-                let task = downloadSession.makeAssetDownloadTask(downloadConfiguration: config)
-                task.taskDescription = playbackID
-                task.resume()
-                downloadTasksByPlaybackID[playbackID] = task
-            }
-            
-            return subject.eraseToAnyPublisher()
+        // Download Task in-progress. Return events from it instead of starting a new task
+        guard downloadTasksByPlaybackID[playbackID] == nil else {
+            return subject(for: playbackID).eraseToAnyPublisher()
         }
+        
+        // configure the new task, and keep track of it
+        let subject = subject(for: playbackID)
+        let config = AVAssetDownloadConfiguration(asset: avAsset, title: options.readableTitle)
+        let task = downloadSession.makeAssetDownloadTask(downloadConfiguration: config)
+        task.taskDescription = playbackID
+        // do this before we await the index management, so re-entrant calls don't orphan the task
+        downloadTasksByPlaybackID[playbackID] = task
+        
+        // clean up any old files that might exist (due to failed tasks, etc) before starting
+        await deleteDownloadedFiles(playbackID: playbackID, removeFromIndex: true)
+        // store DownloadOptions, etc in the index before we start
+        await index.upsert(StoredAsset.forNewDownload(playbackID: playbackID, options: options))
+
+        // start the task now that we're set up
+        task.resume()
+
+        return subject.eraseToAnyPublisher()
     }
     
     func removeDownload(playbackID: String) async {
@@ -215,10 +200,11 @@ actor DownloadManager {
     }
     
     private func subject(for playbackID: String) -> CurrentValueSubject<DownloadEvent, Error> {
-        if let s = subjectsByPlaybackID[playbackID] { return s }
-        let s = CurrentValueSubject<DownloadEvent, Error>(.started)
-        subjectsByPlaybackID[playbackID] = s
-        return s
+        if let existingSubject = subjectsByPlaybackID[playbackID] { return existingSubject }
+        
+        let newSubject = CurrentValueSubject<DownloadEvent, Error>(.started)
+        subjectsByPlaybackID[playbackID] = newSubject
+        return newSubject
     }
 
     private func send(_ event: DownloadEvent, for playbackID: String) {
