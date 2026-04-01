@@ -251,37 +251,34 @@ class OfflineAccessExampleViewController: UIViewController, UITableViewDataSourc
             let state = downloadStates[playbackID] ?? .notDownloaded
             let asset = examplePlaybackOptions.first { $0.playbackID == playbackID }
             
-            // Configure based on state
-            if case .mustRedownload = state, let asset = asset {
-                // Retry and Cancel buttons for mustRedownload
-                cell.configure(
-                    title: asset.title,
-                    state: state,
-                    onAction: { [weak self] in
-                        // Retry button
-                        self?.startDownload(for: asset)
-                    },
-                    onSecondaryAction: { [weak self] in
-                        // Cancel button
-                        self?.cancelOrDeleteDownload(for: playbackID)
-                    }
-                )
-            } else if case .error = state, let asset = asset {
-                // Retry and Cancel buttons for error state
-                cell.configure(
-                    title: asset.title,
-                    state: state,
-                    onAction: { [weak self] in
-                        // Retry button
-                        self?.startDownload(for: asset)
-                    },
-                    onSecondaryAction: { [weak self] in
-                        // Cancel button
-                        self?.cancelOrDeleteDownload(for: playbackID)
-                    }
-                )
-            } else {
-                // Single action for other states
+            // Configure based on state using switch
+            switch state {
+            case .mustRedownload, .error:
+                if let asset = asset {
+                    // Retry and Cancel buttons for mustRedownload and error
+                    cell.configure(
+                        title: asset.title,
+                        state: state,
+                        onAction: { [weak self] in
+                            // Retry button
+                            self?.startDownload(for: asset)
+                        },
+                        onSecondaryAction: { [weak self] in
+                            // Cancel button
+                            self?.cancelOrDeleteDownload(for: playbackID)
+                        }
+                    )
+                } else {
+                    // Fallback when asset metadata isn't found
+                    cell.configure(
+                        title: "Unknown Asset",
+                        state: state,
+                        onAction: { [weak self] in
+                            self?.cancelOrDeleteDownload(for: playbackID)
+                        }
+                    )
+                }
+            case .downloaded:
                 cell.configure(
                     title: asset?.title ?? "Unknown Asset",
                     state: state,
@@ -289,12 +286,15 @@ class OfflineAccessExampleViewController: UIViewController, UITableViewDataSourc
                         self?.cancelOrDeleteDownload(for: playbackID)
                     }
                 )
-            }
-            
-            // Add play indicator for downloaded assets
-            if case .downloaded = state {
                 cell.accessoryType = .disclosureIndicator
-            } else {
+            case .downloading, .notDownloaded:
+                cell.configure(
+                    title: asset?.title ?? "Unknown Asset",
+                    state: state,
+                    onAction: { [weak self] in
+                        self?.cancelOrDeleteDownload(for: playbackID)
+                    }
+                )
                 cell.accessoryType = .none
             }
             
@@ -460,6 +460,14 @@ class DownloadAssetCell: UITableViewCell {
     private var onAction: (() -> Void)?
     private var onSecondaryAction: (() -> Void)?
     
+    private var titleTrailingToSecondaryConstraint: NSLayoutConstraint!
+    private var titleTrailingToActionConstraint: NSLayoutConstraint!
+    private var titleTrailingToContentConstraint: NSLayoutConstraint!
+    private var actionTrailingConstraint: NSLayoutConstraint!
+    private var secondaryToActionConstraint: NSLayoutConstraint!
+    private var actionWidthConstraint: NSLayoutConstraint!
+    private var secondaryWidthConstraint: NSLayoutConstraint!
+    
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setupViews()
@@ -480,6 +488,17 @@ class DownloadAssetCell: UITableViewCell {
         actionButton.addTarget(self, action: #selector(actionButtonTapped), for: .touchUpInside)
         secondaryActionButton.addTarget(self, action: #selector(secondaryActionButtonTapped), for: .touchUpInside)
         
+        // Constraints
+        actionTrailingConstraint = actionButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16)
+        secondaryToActionConstraint = secondaryActionButton.trailingAnchor.constraint(equalTo: actionButton.leadingAnchor, constant: -8)
+        
+        titleTrailingToSecondaryConstraint = titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: secondaryActionButton.leadingAnchor, constant: -12)
+        titleTrailingToActionConstraint = titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: actionButton.leadingAnchor, constant: -12)
+        titleTrailingToContentConstraint = titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16)
+        
+        actionWidthConstraint = actionButton.widthAnchor.constraint(equalToConstant: 0)
+        secondaryWidthConstraint = secondaryActionButton.widthAnchor.constraint(equalToConstant: 0)
+        
         NSLayoutConstraint.activate([
             // Icon on the left
             iconImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
@@ -489,16 +508,15 @@ class DownloadAssetCell: UITableViewCell {
             
             // Pin action button to trailing edge first (right-justified)
             actionButton.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            actionButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            actionTrailingConstraint,
             
             // Secondary action button goes to the left of action button
             secondaryActionButton.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            secondaryActionButton.trailingAnchor.constraint(equalTo: actionButton.leadingAnchor, constant: -8),
+            secondaryToActionConstraint,
             
             // Labels fill the space between icon and buttons
             titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
             titleLabel.leadingAnchor.constraint(equalTo: iconImageView.trailingAnchor, constant: 12),
-            titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: secondaryActionButton.leadingAnchor, constant: -12),
             
             statusLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
             statusLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
@@ -509,6 +527,14 @@ class DownloadAssetCell: UITableViewCell {
             progressView.trailingAnchor.constraint(equalTo: titleLabel.trailingAnchor),
             progressView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -12)
         ])
+        
+        // Default: let title expand to content trailing; collapse both buttons until configured
+        titleTrailingToContentConstraint.isActive = true
+        titleTrailingToActionConstraint.isActive = false
+        titleTrailingToSecondaryConstraint.isActive = false
+        
+        actionWidthConstraint.isActive = true
+        secondaryWidthConstraint.isActive = true
     }
     
     func configure(
@@ -526,8 +552,17 @@ class DownloadAssetCell: UITableViewCell {
             statusLabel.text = "Not Downloaded"
             statusLabel.isHidden = false
             progressView.isHidden = true
+            
+            // Collapse both buttons and let labels extend to trailing
             actionButton.isHidden = true
+            actionWidthConstraint.isActive = true
             secondaryActionButton.isHidden = true
+            secondaryWidthConstraint.isActive = true
+            
+            titleTrailingToContentConstraint.isActive = true
+            titleTrailingToActionConstraint.isActive = false
+            titleTrailingToSecondaryConstraint.isActive = false
+            
             iconImageView.isHidden = true
             
         case .downloading(let progress):
@@ -535,9 +570,17 @@ class DownloadAssetCell: UITableViewCell {
             statusLabel.isHidden = false
             progressView.isHidden = false
             progressView.progress = Float(progress / 100.0)
+            // Show primary action, hide secondary; constrain labels to action button
             actionButton.isHidden = false
-            actionButton.configuration?.attributedTitle = AttributedString("Cancel", attributes: AttributeContainer([.foregroundColor: UIColor.systemRed]))
+            actionWidthConstraint.isActive = false
             secondaryActionButton.isHidden = true
+            secondaryWidthConstraint.isActive = true
+            
+            titleTrailingToContentConstraint.isActive = false
+            titleTrailingToActionConstraint.isActive = true
+            titleTrailingToSecondaryConstraint.isActive = false
+            
+            actionButton.configuration?.attributedTitle = AttributedString("Cancel", attributes: AttributeContainer([.foregroundColor: UIColor.systemRed]))
             iconImageView.image = UIImage(systemName: "arrow.down.circle")
             iconImageView.tintColor = .systemBlue
             iconImageView.isHidden = false
@@ -546,9 +589,17 @@ class DownloadAssetCell: UITableViewCell {
             statusLabel.text = "Downloaded"
             statusLabel.isHidden = false
             progressView.isHidden = true
+            // Show primary action, hide secondary; constrain labels to action button
             actionButton.isHidden = false
-            actionButton.configuration?.attributedTitle = AttributedString("Delete", attributes: AttributeContainer([.foregroundColor: UIColor.systemRed]))
+            actionWidthConstraint.isActive = false
             secondaryActionButton.isHidden = true
+            secondaryWidthConstraint.isActive = true
+            
+            titleTrailingToContentConstraint.isActive = false
+            titleTrailingToActionConstraint.isActive = true
+            titleTrailingToSecondaryConstraint.isActive = false
+            
+            actionButton.configuration?.attributedTitle = AttributedString("Delete", attributes: AttributeContainer([.foregroundColor: UIColor.systemRed]))
             iconImageView.image = UIImage(systemName: "play.circle.fill")
             iconImageView.tintColor = .systemBlue
             iconImageView.isHidden = false
@@ -557,9 +608,17 @@ class DownloadAssetCell: UITableViewCell {
             statusLabel.text = "Must Redownload"
             statusLabel.isHidden = false
             progressView.isHidden = true
+            // Show both buttons; constrain labels to secondary button
             actionButton.isHidden = false
-            actionButton.configuration?.attributedTitle = AttributedString("Retry", attributes: AttributeContainer([.foregroundColor: UIColor.systemBlue]))
+            actionWidthConstraint.isActive = false
             secondaryActionButton.isHidden = false
+            secondaryWidthConstraint.isActive = false
+            
+            titleTrailingToContentConstraint.isActive = false
+            titleTrailingToActionConstraint.isActive = false
+            titleTrailingToSecondaryConstraint.isActive = true
+            
+            actionButton.configuration?.attributedTitle = AttributedString("Retry", attributes: AttributeContainer([.foregroundColor: UIColor.systemBlue]))
             secondaryActionButton.configuration?.attributedTitle = AttributedString("Cancel", attributes: AttributeContainer([.foregroundColor: UIColor.systemRed]))
             iconImageView.image = UIImage(systemName: "exclamationmark.triangle.fill")
             iconImageView.tintColor = .systemOrange
@@ -569,9 +628,17 @@ class DownloadAssetCell: UITableViewCell {
             statusLabel.text = error.localizedDescription
             statusLabel.isHidden = false
             progressView.isHidden = true
+            // Show both buttons; constrain labels to secondary button
             actionButton.isHidden = false
-            actionButton.configuration?.attributedTitle = AttributedString("Retry", attributes: AttributeContainer([.foregroundColor: UIColor.systemBlue]))
+            actionWidthConstraint.isActive = false
             secondaryActionButton.isHidden = false
+            secondaryWidthConstraint.isActive = false
+            
+            titleTrailingToContentConstraint.isActive = false
+            titleTrailingToActionConstraint.isActive = false
+            titleTrailingToSecondaryConstraint.isActive = true
+            
+            actionButton.configuration?.attributedTitle = AttributedString("Retry", attributes: AttributeContainer([.foregroundColor: UIColor.systemBlue]))
             secondaryActionButton.configuration?.attributedTitle = AttributedString("Cancel", attributes: AttributeContainer([.foregroundColor: UIColor.systemRed]))
             iconImageView.image = UIImage(systemName: "exclamationmark.circle.fill")
             iconImageView.tintColor = .systemRed
