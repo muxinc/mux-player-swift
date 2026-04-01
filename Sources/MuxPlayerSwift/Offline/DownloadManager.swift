@@ -360,8 +360,14 @@ extension StoredAsset {
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         encoder.dateEncodingStrategy = .iso8601
         
-        guard let data = try? encoder.encode(self),
-              let jsonString = String(data: data, encoding: .utf8) else {
+        let data: Data
+        do {
+            data = try encoder.encode(self)
+        } catch {
+            return "StoredAsset(playbackID: \(playbackID), encoding failed)"
+        }
+        
+        guard let jsonString = String(data: data, encoding: .utf8) else {
             return "StoredAsset(playbackID: \(playbackID), encoding failed)"
         }
         
@@ -625,6 +631,7 @@ fileprivate class DownloadTaskDelegate: NSObject, AVAssetDownloadDelegate {
 
     func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: (any Error)?) {
         logger.error("[Mux-Offline] didCompleteWithError: taskId=\(task.taskIdentifier) error=\(String(describing: error))")
+        // note - AVAssetDownloadDelegate has a seprarate delegate call for task success, didFinishDownloadingTo, which we use instead of reporting it here
         if let error {
             Task { [downloadManager] in
                 await downloadManager.handleError(for: task, error: error)
