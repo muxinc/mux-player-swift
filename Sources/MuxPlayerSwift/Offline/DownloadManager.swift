@@ -147,7 +147,11 @@ actor DownloadManager {
                 }
             }
     }
-
+    
+    func allInProgressTasks() async -> [String: AnyPublisher<DownloadEvent, Error>] {
+        return subjectsByPlaybackID.mapValues { $0.eraseToAnyPublisher() }
+    }
+    
     func reattachPendingDownloadPublishers() async -> [String: AnyPublisher<DownloadEvent, Error>] {
         let tasks = await tasksFromSession()
         var publishers: [String: AnyPublisher<DownloadEvent, Error>] = [:]

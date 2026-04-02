@@ -83,6 +83,16 @@ public class MuxOfflineAccessManager {
         return publisher.toAsyncThrowingStream()
     }
     
+    /// Gets publishers for all in-progress tasks
+    public func allInProcessTasks() async -> [String: AnyPublisher<DownloadEvent, Error>] {
+        return await manager.allInProgressTasks()
+    }
+    
+    /// Gets publishers for all in-progress tasks
+    public func allInProcessTasksAsync() async -> [String: AsyncThrowingStream<DownloadEvent, Error>] {
+        return await allInProcessTasks().mapValues { $0.toAsyncThrowingStream() }
+    }
+    
     /// Resume any pending download tasks from last app session
     public func resumePendingDownloadTasks() {
         Task { await manager.reattachPendingDownloadPublishers() }
