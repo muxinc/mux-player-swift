@@ -8,7 +8,7 @@
 import Combine
 
 extension AnyPublisher {
-    func toAsyncThrowingStream() -> AsyncThrowingStream<Output, Error> {
+    func toAsyncThrowingStream() -> AsyncThrowingStream<Output, Failure> {
         AsyncThrowingStream { continuation in
             let cancellable = self.sink(
                 receiveCompletion: { completion in
