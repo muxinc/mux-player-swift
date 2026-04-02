@@ -80,10 +80,13 @@ actor DownloadManager {
         avAsset: AVURLAsset,
         options: DownloadOptions
     ) async -> AnyPublisher<DownloadEvent, Error> {
-        // TODO: Check if we have a saved asset already (by using findDownloadedAsset, for its checks)
-        //  I worry about findDownloadedAset racing with removeAsset, since both yeild for index.get() before doing conflicting stuff...
-        //  as part of this todo: deleteDownloadedFiles should probably go into the DownloadIndex, so it can
-        //  isolate the entire deletion process.. Otherwise maybe we get a stale index entry from findDownloadedAsset
+        // If we already have a completed asset, return it. Caller can use it, or if it's not playable, they can explicitly delete
+        let alreadyCompletedAsset = await findDownloadedAsset(playbackID: playbackID)
+        if let alreadyCompletedAsset {
+            return Just(.completed(alreadyCompletedAsset))
+                .setFailureType(to: Error.self)
+                .eraseToAnyPublisher()
+        }
         
         // Download Task in-progress. Return events from it instead of starting a new task
         guard downloadTasksByPlaybackID[playbackID] == nil else {
@@ -99,7 +102,7 @@ actor DownloadManager {
         downloadTasksByPlaybackID[playbackID] = task
         
         // clean up any old files that might exist (due to failed tasks, etc) before starting
-        await deleteDownloadedFiles(playbackID: playbackID, removeFromIndex: true)
+        await index.deleteDownloadedFiles(playbackID: playbackID, removeFromIndex: true)
         // store DownloadOptions, etc in the index before we start
         await index.upsert(StoredAsset.forNewDownload(playbackID: playbackID, options: options))
 
@@ -118,7 +121,7 @@ actor DownloadManager {
             // will also clear the subject, to avoid saving stale state
             sendError(URLError(.cancelled), for: playbackID)
         }
-        await deleteDownloadedFiles(playbackID: playbackID, removeFromIndex: true)
+        await index.deleteDownloadedFiles(playbackID: playbackID, removeFromIndex: true)
     }
     
     func allCompletedAssets() async -> [DownloadedAsset] {
@@ -191,37 +194,6 @@ actor DownloadManager {
         return await downloadSession.allTasks
     }
 
-    private func deleteDownloadedFiles(playbackID: String, removeFromIndex: Bool) async {
-        // Attempt to delete the local media file and CKC sidecar if present (if not present, it's fine)
-        if let stored = await index.get(playbackID: playbackID) {
-            let fm = FileManager.default
-            // Delete media file
-            if let mediaPath = stored.localPath {
-                let mediaURL = URL(fileURLWithPath: mediaPath, relativeTo: URL(fileURLWithPath: NSHomeDirectory()))
-                do {
-                    try fm.removeItem(at: mediaURL)
-                } catch {
-                    // not generally an error condition. file can be gone due to early cancellation or re-entrant calls to this method
-                    logger.trace("[Mux-Offline] Failed to delete media file at \(mediaURL.path): \(error)")
-                }
-            }
-            
-            // Delete CKC sidecar if any
-            if let ckcFilePath = stored.ckcFilePath {
-                let ckcFile = URL(fileURLWithPath: ckcFilePath, relativeTo: URL(fileURLWithPath: NSHomeDirectory()))
-                do {
-                    try fm.removeItem(at: ckcFile)
-                } catch {
-                    // not generally an error condition. file can be gone due to early cancellation or re-entrant calls to this method
-                    logger.trace("[Mux-Offline] Failed to key id file at \(ckcFile.path): \(error)")
-                }
-            }
-        }
-        
-        if removeFromIndex {
-            await index.delete(playbackID: playbackID)
-        }
-    }
     
     private func subject(for playbackID: String) -> CurrentValueSubject<DownloadEvent, Error> {
         if let existingSubject = subjectsByPlaybackID[playbackID] { return existingSubject }
@@ -310,7 +282,8 @@ actor DownloadManager {
         }
 
         await index.updateIsComplete(playbackID: playbackID, isComplete: true, completeWithError: true)
-        await deleteDownloadedFiles(playbackID: playbackID, removeFromIndex: false)
+        // Once a task errors, we can't resume where we left off, so just delete any partially-downloaded data
+        await index.deleteDownloadedFiles(playbackID: playbackID, removeFromIndex: false)
         
         // do these after the awaits, so callers that call startDownload to handle errors actually start one
         sendError(error, for: playbackID)
