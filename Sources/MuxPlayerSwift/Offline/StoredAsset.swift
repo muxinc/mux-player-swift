@@ -28,22 +28,24 @@ struct StoredAsset: Codable {
 
 extension StoredAsset {
     static func forNewDownload(playbackID: String, options: DownloadOptions) -> StoredAsset {
-       return StoredAsset(
-        isComplete: false,
-        completedWithError: false,
-        playbackID: playbackID,
-        localPath: nil,
-        readableTitle: options.readableTitle,
-        posterDataBase64: options.posterData?.base64EncodedString(),
-        subtitleLanguages: options.subtitleLanguages,
-        secondaryAudioLanguages: options.secondaryAudioLanguages,
-        ckcFilePath: nil,
-        keyExpiration: nil,
-        redownloadExpiration: nil
-       )
+        return StoredAsset(
+            isComplete: false,
+            completedWithError: false,
+            playbackID: playbackID,
+            localPath: nil,
+            readableTitle: options.readableTitle,
+            posterDataBase64: options.posterData?.base64EncodedString(),
+            subtitleLanguages: options.subtitleLanguages,
+            secondaryAudioLanguages: options.secondaryAudioLanguages,
+            ckcFilePath: nil,
+            keyExpiration: nil,
+            redownloadExpiration: nil
+        )
     }
-    
-    func debugString() -> String {
+}
+
+extension StoredAsset: CustomDebugStringConvertible {
+    var debugDescription: String {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         encoder.dateEncodingStrategy = .iso8601
@@ -62,4 +64,3 @@ extension StoredAsset {
         return jsonString
     }
 }
-
