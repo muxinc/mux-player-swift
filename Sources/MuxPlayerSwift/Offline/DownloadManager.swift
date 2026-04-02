@@ -37,7 +37,7 @@ actor DownloadManager {
     private let logger = Logger(.disabled)
     #endif
     
-    private var reattchedTasks: Bool = false
+    private var reattachedTasks: Bool = false
     private let index = DownloadIndex()
     private var downloadTasksByPlaybackID: [String: AVAssetDownloadTask] = [:]
     private var subjectsByPlaybackID: [String: CurrentValueSubject<DownloadEvent, Error>] = [:]
@@ -168,7 +168,7 @@ actor DownloadManager {
             assetTask.resume()
         }
         
-        self.reattchedTasks = true
+        self.reattachedTasks = true
         return publishers
     }
     
@@ -248,7 +248,7 @@ actor DownloadManager {
     }
     
     private func isCurrentTask(_ task: URLSessionTask, for playbackID: String) -> Bool {
-        guard self.reattchedTasks else {
+        guard self.reattachedTasks else {
             // before we reattach tasks, downloadTasksByPlaybackID is always empty,
             //  but restored tasks' events must stil be handled
             return true
