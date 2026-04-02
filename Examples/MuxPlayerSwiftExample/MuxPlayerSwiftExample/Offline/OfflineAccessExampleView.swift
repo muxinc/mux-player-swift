@@ -133,11 +133,11 @@ private struct PlayerViewControllerRepresentable: UIViewControllerRepresentable 
 
     func makeUIViewController(context: Context) -> MuxPlayerContainerViewController {
         let controller = MuxPlayerContainerViewController()
-        controller.player = player
         return controller
     }
 
     func updateUIViewController(_ uiViewController: MuxPlayerContainerViewController, context: Context) {
+        guard uiViewController.player !== player else { return }
         uiViewController.player = player
         player.play()
     }
