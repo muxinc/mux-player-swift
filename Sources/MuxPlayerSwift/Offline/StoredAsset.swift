@@ -52,7 +52,7 @@ extension StoredAsset {
         do {
             data = try encoder.encode(self)
         } catch {
-            return "StoredAsset(playbackID: \(playbackID), encoding failed)"
+            return "StoredAsset(playbackID: \(playbackID), encoding failed: \(error))"
         }
         
         guard let jsonString = String(data: data, encoding: .utf8) else {
