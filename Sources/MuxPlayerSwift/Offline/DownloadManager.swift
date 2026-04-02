@@ -114,6 +114,8 @@ actor DownloadManager {
         if let task = downloadTasksByPlaybackID[playbackID] {
             task.cancel()
             downloadTasksByPlaybackID[playbackID] = nil
+            // will also clear the subject, to avoid saving stale state
+            sendError(URLError(.cancelled), for: playbackID)
         }
         await deleteDownloadedFiles(playbackID: playbackID, removeFromIndex: true)
     }
