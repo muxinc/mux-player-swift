@@ -338,7 +338,7 @@
         <!--Offline Access Example View Controller-->
         <scene sceneID="fPf-Ob-etU">
             <objects>
-                <viewController id="U6T-62-JbB" customClass="OfflineAccessExampleViewController" customModule="MuxPlayerSwiftExample" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController id="U6T-62-JbB" customClass="OfflineAccessExampleHostingController" customModule="MuxPlayerSwiftExample" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="UJG-li-URA">
                         <rect key="frame" x="0.0" y="0.0" width="402" height="874"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
