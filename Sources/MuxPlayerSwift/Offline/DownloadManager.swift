@@ -236,12 +236,23 @@ actor DownloadManager {
     private func detachEvents(for playbackID: String) {
         subjectsByPlaybackID[playbackID] = nil
     }
-
+    
+    private func isCurrentTask(_ task: URLSessionTask, for playbackID: String) -> Bool {
+        guard let currentTask = downloadTasksByPlaybackID[playbackID] else {
+            return false
+        }
+        return currentTask.taskIdentifier == task.taskIdentifier
+    }
+    
     // MARK: - Delegate forwarding targets (actor-isolated)
 
     func handleWaitingForConnectivity(for task: URLSessionTask) {
         guard let playbackID = task.taskDescription else {
             logger.warning("[Mux-Offline] handleWaitingForConnectivity: Missing playbackID (taskDescription) for task id=\(task.taskIdentifier)")
+            return
+        }
+        guard isCurrentTask(task, for: playbackID) else {
+            logger.debug("[Mux-Offline] Ignoring stale error callback for playbackID \(playbackID), task id=\(task.taskIdentifier)")
             return
         }
         send(.waitingForConnectivity, for: playbackID)
@@ -252,6 +263,11 @@ actor DownloadManager {
             logger.warning("[Mux-Offline] handleProgress: Missing playbackID (taskDescription) for task id=\(task.taskIdentifier)")
             return
         }
+        guard isCurrentTask(task, for: playbackID) else {
+            logger.debug("[Mux-Offline] Ignoring stale error callback for playbackID \(playbackID), task id=\(task.taskIdentifier)")
+            return
+        }
+        
         let loadedSeconds = loadedTimeRanges.reduce(0.0) { $0 + $1.duration.seconds }
         let expectedSeconds = max(expectedTimeRange.duration.seconds, 0.0001)
         let fraction = min(max(loadedSeconds / expectedSeconds, 0.0), 1.0)
@@ -269,7 +285,11 @@ actor DownloadManager {
             logger.warning("[Mux-Offline] handleError: Missing playbackID (taskDescription) for task id=\(task.taskIdentifier)")
             return
         }
-        
+        guard isCurrentTask(task, for: playbackID) else {
+            logger.debug("[Mux-Offline] Ignoring stale error callback for playbackID \(playbackID), task id=\(task.taskIdentifier)")
+            return
+        }
+
         await index.updateIsComplete(playbackID: playbackID, isComplete: true, completeWithError: true)
         await deleteDownloadedFiles(playbackID: playbackID, removeFromIndex: false)
         
@@ -284,16 +304,24 @@ actor DownloadManager {
             logger.warning("[Mux-Offline] handleDownloadLocation: Missing playbackID (taskDescription) for task id=\(task.taskIdentifier)")
             return
         }
+        guard isCurrentTask(task, for: playbackID) else {
+            logger.debug("[Mux-Offline] Ignoring stale error callback for playbackID \(playbackID), task id=\(task.taskIdentifier)")
+            return
+        }
         await index.updateLocalPathURL(playbackID: playbackID, localPath: relativeLocation)
     }
     
     func handleFinishedDownload(task: AVAssetDownloadTask, location: URL) async {
         logger.info("[Mux-Offline] handleFinishedDownload: For playbackID (taskDescription) for task id=\(task.taskIdentifier)")
-        
         guard let playbackID = task.taskDescription else {
             logger.warning("[Mux-Offline] handleFinishedDownload: Missing playbackID (taskDescription) for task id=\(task.taskIdentifier)")
             return
         }
+        guard isCurrentTask(task, for: playbackID) else {
+            logger.debug("[Mux-Offline] Ignoring stale error callback for playbackID \(playbackID), task id=\(task.taskIdentifier)")
+            return
+        }
+        
         let asset = AVURLAsset(url: location)
         let storedAsset = await index.updateIsComplete(playbackID: playbackID, isComplete: true, completeWithError: false)
         guard let storedAsset else {
