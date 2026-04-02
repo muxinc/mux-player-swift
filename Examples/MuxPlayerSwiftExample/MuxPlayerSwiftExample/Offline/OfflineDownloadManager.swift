@@ -4,7 +4,6 @@
 //
 
 import AVFoundation
-import Combine
 import MuxPlayerSwift
 
 @MainActor
@@ -37,9 +36,9 @@ final class OfflineDownloadManager: ObservableObject {
     /// Download states keyed by playback ID.
     @Published var downloadStates: [String: AssetDownloadState] = [:]
 
-    /// One Combine subscription per playback ID; removed when the
-    /// download finishes, fails, or is cancelled.
-    private var downloadSubscriptions: [String: AnyCancellable] = [:]
+    /// One Task per playback ID; cancelled when the download finishes,
+    /// fails, or is removed by the user.
+    private var downloadTasks: [String: Task<Void, Never>] = [:]
 
     // MARK: - Loading
 
@@ -54,27 +53,28 @@ final class OfflineDownloadManager: ObservableObject {
             }
         }
 
-        let inProgressPublishers = await MuxOfflineAccessManager.shared.allInProcessTasks()
-        for (playbackID, publisher) in inProgressPublishers {
+        let inProgressStreams = await MuxOfflineAccessManager.shared.allInProcessTasksAsync()
+        for (playbackID, stream) in inProgressStreams {
             downloadStates[playbackID] = .downloading(progress: 0.0)
-            subscribeToDownload(playbackID: playbackID, publisher: publisher)
+            observeDownload(playbackID: playbackID, stream: stream)
         }
     }
 
     // MARK: - Download Actions
 
     func startDownload(for asset: ExampleAsset) async {
-        let publisher = await MuxOfflineAccessManager.shared.startDownload(
+        let stream = await MuxOfflineAccessManager.shared.startDownloadAsync(
             playbackID: asset.playbackID,
             playbackOptions: .init(),
             downloadOptions: DownloadOptions(readableTitle: asset.title)
         )
         downloadStates[asset.playbackID] = .downloading(progress: 0.0)
-        subscribeToDownload(playbackID: asset.playbackID, publisher: publisher)
+        observeDownload(playbackID: asset.playbackID, stream: stream)
     }
 
     func cancelOrDeleteDownload(for playbackID: String) {
-        downloadSubscriptions.removeValue(forKey: playbackID)
+        downloadTasks[playbackID]?.cancel()
+        downloadTasks.removeValue(forKey: playbackID)
         Task {
             await MuxOfflineAccessManager.shared.removeDownload(playbackID: playbackID)
             downloadStates.removeValue(forKey: playbackID)
@@ -104,23 +104,22 @@ final class OfflineDownloadManager: ObservableObject {
 
     // MARK: - Private
 
-    private func subscribeToDownload(
+    private func observeDownload(
         playbackID: String,
-        publisher: AnyPublisher<DownloadEvent, Error>
+        stream: AsyncThrowingStream<DownloadEvent, Error>
     ) {
-        downloadSubscriptions[playbackID] = publisher
-            .receive(on: DispatchQueue.main)
-            .sink(
-                receiveCompletion: { [weak self] completion in
-                    self?.downloadSubscriptions.removeValue(forKey: playbackID)
-                    if case .failure(let error) = completion {
-                        self?.handleDownloadError(error, for: playbackID)
-                    }
-                },
-                receiveValue: { [weak self] event in
+        downloadTasks[playbackID] = Task { [weak self] in
+            do {
+                for try await event in stream {
+                    guard !Task.isCancelled else { return }
                     self?.handleDownloadEvent(event, for: playbackID)
                 }
-            )
+            } catch {
+                guard !Task.isCancelled else { return }
+                self?.handleDownloadError(error, for: playbackID)
+            }
+            self?.downloadTasks.removeValue(forKey: playbackID)
+        }
     }
 
     private func handleDownloadEvent(_ event: DownloadEvent, for playbackID: String) {
