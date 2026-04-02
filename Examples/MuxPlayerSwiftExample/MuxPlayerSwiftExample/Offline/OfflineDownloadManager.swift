@@ -53,7 +53,7 @@ final class OfflineDownloadManager: ObservableObject {
             }
         }
 
-        let inProgressStreams = await MuxOfflineAccessManager.shared.allInProcessTasksAsync()
+        let inProgressStreams = await MuxOfflineAccessManager.shared.allInProcessTasks()
         for (playbackID, stream) in inProgressStreams {
             downloadStates[playbackID] = .downloading(progress: 0.0)
             observeDownload(playbackID: playbackID, stream: stream)
@@ -63,7 +63,7 @@ final class OfflineDownloadManager: ObservableObject {
     // MARK: - Download Actions
 
     func startDownload(for asset: ExampleAsset) async {
-        let stream = await MuxOfflineAccessManager.shared.startDownloadAsync(
+        let stream = await MuxOfflineAccessManager.shared.startDownload(
             playbackID: asset.playbackID,
             playbackOptions: .init(),
             downloadOptions: DownloadOptions(readableTitle: asset.title)
