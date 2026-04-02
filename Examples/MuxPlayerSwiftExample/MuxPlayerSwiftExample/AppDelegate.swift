@@ -5,6 +5,7 @@
 
 import AVFoundation
 import UIKit
+import MuxPlayerSwift
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -28,7 +29,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 await mediaServicesResetNotifications.next()
             } while true
         }
-
+        
+        // If using offline access, you can re-start any backgrounded download tasks here
+        MuxOfflineAccessManager.shared.resumePendingDownloadTasks()
+        
         return true
     }
 

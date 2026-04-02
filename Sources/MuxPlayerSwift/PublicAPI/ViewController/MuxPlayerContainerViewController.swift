@@ -50,13 +50,13 @@ public class MuxPlayerContainerViewController : UIViewController {
         self.playerViewController.didMove(toParent: self)
     }
     
-    convenience init() {
+    public convenience init() {
         self.init(muxMetadata: MUXSDKCustomerData())
     }
     
     public init(muxMetadata: MUXSDKCustomerData) {
         self.playerViewController = AVPlayerViewController()
-        super.init()
+        super.init(nibName: nil, bundle: nil)
         
         updateMuxMetadata(muxMetadata)
     }
