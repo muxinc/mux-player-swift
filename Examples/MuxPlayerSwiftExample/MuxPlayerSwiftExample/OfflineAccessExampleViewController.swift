@@ -92,9 +92,6 @@ class OfflineAccessExampleViewController: UIViewController, UITableViewDataSourc
                 }
             }
             
-            // Resume in-progress downloads
-            let inProgressPublishers = await MuxOfflineAccessManager.shared.resumePendingDownloadsWithEvents()
-            
             await MainActor.run {
                 for (playbackID, publisher) in inProgressPublishers {
                     downloadStates[playbackID] = .downloading(progress: 0.0)
