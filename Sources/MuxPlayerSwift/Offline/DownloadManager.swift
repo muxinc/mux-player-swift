@@ -79,6 +79,11 @@ actor DownloadManager {
         avAsset: AVURLAsset,
         options: DownloadOptions
     ) async -> AnyPublisher<DownloadEvent, Error> {
+        // TODO: Check if we have a saved asset already (by using findDownloadedAsset, for its checks)
+        //  I worry about findDownloadedAset racing with removeAsset, since both yeild for index.get() before doing conflicting stuff...
+        //  as part of this todo: deleteDownloadedFiles should probably go into the DownloadIndex, so it can
+        //  isolate the entire deletion process.. Otherwise maybe we get a stale index entry from findDownloadedAsset
+        
         // Download Task in-progress. Return events from it instead of starting a new task
         guard downloadTasksByPlaybackID[playbackID] == nil else {
             return subject(for: playbackID).eraseToAnyPublisher()
