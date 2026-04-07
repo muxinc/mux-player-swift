@@ -125,20 +125,3 @@ struct OfflineAccessExampleView: View {
 extension AVPlayer: @retroactive Identifiable {
     public var id: ObjectIdentifier { ObjectIdentifier(self) }
 }
-
-// MARK: - Player UIViewControllerRepresentable
-
-private struct PlayerViewControllerRepresentable: UIViewControllerRepresentable {
-    let player: AVPlayer
-
-    func makeUIViewController(context: Context) -> MuxPlayerContainerViewController {
-        let controller = MuxPlayerContainerViewController()
-        return controller
-    }
-
-    func updateUIViewController(_ uiViewController: MuxPlayerContainerViewController, context: Context) {
-        guard uiViewController.player !== player else { return }
-        uiViewController.player = player
-        player.play()
-    }
-}
