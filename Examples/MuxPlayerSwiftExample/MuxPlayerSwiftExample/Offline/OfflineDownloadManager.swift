@@ -108,6 +108,7 @@ final class OfflineDownloadManager: ObservableObject {
         playbackID: String,
         stream: AsyncThrowingStream<DownloadEvent, Error>
     ) {
+        downloadTasks[playbackID]?.cancel()
         downloadTasks[playbackID] = Task { [weak self] in
             do {
                 for try await event in stream {
