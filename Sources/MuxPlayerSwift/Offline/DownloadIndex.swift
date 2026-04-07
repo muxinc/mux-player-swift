@@ -56,6 +56,38 @@ actor DownloadIndex {
     func all() -> [StoredAsset] {
         Array(assets.values)
     }
+    
+    func deleteDownloadedFiles(playbackID: String, removeFromIndex: Bool) async {
+        // Attempt to delete the local media file and CKC sidecar if present (if not present, it's fine)
+        if let stored = get(playbackID: playbackID) {
+            let fm = FileManager.default
+            // Delete media file
+            if let mediaPath = stored.localPath {
+                let mediaURL = URL(fileURLWithPath: mediaPath, relativeTo: URL(fileURLWithPath: NSHomeDirectory()))
+                do {
+                    try fm.removeItem(at: mediaURL)
+                } catch {
+                    // not generally an error condition. file can be gone due to early cancellation or re-entrant calls to this method
+                    logger.trace("[Mux-Offline] Failed to delete media file at \(mediaURL.path): \(error)")
+                }
+            }
+            
+            // Delete CKC sidecar if any
+            if let ckcFilePath = stored.ckcFilePath {
+                let ckcFile = URL(fileURLWithPath: ckcFilePath, relativeTo: URL(fileURLWithPath: NSHomeDirectory()))
+                do {
+                    try fm.removeItem(at: ckcFile)
+                } catch {
+                    // not generally an error condition. file can be gone due to early cancellation or re-entrant calls to this method
+                    logger.trace("[Mux-Offline] Failed to key id file at \(ckcFile.path): \(error)")
+                }
+            }
+        }
+        
+        if removeFromIndex {
+            delete(playbackID: playbackID)
+        }
+    }
 
     // MARK: - Partial Updates
 
