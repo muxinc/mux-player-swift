@@ -14,32 +14,28 @@ struct DownloadAssetRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            // Tappable content area (icon + labels)
-            Button {
-                onTap?()
-            } label: {
-                HStack(spacing: 12) {
-                    icon
-                        .frame(width: 24, height: 24)
+            icon
+                .frame(width: 24, height: 24)
 
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(title)
-                            .font(.body.weight(.medium))
-                            .foregroundStyle(.primary)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.body.weight(.medium))
+                    .foregroundStyle(.primary)
 
-                        statusText
+                statusText
 
-                        if case .downloading(let progress) = state {
-                            ProgressView(value: progress, total: 100)
-                        }
-                    }
+                if case .downloading(let progress) = state {
+                    ProgressView(value: progress, total: 100)
                 }
             }
-            .buttonStyle(.plain)
 
             Spacer()
 
             actionButtons
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            onTap?()
         }
         .padding(.vertical, 4)
     }
