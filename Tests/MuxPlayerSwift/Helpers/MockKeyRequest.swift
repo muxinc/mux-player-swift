@@ -56,6 +56,15 @@ class MockKeyRequest : KeyRequest {
         fakeRequest.append((funcName, args))
     }
     
+    func respondByRequestingPersistableContentKeyRequestOnAnyOS() throws {
+        fakeRequest.append(("respondByPersistableContentKeyRequestOnAnyOS", nil))
+    }
+    
+    func persistableContentKey(fromKeyVendorResponse ckcData: Data, options: [String : Any]) {
+        let args: [Any] = [ckcData, options]
+        fakeRequest.append(("respondByPersistableContentKeyRequestOnAnyOS", args))
+    }
+    
     // MARK: verificaitons
     
     /// Verifies that the given method was called the given number of times

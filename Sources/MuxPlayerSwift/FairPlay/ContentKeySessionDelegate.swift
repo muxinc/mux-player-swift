@@ -33,6 +33,13 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
         )
     }
     
+    func contentKeySession(_ session: AVContentKeySession, didProvide keyRequest: AVPersistableContentKeyRequest) {
+        // TODO: Have we a saved key blob for the playbackID and keyID? Return that, since we're trying to play
+        // otherwise....
+        // TODO: Normal workflow up to a point: App Cert from Mux -> makeRequestData from CDM -> CKC from Mux (don't give CKC to cdm yet)
+        // TODO: New workflow from here: CKC -> request.persistableContentKey(fromVendorblahblah) -> Some Key Blob -> processKeyResponse(thatKeyBlob) -> Save blob to disk
+    }
+    
     func contentKeySession(
         _ session: AVContentKeySession,
         didProvideRenewingContentKeyRequest keyRequest: AVContentKeyRequest
@@ -142,11 +149,25 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
         logger.debug(
             "Called \(#function)"
         )
-
+        
         guard let sessionManager = self.sessionManager else {
             // TODO: Should this also invoke `processContentKeyResponseError`?
             logger.debug("Missing session manager")
             return
+        }
+        
+        // TODO: Do I care about keyID right now? I say playbackID is probably enough, since we don't support muli-key (and don't know if we'd support it via multiple skd urls if we chose to)
+        // TODO: For offline keys, Branch here (or around here)
+        // check - offline download started for a given playbackID+keyID || key blob already stored for given playbackID+keyID
+        if false /*TODO: Placeholder: sessionManager.isOfflineKeyRequest, checks drm_token and/or comes from different 'registry' (dict)*/ {
+            do {
+                try request.respondByRequestingPersistableContentKeyRequestOnAnyOS()
+                // no more processing for this key request. we'll get a delegate call with a persistable key request next
+                return
+            } catch {
+                // happens if playing airplay (according to example code). The proper response is to process as an online key
+                //  .. although using an 'offline' drm_token for playing an asset is technically not supported
+            }
         }
 
         // for hls, "the identifier must be an NSURL that matches a key URI in the Media Playlist." from the docs
@@ -160,7 +181,7 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
             )
             return
         }
-
+        
         guard let playbackID = parsePlaybackId(
             fromSkdLocation: mediaPlaylistKeyURL
         ) else {
@@ -297,10 +318,15 @@ protocol KeyRequest {
                                             contentIdentifier: Data?,
                                             options: [String : Any]?,
                                             completionHandler handler: @escaping (Data?, (any Error)?) -> Void)
+    // Delegates to different methods depending on which platform we're on
+    func respondByRequestingPersistableContentKeyRequestOnAnyOS() throws
+    // note: key vendor response is a CKC for FairPlay
+    func persistableContentKey(fromKeyVendorResponse: Data, options: [String: Any])
 }
 
 // Wraps a real AVContentKeyRequest and straightforwardly delegates to it
 struct DefaultKeyRequest : KeyRequest {
+    
     typealias InnerRequest = AVContentKeyRequest
     
     var identifier: Any? {
@@ -333,6 +359,18 @@ struct DefaultKeyRequest : KeyRequest {
             options: options,
             completionHandler: handler
         )
+    }
+    
+    func respondByRequestingPersistableContentKeyRequestOnAnyOS() throws {
+        #if os(iOS)
+        try self.request.respondByRequestingPersistableContentKeyRequestAndReturnError()
+        #else
+        try self.respondByRequestingPersistableContentKeyRequest()
+        #endif
+    }
+    
+    func persistableContentKey(fromKeyVendorResponse ckcData: Data, options: [String : Any]) {
+        self.persistableContentKey(fromKeyVendorResponse: ckcData, options: options)
     }
     
     let request: InnerRequest
