@@ -10,7 +10,8 @@ import os
 // internal class to manage dependency injection
 class PlayerSDK {
     #if DEBUG
-    @TaskLocal
+    // TODO: This @TaskLocal is making lots of things hard. Figure that out
+    //    @TaskLocal
     static var shared = PlayerSDK()
     #else
     static let shared = PlayerSDK()
@@ -91,6 +92,7 @@ class PlayerSDK {
                 category: "External"
             )
         )
+        
         self.reverseProxyServer = ReverseProxyServer()
     }
 
@@ -140,6 +142,22 @@ class PlayerSDK {
                 playbackID: playbackID,
                 options: drmOptions,
                 rootDomain: playbackOptions.rootDomain())
+        }
+    }
+    
+    func registerOfflineDRMAsset(
+        _ urlAsset: AVURLAsset,
+        playbackID: String,
+        playbackOptions: PlaybackOptions
+    ) {
+        // as? AVURLAsset check should never fail
+        if case .drm(let drmOptions) = playbackOptions.playbackPolicy {
+            fairPlaySessionManager.addOfflineDownloadDRMAsset(
+                urlAsset,
+                playbackID: playbackID,
+                options: drmOptions,
+                rootDomain: playbackOptions.rootDomain()
+            )
         }
     }
 

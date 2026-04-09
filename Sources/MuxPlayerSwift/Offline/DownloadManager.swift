@@ -31,11 +31,11 @@ actor DownloadManager {
         delegateQueue: delegateQueue
     )
     
-    #if DEBUG
+#if DEBUG
     private let logger = Logger(OSLog(subsystem: "com.mux.player", category: "Mux-Offline"))
-    #else 
+#else
     private let logger = Logger(.disabled)
-    #endif
+#endif
     
     private var reattachedTasks: Bool = false
     private let index = DownloadIndex()
@@ -55,13 +55,25 @@ actor DownloadManager {
             logger.warning("[Mux-Offline] findDownloadedAsset: No local path saved for completed asset")
             return nil
         }
-        // TODO: Check DRM expiration
-        
-        let fileURL = URL(fileURLWithPath: file, relativeTo: URL(fileURLWithPath: NSHomeDirectory()))
-        if assetFileExists(at: fileURL), !storedAsset.completedWithError {
+
+        if storedAsset.isExpired() {
             return DownloadedAsset(
                 playbackID: playbackID,
-                assetStatus: .playable(asset: AVURLAsset(url: fileURL)),
+                assetStatus: .expired,
+                downloadOptions: DownloadOptions(from: storedAsset)
+            )
+        }
+
+        let fileURL = URL(fileURLWithPath: file, relativeTo: URL(fileURLWithPath: NSHomeDirectory()))
+        if assetFileExists(at: fileURL), !storedAsset.completedWithError {
+            let urlAsset = AVURLAsset(url: fileURL)
+            if storedAsset.ckcFilePath != nil {
+                await addDRMInfoTo(urlAsset, playbackID: playbackID)
+            }
+            
+            return DownloadedAsset(
+                playbackID: playbackID,
+                assetStatus: .playable(asset: urlAsset),
                 downloadOptions: DownloadOptions(from: storedAsset)
             )
         } else {
@@ -73,13 +85,15 @@ actor DownloadManager {
         }
     }
     
-    /// Starts a new Download Task. If there was already a task in progress for this playbackID,
     /// tracks that task's progress instead of starting a new one.
     func startDownloadWithPublisher(
         playbackID: String,
         avAsset: AVURLAsset,
-        options: DownloadOptions
+        downloadOptions: DownloadOptions,
+        playbackOptions: PlaybackOptions
     ) async -> AnyPublisher<DownloadEvent, Error> {
+        print("--- URL I'm Downloading: \(avAsset.url)")
+        
         // If we already have a completed asset, return it. Caller can use it, or if it's not playable, they can explicitly delete
         let alreadyCompletedAsset = await findDownloadedAsset(playbackID: playbackID)
         if let alreadyCompletedAsset {
@@ -95,7 +109,7 @@ actor DownloadManager {
         
         // configure the new task, and keep track of it
         let subject = subject(for: playbackID)
-        let config = AVAssetDownloadConfiguration(asset: avAsset, title: options.readableTitle)
+        let config = AVAssetDownloadConfiguration(asset: avAsset, title: downloadOptions.readableTitle)
         let task = downloadSession.makeAssetDownloadTask(downloadConfiguration: config)
         task.taskDescription = playbackID
         // do this before we await the index management, so re-entrant calls don't orphan the task
@@ -104,11 +118,26 @@ actor DownloadManager {
         // clean up any old files that might exist (due to failed tasks, etc) before starting
         await index.deleteDownloadedFiles(playbackID: playbackID, removeFromIndex: true)
         // store DownloadOptions, etc in the index before we start
-        await index.upsert(StoredAsset.forNewDownload(playbackID: playbackID, options: options))
-
+        let drmClaims: DRMTokenClaims? = {
+            if case .drm(let drmOptions) = playbackOptions.playbackPolicy {
+                return DRMTokenClaims.from(drmToken: drmOptions.drmToken)
+            }
+            return nil
+        }()
+        await index.upsert(StoredAsset.forNewDownload(playbackID: playbackID, options: downloadOptions, drmClaims: drmClaims))
+        
+        // Adds the asset as a ContentKeyRecipient, if it's DRM-protected
+        if case .drm(let drmOptions) = playbackOptions.playbackPolicy {
+            // this has to run on the main thread (on debug builds) because PlayerSDK.shared is TaskLocal and will crash if created in a BG thread
+            //  (begging the question, does making PlayerSDK.shared task-local have any real impact?)
+            await MainActor.run {
+                PlayerSDK.shared.registerOfflineDRMAsset(avAsset, playbackID: playbackID, playbackOptions: playbackOptions)
+            }
+        }
+        
         // start the task now that we're set up
         task.resume()
-
+        
         return subject.eraseToAnyPublisher()
     }
     
@@ -117,6 +146,10 @@ actor DownloadManager {
         
         if let task = downloadTasksByPlaybackID[playbackID] {
             task.cancel()
+            await MainActor.run {
+                PlayerSDK.shared.fairPlaySessionManager.removeOfflineDownloadSession(playbackID: playbackID)
+            }
+            
             downloadTasksByPlaybackID[playbackID] = nil
             // will also clear the subject, to avoid saving stale state
             sendError(URLError(.cancelled), for: playbackID)
@@ -124,8 +157,73 @@ actor DownloadManager {
         await index.deleteDownloadedFiles(playbackID: playbackID, removeFromIndex: true)
     }
     
+    /// If an asset is stored in the index (completed or not), and it has a persisted content key, returns it
+    func findPeristedContentKey(playbackID: String) async throws -> Data? {
+        guard let storedAsset = await index.get(playbackID: playbackID),
+              let localFile = storedAsset.ckcFilePath
+        else {
+            return nil
+        }
+        
+        let ckcFileDir = try DownloadIndex.persistenKeyDirectory()
+        let fileURL = URL(fileURLWithPath: localFile, relativeTo: ckcFileDir)
+//        logger.info("Looking for CKC to file at: \(fileURL.path)")
+//        logger.info("Looking for CKC to file at (relative): \(fileURL.relativePath)")
+//        logger.info("Looking for CKC to file at (relative): \(fileURL)")
+        guard assetFileExists(at: fileURL) else {
+            logger.warning("CKC file doesn't exist for \(playbackID) at \(fileURL.absoluteString)")
+            return nil
+        }
+//        logger.trace("CKC file found for \(playbackID) at \(fileURL.absoluteString)")
+        // returns nil if there's a read error
+        return FileManager.default.contents(atPath: fileURL.path)
+    }
+    
+    /// Starts a new Download Task. If there was already a task in progress for this playbackID,
+    func savePersistedContentKey(playbackID: String, identifier: String, contentKeyData: Data) async throws {
+        // TODO: Save that dude to a file
+        //        try await index.updateCKCFileURL(playbackID: playbackID, ckcFilePath: ckcFileURL.relativePath)
+        
+        guard let asset = await index.get(playbackID: playbackID) else {
+            logger.warning("[Mux-Offline] tried to save persistent key for not-index playbackID: \(playbackID)")
+            // TODO: Should we throw?
+            return
+        }
+        
+        // Clean up old file if it exists
+        if let existingFile = asset.ckcFilePath {
+            let existingURL = URL(fileURLWithPath: existingFile, relativeTo: URL(fileURLWithPath: NSHomeDirectory()))
+            do {
+                try FileManager.default.removeItem(at: existingURL)
+            } catch {
+                logger.trace("Failed to delete existing CKC file (probably didn't exist): \(error)")
+            }
+        }
+        
+        let newCkcFileURL = try persistentKeyFile(playbackID: playbackID, identifier: identifier)
+        //        logger.info("Saved CKC to file at: \(newCkcFileURL.path)")
+        //        logger.info("Saved CKC to file at (relative): \(newCkcFileURL)")
+        logger.info("Saving CKC to file at (relative): \(newCkcFileURL.relativePath)")
+        
+        // update index first. Better to have blank entries here than orphaned files on disk
+        await index.updateCKCFileURL(playbackID: playbackID, ckcFilePath: newCkcFileURL.relativePath)
+        
+        try FileManager.default.createDirectory(
+            at: DownloadIndex.persistenKeyDirectory(),
+            withIntermediateDirectories: true
+        )
+        try contentKeyData.write(to: newCkcFileURL)
+        
+        logger.info("Saved CKC to file at (relative): \(newCkcFileURL.relativePath)")
+        
+    }
+    
+    func updateExpirationPhase(playbackID: String, phase: ExpirationPhase) async {
+        await index.updateExpirationPhase(playbackID: playbackID, phase: phase)
+    }
+
     func allCompletedAssets() async -> [DownloadedAsset] {
-        await index.all()
+        let completedAssets = await index.all()
             .filter { $0.isComplete }
             .compactMap { completedAsset -> DownloadedAsset? in
                 guard let assetPath = completedAsset.localPath else {
@@ -133,12 +231,20 @@ actor DownloadManager {
                     return nil
                 }
                 let assetURL = URL(fileURLWithPath: assetPath, relativeTo: URL(fileURLWithPath: NSHomeDirectory()))
-                
-                // TODO: Check DRM expiration too
+                let urlAsset = AVURLAsset(url: assetURL)
+
+                if completedAsset.isExpired() {
+                    return DownloadedAsset(
+                        playbackID: completedAsset.playbackID,
+                        assetStatus: .expired,
+                        downloadOptions: DownloadOptions(from: completedAsset)
+                    )
+                }
+
                 if assetFileExists(at: assetURL), !completedAsset.completedWithError {
                     return DownloadedAsset(
                         playbackID: completedAsset.playbackID,
-                        assetStatus: .playable(asset: AVURLAsset(url: assetURL)),
+                        assetStatus: .playable(asset: urlAsset),
                         downloadOptions: DownloadOptions(from: completedAsset)
                     )
                 } else {
@@ -149,6 +255,14 @@ actor DownloadManager {
                     )
                 }
             }
+        
+        for asset in completedAssets {
+            if let urlAsset = asset.avAssetIfPlayable() {
+                await addDRMInfoTo(urlAsset, playbackID: asset.playbackID)
+            }
+        }
+        
+        return completedAssets
     }
     
     func allInProgressTasks() async -> [String: AnyPublisher<DownloadEvent, Error>] {
@@ -167,11 +281,11 @@ actor DownloadManager {
                 logger.warning("[Mux-Offline] reattachPendingDownloadPublishers: Missing playbackID (taskDescription) for task id=\(assetTask.taskIdentifier)")
                 continue
             }
-
+            
             downloadTasksByPlaybackID[playbackID] = assetTask
             let subject = subject(for: playbackID)
             publishers[playbackID] = subject.eraseToAnyPublisher()
-
+            
             assetTask.resume()
         }
         
@@ -185,6 +299,39 @@ actor DownloadManager {
         }
         return subject.eraseToAnyPublisher()
     }
+    
+    private func addDRMInfoTo(_ urlAsset: AVURLAsset, playbackID: String) async {
+        // TODO: try?
+        let persistedContentKey = await try? findPeristedContentKey(playbackID: playbackID)
+        // We are only sending to the main actor so we know this will be safe
+        if let persistedContentKey {
+            // We only need MainActor because PlayerSDK.shared is TaskLocal on debug
+            //                await MainActor.run {
+            // TODO: Can just store the key Data here
+            await PlayerSDK.shared.fairPlaySessionManager.addOfflinePlayDRMAsset(
+                urlAsset,
+                playbackID: playbackID,
+                keyData: persistedContentKey
+            )
+            //                }
+        }
+    }
+    
+    private func persistentKeyFile(playbackID: String, identifier: String) throws -> URL {
+        let sanitizedIdentifier = identifier.data(using: .utf8)?.base64EncodedString()
+            .replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "=", with: "")
+        guard let sanitizedIdentifier else {
+            throw FairPlaySessionError.unexpected(message: "Failed to santiize key identifier [\(identifier)]")
+        }
+        
+        let sanitizedName = "\(playbackID)-\(sanitizedIdentifier)"
+        let fileName = "\(sanitizedName).key"
+        let directoryURL = try DownloadIndex.persistenKeyDirectory()
+        return URL(fileURLWithPath: fileName, relativeTo: directoryURL)
+    }
+    
     
     private func assetFileExists(at movPkgURL: URL) -> Bool {
         return FileManager.default.fileExists(atPath: movPkgURL.path)
@@ -284,6 +431,9 @@ actor DownloadManager {
         await index.updateIsComplete(playbackID: playbackID, isComplete: true, completeWithError: true)
         // Once a task errors, we can't resume where we left off, so just delete any partially-downloaded data
         await index.deleteDownloadedFiles(playbackID: playbackID, removeFromIndex: false)
+        await MainActor.run {
+            PlayerSDK.shared.fairPlaySessionManager.removeOfflineDownloadSession(playbackID: playbackID)
+        }
         
         // do these after the awaits, so callers that call startDownload to handle errors actually start one
         sendError(error, for: playbackID)
@@ -314,6 +464,14 @@ actor DownloadManager {
             return
         }
         
+        await MainActor.run {
+            PlayerSDK.shared.fairPlaySessionManager.removeOfflineDownloadSession(playbackID: playbackID)
+        }
+
+        // Ensure localPath is set even if willDownloadTo's Task hasn't
+        // run yet (actor task scheduling is not FIFO)
+        await index.updateLocalPathURL(playbackID: playbackID, localPath: location.relativePath)
+
         let asset = AVURLAsset(url: location)
         let storedAsset = await index.updateIsComplete(playbackID: playbackID, isComplete: true, completeWithError: false)
         guard let storedAsset else {

@@ -9,7 +9,7 @@ import MuxPlayerSwift
 import SwiftUI
 
 struct OfflineAccessExampleView: View {
-    @StateObject private var manager = OfflineDownloadManager()
+    @StateObject private var manager = ExampleOfflineDownloadManager()
     @State private var playerToPresent: AVPlayer?
 
     var body: some View {
@@ -63,13 +63,16 @@ struct OfflineAccessExampleView: View {
         asset: ExampleAsset?
     ) -> some View {
         switch state {
-        case .mustRedownload, .error:
+        case .expired, .mustRedownload, .error:
             if let asset {
                 DownloadAssetRow(
                     title: asset.title,
                     state: state,
                     onAction: {
-                        Task { await manager.startDownload(for: asset) }
+                        Task {
+                            await MuxOfflineAccessManager.shared.removeDownload(playbackID: playbackID)
+                            await manager.startDownload(for: asset)
+                        }
                     },
                     onSecondaryAction: {
                         manager.cancelOrDeleteDownload(for: playbackID)

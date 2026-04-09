@@ -7,7 +7,7 @@ import AVFoundation
 import MuxPlayerSwift
 
 @MainActor
-final class OfflineDownloadManager: ObservableObject {
+final class ExampleOfflineDownloadManager: ObservableObject {
 
     // In your app, this would probably come from your app's backend or CMS
     let exampleAssets: [ExampleAsset] = [
@@ -48,8 +48,10 @@ final class OfflineDownloadManager: ObservableObject {
             switch asset.assetStatus {
             case .playable(let avAsset):
                 downloadStates[asset.playbackID] = .downloaded(avAsset)
-            case .redownloadWhenOnline, .expired:
+            case .redownloadWhenOnline:
                 downloadStates[asset.playbackID] = .mustRedownload
+            case .expired:
+                downloadStates[asset.playbackID] = .expired
             }
         }
 
@@ -63,9 +65,21 @@ final class OfflineDownloadManager: ObservableObject {
     // MARK: - Download Actions
 
     func startDownload(for asset: ExampleAsset) async {
+        let playbackOptions = {
+            if let playbackToken = asset.playbackToken {
+                if let drmToken = asset.drmToken {
+                    return PlaybackOptions(playbackToken: playbackToken, drmToken: drmToken)
+                } else {
+                    return PlaybackOptions(playbackToken: playbackToken)
+                }
+            } else {
+                return PlaybackOptions()
+            }
+        }()
+        
         let stream = await MuxOfflineAccessManager.shared.startDownload(
             playbackID: asset.playbackID,
-            playbackOptions: .init(),
+            playbackOptions: playbackOptions,
             downloadOptions: DownloadOptions(readableTitle: asset.title)
         )
         downloadStates[asset.playbackID] = .downloading(progress: 0.0)

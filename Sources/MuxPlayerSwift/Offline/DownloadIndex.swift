@@ -74,12 +74,13 @@ actor DownloadIndex {
             
             // Delete CKC sidecar if any
             if let ckcFilePath = stored.ckcFilePath {
-                let ckcFile = URL(fileURLWithPath: ckcFilePath, relativeTo: URL(fileURLWithPath: NSHomeDirectory()))
                 do {
+                    let ckcDir = try Self.persistenKeyDirectory()
+                    let ckcFile = URL(fileURLWithPath: ckcFilePath, relativeTo: ckcDir)
                     try fm.removeItem(at: ckcFile)
                 } catch {
                     // not generally an error condition. file can be gone due to early cancellation or re-entrant calls to this method
-                    logger.trace("[Mux-Offline] Failed to key id file at \(ckcFile.path): \(error)")
+                    logger.trace("[Mux-Offline] Failed to key id file at \(ckcFilePath): \(error)")
                 }
             }
         }
@@ -107,16 +108,19 @@ actor DownloadIndex {
             subtitleLanguages: existing.subtitleLanguages,
             secondaryAudioLanguages: existing.secondaryAudioLanguages,
             ckcFilePath: existing.ckcFilePath,
-            keyExpiration: existing.keyExpiration,
-            redownloadExpiration: existing.redownloadExpiration
+            redownloadExpiration: existing.redownloadExpiration,
+            downloadedAt: existing.downloadedAt,
+            expirationPhase: existing.expirationPhase,
+            licenseExpirationDuration: existing.licenseExpirationDuration,
+            playDurationDuration: existing.playDurationDuration
         )
         assets[playbackID] = updated
         persist()
-        
+
         return updated
     }
 
-    func updateCKCFileURL(playbackID: String, ckcFilePath: String) -> StoredAsset? {
+    func updateCKCFileURL(playbackID: String, ckcFilePath: String?) -> StoredAsset? {
         // not an error case. Deletion can occur re-entrantly before the delegate callback that calls this
         guard let existing = assets[playbackID] else {
             logger.warning("[Mux-Offline] DownloadIndex.updateCKCFileURL: No existing asset for playbackID \(playbackID)")
@@ -132,12 +136,15 @@ actor DownloadIndex {
             subtitleLanguages: existing.subtitleLanguages,
             secondaryAudioLanguages: existing.secondaryAudioLanguages,
             ckcFilePath: ckcFilePath,
-            keyExpiration: existing.keyExpiration,
-            redownloadExpiration: existing.redownloadExpiration
+            redownloadExpiration: existing.redownloadExpiration,
+            downloadedAt: existing.downloadedAt,
+            expirationPhase: existing.expirationPhase,
+            licenseExpirationDuration: existing.licenseExpirationDuration,
+            playDurationDuration: existing.playDurationDuration
         )
         assets[playbackID] = updated
         persist()
-        
+
         return updated
     }
 
@@ -157,14 +164,54 @@ actor DownloadIndex {
             subtitleLanguages: existing.subtitleLanguages,
             secondaryAudioLanguages: existing.secondaryAudioLanguages,
             ckcFilePath: existing.ckcFilePath,
-            keyExpiration: existing.keyExpiration,
-            redownloadExpiration: existing.redownloadExpiration
+            redownloadExpiration: existing.redownloadExpiration,
+            downloadedAt: existing.downloadedAt,
+            expirationPhase: existing.expirationPhase,
+            licenseExpirationDuration: existing.licenseExpirationDuration,
+            playDurationDuration: existing.playDurationDuration
         )
         assets[playbackID] = updated
         persist()
         return updated
     }
 
+    func updateExpirationPhase(playbackID: String, phase: ExpirationPhase) -> StoredAsset? {
+        guard let existing = assets[playbackID] else {
+            logger.warning("[Mux-Offline] DownloadIndex.updateExpirationPhase: No existing asset for playbackID \(playbackID)")
+            return nil
+        }
+        let updated = StoredAsset(
+            isComplete: existing.isComplete,
+            completedWithError: existing.completedWithError,
+            playbackID: existing.playbackID,
+            localPath: existing.localPath,
+            readableTitle: existing.readableTitle,
+            posterDataBase64: existing.posterDataBase64,
+            subtitleLanguages: existing.subtitleLanguages,
+            secondaryAudioLanguages: existing.secondaryAudioLanguages,
+            ckcFilePath: existing.ckcFilePath,
+            redownloadExpiration: existing.redownloadExpiration,
+            downloadedAt: existing.downloadedAt,
+            expirationPhase: phase,
+            licenseExpirationDuration: existing.licenseExpirationDuration,
+            playDurationDuration: existing.playDurationDuration
+        )
+        assets[playbackID] = updated
+        persist()
+        return updated
+    }
+    
+    public static func persistenKeyDirectory() throws -> URL {
+        let baseURL = try FileManager.default.url(
+            for: .libraryDirectory,
+            in: .userDomainMask,
+            appropriateFor: nil,
+            create: false
+        )
+        return URL(fileURLWithPath: "mux-offline", relativeTo: baseURL)
+    }
+
+    
     // MARK: - Persistence
 
     private func persist() {

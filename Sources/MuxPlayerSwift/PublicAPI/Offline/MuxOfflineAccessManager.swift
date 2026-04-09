@@ -13,13 +13,13 @@ import os
 public class MuxOfflineAccessManager {
     public static let shared = MuxOfflineAccessManager()
     
-    private let manager: DownloadManager = DownloadManager()
+    internal let manager: DownloadManager = DownloadManager()
     
-    #if DEBUG
+#if DEBUG
     private let logger = Logger(OSLog(subsystem: "com.mux.player", category: "Mux-Offline"))
-    #else
+#else
     private let logger = Logger(.disabled)
-    #endif
+#endif
     
     /// Start downloading a video for offline access.
     /// Only one download per playbackID may be saved at once. If you want to re-download media for the same playbackID
@@ -43,8 +43,14 @@ public class MuxOfflineAccessManager {
         }
         
         let asset = AVURLAsset(url: url)
+        
         return await manager
-            .startDownloadWithPublisher(playbackID: playbackID, avAsset: asset, options: downloadOptions)
+            .startDownloadWithPublisher(
+                playbackID: playbackID,
+                avAsset: asset,
+                downloadOptions: downloadOptions,
+                playbackOptions: playbackOptions
+            )
             .toAsyncThrowingStream()
     }
     
@@ -82,5 +88,9 @@ public class MuxOfflineAccessManager {
     /// - Returns: An array of all downloaded assets
     public func allDownloadedAssets() async -> [DownloadedAsset] {
         return await manager.allCompletedAssets()
+    }
+    
+    public init() {
+        PlayerSDK.shared.diagnosticsLogger.info("initializing MuxOfflineAccessManager")
     }
 }
