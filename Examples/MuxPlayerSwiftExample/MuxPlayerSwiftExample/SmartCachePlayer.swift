@@ -17,6 +17,7 @@ struct SmartCachePlayer: View {
             singleRenditionResolutionTier: singleRenditionResolutionTier,
             monitoringOptions: monitoringOptions
         )
+        .id(singleRenditionResolutionTier)
         .ignoresSafeArea()
         .background(.black)
         .accessibilityIdentifier("SmartCachePlayerView")
@@ -88,16 +89,7 @@ private struct SmartCachePlayerRepresentable: UIViewControllerRepresentable {
     func updateUIViewController(
         _ uiViewController: AVPlayerViewController,
         context: Context
-    ) {
-        uiViewController.prepare(
-            playbackID: playbackID,
-            playbackOptions: PlaybackOptions(
-                enableSmartCache: true,
-                singleRenditionResolutionTier: singleRenditionResolutionTier
-            ),
-            monitoringOptions: monitoringOptions
-        )
-    }
+    ) { }
 
     static func dismantleUIViewController(
         _ uiViewController: AVPlayerViewController,
