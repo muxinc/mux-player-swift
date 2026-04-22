@@ -167,26 +167,17 @@ actor DownloadManager {
         
         let ckcFileDir = try DownloadIndex.persistenKeyDirectory()
         let fileURL = URL(fileURLWithPath: localFile, relativeTo: ckcFileDir)
-//        logger.info("Looking for CKC to file at: \(fileURL.path)")
-//        logger.info("Looking for CKC to file at (relative): \(fileURL.relativePath)")
-//        logger.info("Looking for CKC to file at (relative): \(fileURL)")
         guard assetFileExists(at: fileURL) else {
             logger.warning("CKC file doesn't exist for \(playbackID) at \(fileURL.absoluteString)")
             return nil
         }
-//        logger.trace("CKC file found for \(playbackID) at \(fileURL.absoluteString)")
-        // returns nil if there's a read error
         return FileManager.default.contents(atPath: fileURL.path)
     }
     
     /// Starts a new Download Task. If there was already a task in progress for this playbackID,
     func savePersistedContentKey(playbackID: String, identifier: String, contentKeyData: Data) async throws {
-        // TODO: Save that dude to a file
-        //        try await index.updateCKCFileURL(playbackID: playbackID, ckcFilePath: ckcFileURL.relativePath)
-        
         guard let asset = await index.get(playbackID: playbackID) else {
-            logger.warning("[Mux-Offline] tried to save persistent key for not-index playbackID: \(playbackID)")
-            // TODO: Should we throw?
+            logger.warning("[Mux-Offline] tried to save persistent key for non-indexed playbackID: \(playbackID)")
             return
         }
         
@@ -201,8 +192,6 @@ actor DownloadManager {
         }
         
         let newCkcFileURL = try persistentKeyFile(playbackID: playbackID, identifier: identifier)
-        //        logger.info("Saved CKC to file at: \(newCkcFileURL.path)")
-        //        logger.info("Saved CKC to file at (relative): \(newCkcFileURL)")
         logger.info("Saving CKC to file at (relative): \(newCkcFileURL.relativePath)")
         
         // update index first. Better to have blank entries here than orphaned files on disk
@@ -301,19 +290,21 @@ actor DownloadManager {
     }
     
     private func addDRMInfoTo(_ urlAsset: AVURLAsset, playbackID: String) async {
-        // TODO: try?
-        let persistedContentKey = await try? findPeristedContentKey(playbackID: playbackID)
+        let persistedContentKey: Data?
+        do {
+            persistedContentKey = await try findPeristedContentKey(playbackID: playbackID)
+        } catch {
+            logger.warning("Couldn't find persisted content key for \(playbackID): \(error)")
+            return
+        }
         // We are only sending to the main actor so we know this will be safe
         if let persistedContentKey {
             // We only need MainActor because PlayerSDK.shared is TaskLocal on debug
-            //                await MainActor.run {
-            // TODO: Can just store the key Data here
             await PlayerSDK.shared.fairPlaySessionManager.addOfflinePlayDRMAsset(
                 urlAsset,
                 playbackID: playbackID,
                 keyData: persistedContentKey
             )
-            //                }
         }
     }
     

@@ -253,8 +253,6 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
         )
         
         request.processContentKeyResponse(AVContentKeyResponse(fairPlayStreamingKeyResponseData: persistableKey))
-        
-        // TODO: Start removing DRMConfigs when we complete the handshake process
     }
     
     func handleContentKeyRequest(request: any KeyRequest) {
