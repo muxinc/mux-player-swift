@@ -261,7 +261,6 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
         )
         
         guard let sessionManager = self.sessionManager else {
-            // TODO: Should this also invoke `processContentKeyResponseError`?
             logger.debug("Missing session manager")
             return
         }
@@ -271,7 +270,6 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
               let mediaPlaylistKeyURL = URL(string: requestIdentifierString),
               let utfEncodedRequestIdentifierString = requestIdentifierString.data(using: .utf8)
         else {
-            // TODO: Should this also invoke `processContentKeyResponseError`?
             logger.debug(
                 "CK request identifier not a valid key url."
             )
