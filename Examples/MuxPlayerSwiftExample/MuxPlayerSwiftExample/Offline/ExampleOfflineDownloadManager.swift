@@ -63,7 +63,11 @@ final class ExampleOfflineDownloadManager: ObservableObject {
     }
 
     // MARK: - Download Actions
-
+    
+    func removeDownload(playbackID: String) async {
+        await MuxOfflineAccessManager.shared.removeDownload(playbackID: playbackID)
+    }
+    
     func startDownload(for asset: ExampleAsset) async {
         let playbackOptions = {
             if let playbackToken = asset.playbackToken {

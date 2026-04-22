@@ -70,7 +70,7 @@ struct OfflineAccessExampleView: View {
                     state: state,
                     onAction: {
                         Task {
-                            await MuxOfflineAccessManager.shared.removeDownload(playbackID: playbackID)
+                            await manager.removeDownload(playbackID: playbackID)
                             await manager.startDownload(for: asset)
                         }
                     },
