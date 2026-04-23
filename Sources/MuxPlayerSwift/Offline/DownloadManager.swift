@@ -288,7 +288,7 @@ actor DownloadManager {
     private func addDRMInfoTo(_ urlAsset: AVURLAsset, playbackID: String) async {
         let persistedContentKey: Data?
         do {
-            persistedContentKey = await try findPersistedContentKey(playbackID: playbackID)
+            persistedContentKey = try await findPersistedContentKey(playbackID: playbackID)
         } catch {
             logger.warning("Couldn't find persisted content key for \(playbackID): \(error)")
             return

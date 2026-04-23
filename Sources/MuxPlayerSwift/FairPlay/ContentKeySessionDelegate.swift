@@ -57,7 +57,7 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
         logger.trace("contentKeySession: didUpdatePersistableContentKey")
         Task {
             do {
-                await try handleContentKeyUpdated(keyIdentifier: keyIdentifier, data: persistableContentKey)
+                try await handleContentKeyUpdated(keyIdentifier: keyIdentifier, data: persistableContentKey)
             } catch {
                 // Delegate provides no way to notify of this
                 logger.error("Failed to update content key: \(error)")
@@ -229,7 +229,7 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
         }
         
         // If we already have a persisted content key, use it (this is the offline playback path)
-        if let persistedContentKey = await try downloadManager.findPersistedContentKey(playbackID: playbackID) {
+        if let persistedContentKey = try await downloadManager.findPersistedContentKey(playbackID: playbackID) {
             // Transition to playDuration-based expiration on first offline playback
             await downloadManager.updateExpirationPhase(playbackID: playbackID, phase: .playDuration)
             request.processContentKeyResponse(AVContentKeyResponse(fairPlayStreamingKeyResponseData: persistedContentKey))
@@ -246,7 +246,7 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
         let ckcData = try await sessionManager.requestLicence(spcData: spcData, playbackID: playbackID)
         
         let persistableKey = try request.persistableContentKey(fromKeyVendorResponse: ckcData, options: nil)
-        await try MuxOfflineAccessManager.shared.manager.savePersistedContentKey(
+        try await MuxOfflineAccessManager.shared.manager.savePersistedContentKey(
             playbackID: playbackID,
             identifier: requestIdentifierString,
             contentKeyData: persistableKey
