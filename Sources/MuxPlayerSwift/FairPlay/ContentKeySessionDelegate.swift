@@ -177,8 +177,7 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
     ) async throws {
         logger.trace("\(#function) called")
         guard let requestIdentifierString = keyIdentifier as? String,
-              let mediaPlaylistKeyURL = URL(string: requestIdentifierString),
-              let utfEncodedRequestIdentifierString = requestIdentifierString.data(using: .utf8)
+              let mediaPlaylistKeyURL = URL(string: requestIdentifierString)
         else {
             // TODO: Should this also invoke `processContentKeyResponseError`?
             logger.debug(

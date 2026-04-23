@@ -92,6 +92,7 @@ actor DownloadIndex {
 
     // MARK: - Partial Updates
 
+    @discardableResult
     func updateIsComplete(playbackID: String, isComplete: Bool, completeWithError: Bool) -> StoredAsset? {
         // not an error case. Deletion can occur re-entrantly before the delegate callback that calls this
         guard let existing = assets[playbackID] else {
@@ -120,6 +121,7 @@ actor DownloadIndex {
         return updated
     }
 
+    @discardableResult
     func updateCKCFileURL(playbackID: String, ckcFilePath: String?) -> StoredAsset? {
         // not an error case. Deletion can occur re-entrantly before the delegate callback that calls this
         guard let existing = assets[playbackID] else {
@@ -148,6 +150,7 @@ actor DownloadIndex {
         return updated
     }
 
+    @discardableResult
     func updateLocalPathURL(playbackID: String, localPath: String) -> StoredAsset? {
         // not an error case. Deletion can occur re-entrantly before the delegate callback that calls this
         guard let existing = assets[playbackID] else {
@@ -175,6 +178,7 @@ actor DownloadIndex {
         return updated
     }
 
+    @discardableResult
     func updateExpirationPhase(playbackID: String, phase: ExpirationPhase) -> StoredAsset? {
         guard let existing = assets[playbackID] else {
             logger.warning("[Mux-Offline] DownloadIndex.updateExpirationPhase: No existing asset for playbackID \(playbackID)")

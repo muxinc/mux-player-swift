@@ -128,7 +128,7 @@ actor DownloadManager {
         await index.upsert(StoredAsset.forNewDownload(playbackID: playbackID, options: downloadOptions, drmClaims: drmClaims))
         
         // Adds the asset as a ContentKeyRecipient, if it's DRM-protected
-        if case .drm(let drmOptions) = playbackOptions.playbackPolicy {
+        if case .drm(_) = playbackOptions.playbackPolicy {
             PlayerSDK.shared.registerOfflineDRMAsset(avAsset, playbackID: playbackID, playbackOptions: playbackOptions)
         }
         
@@ -181,7 +181,7 @@ actor DownloadManager {
         )
 
         // Clean up old file if it exists
-        if let existingFile = asset.ckcFilePath {
+        if asset.ckcFilePath != nil {
             let existingURL = try persistentKeyFile(playbackID: playbackID, identifier: identifier)
             do {
                 try FileManager.default.removeItem(at: existingURL)
@@ -194,7 +194,7 @@ actor DownloadManager {
         logger.info("Saving CKC to file at: \(newCkcFileURL.relativePath)")
         
         // update index first. Better to have blank entries here than orphaned files on disk
-        await index.updateCKCFileURL(playbackID: playbackID, ckcFilePath: newCkcFileURL.relativePath)
+        let _ = await index.updateCKCFileURL(playbackID: playbackID, ckcFilePath: newCkcFileURL.relativePath)
         
         try contentKeyData.write(to: newCkcFileURL)
         
