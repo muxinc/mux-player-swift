@@ -33,9 +33,13 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
         didProvide keyRequest: AVContentKeyRequest
     ) {
         logger.trace("didProvide AVContentKeyRequest")
-        handleContentKeyRequest(
-            request: DefaultKeyRequest(wrapping: keyRequest)
-        )
+        Task {
+            do {
+                try await handleContentKeyRequest(request: DefaultKeyRequest(wrapping: keyRequest))
+            } catch {
+                keyRequest.processContentKeyResponseError(error)
+            }
+        }
     }
     
     func contentKeySession(_ session: AVContentKeySession, didProvide keyRequest: AVPersistableContentKeyRequest) {
@@ -70,7 +74,13 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
         didProvideRenewingContentKeyRequest keyRequest: AVContentKeyRequest
     ) {
         logger.trace("didProvide didProvideRenewingContentKeyRequest")
-        handleContentKeyRequest(request: DefaultKeyRequest(wrapping: keyRequest))
+        Task {
+            do {
+                try await handleContentKeyRequest(request: DefaultKeyRequest(wrapping: keyRequest))
+            } catch {
+                keyRequest.processContentKeyResponseError(error)
+            }
+        }
     }
     
     func contentKeySession(
@@ -236,13 +246,13 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
         }
 
         // No content key already? Try to get one
-        let appCertData = try await sessionManager.requestCertificate(playbackID: playbackID)
+        let appCertData = try await sessionManager.requestCertificate(playbackID: playbackID, online: false)
         let spcData = try await request.makeStreamingContentKeyRequestData(
             forApp: appCertData,
             contentIdentifier: utfEncodedRequestIdentifierString,
             options: [AVContentKeyRequestProtocolVersionsKey: [1]]
         )
-        let ckcData = try await sessionManager.requestLicence(spcData: spcData, playbackID: playbackID)
+        let ckcData = try await sessionManager.requestLicense(spcData: spcData, playbackID: playbackID, online: false)
         
         let persistableKey = try request.persistableContentKey(fromKeyVendorResponse: ckcData, options: nil)
         try await MuxOfflineAccessManager.shared.manager.savePersistedContentKey(
@@ -254,7 +264,7 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
         request.processContentKeyResponse(AVContentKeyResponse(fairPlayStreamingKeyResponseData: persistableKey))
     }
     
-    func handleContentKeyRequest(request: any KeyRequest) {
+    func handleContentKeyRequest(request: any KeyRequest) async throws {
         logger.debug(
             "Called \(#function)"
         )
@@ -298,112 +308,26 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
                 //  .. although using an 'offline' drm_token for playing an asset is technically not supported
             }
         }
-
+        
         // get app cert
-        sessionManager.requestCertificate(
-            playbackID: playbackID,
-            completion: { [weak self] result in
-                guard let self else {
-                    PlayerSDK.shared.diagnosticsLogger.debug(
-                        "Content key request completed: missing session delegate"
-                    )
-                    return
-                }
-
-                let applicationCertificate: Data
-                do {
-                    applicationCertificate = try result.get()
-                } catch {
-                    request.processContentKeyResponseError(
-                        error
-                    )
-                    return
-                }
-
-                handleApplicationCertificate(
-                    applicationCertificate,
-                    contentIdentifier: utfEncodedRequestIdentifierString,
-                    playbackID: playbackID,
-                    request: request)
-            }
-        )
-    }
-
-    func handleApplicationCertificate(
-        _ applicationCertificate: Data,
-        contentIdentifier utfEncodedRequestIdentifierString: Data,
-        playbackID: String,
-        request: any KeyRequest
-    ) {
+        let applicationCertificate = try await sessionManager.requestCertificate(playbackID: playbackID, online: true)
+        
         // exchange app cert for SPC using KeyRequest to give to CDM
-        request.makeStreamingContentKeyRequestData(
+        let spcData = try await request.makeStreamingContentKeyRequestData(
             forApp: applicationCertificate,
             contentIdentifier: utfEncodedRequestIdentifierString,
             options: [AVContentKeyRequestProtocolVersionsKey: [1]]
-        ) { [weak self] spcData, error in
-            guard let self = self else {
-                PlayerSDK.shared.diagnosticsLogger.debug(
-                    "Content key request completed: missing session delegate"
-                )
-                return
-            }
-            
-            guard let spcData = spcData else {
-                request.processContentKeyResponseError(
-                    error ?? FairPlaySessionError.unexpected(message: "no SPC")
-                )
-                return
-            }
-            
-            // exchange SPC for CKC
-            handleSpcObtainedFromCDMForOnlineKey(
-                spcData: spcData,
-                playbackID: playbackID,
-                request: request
-            )
-        }
-    }
-    
-    func handleSpcObtainedFromCDMForOnlineKey(
-        spcData: Data,
-        playbackID: String,
-        request: any KeyRequest
-    ) {
-        guard let sessionManager = self.sessionManager else {
-            logger.debug("Missing Session Manager")
-            return
-        }
+        )
         
-        sessionManager.requestLicense(
-            spcData: spcData,
-            playbackID: playbackID,
-            offline: false
-        ) { [weak self] result in
-            guard let self else {
-                return
-            }
-
-            let ckcData: Data
-            do {
-                ckcData = try result.get()
-            } catch {
-                request.processContentKeyResponseError(
-                    error
-                )
-                return
-            }
-
-            logger.debug("Submitting CKC to system")
-            // Send CKC to CDM/wherever else so we can finally play our content
-            let keyResponse = request.makeContentKeyResponse(
-                data: ckcData
-            )
-            request.processContentKeyResponse(
-                keyResponse
-            )
-            logger.debug("Protected content now available for processing")
-            // Done! no further interaction is required from us to play.
-        }
+        let licenseData = try await sessionManager.requestLicense(spcData: spcData, playbackID: playbackID, online: true)
+        logger.debug("Submitting CKC to system")
+        
+        // Send CKC to CDM/wherever else so we can finally play our content
+        let keyResponse = request.makeContentKeyResponse(data: licenseData)
+        request.processContentKeyResponse(keyResponse)
+        
+        logger.debug("Protected content now available for processing")
+        // Done! no further interaction is required from us to play.
     }
 }
 
@@ -419,6 +343,7 @@ protocol KeyRequest {
     
     func processContentKeyResponse(_ response: AVContentKeyResponse)
     func processContentKeyResponseError(_ error: any Error)
+    
     func makeStreamingContentKeyRequestData(forApp appIdentifier: Data,
                                             contentIdentifier: Data?,
                                             options: [String : Any]?,
@@ -487,7 +412,7 @@ struct DefaultKeyRequest : KeyRequest {
                     continuation.resume(throwing: error)
                 } else {
                     // probably not a real case, but we don't want to hang the request to the system
-                    continuation.resume(throwing: FairPlaySessionError.unexpected(message: "No SPC data or error"))
+                    continuation.resume(throwing: FairPlaySessionError.unexpected(message: "No SPC data with nil error"))
                 }
             }
         }
