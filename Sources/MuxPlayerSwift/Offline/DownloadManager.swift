@@ -92,7 +92,7 @@ actor DownloadManager {
         downloadOptions: DownloadOptions,
         playbackOptions: PlaybackOptions
     ) async -> AnyPublisher<DownloadEvent, Error> {
-        print("--- URL I'm Downloading: \(avAsset.url)")
+        logger.trace("Downloading: \(avAsset.url)")
         
         // If we already have a completed asset, return it. Caller can use it, or if it's not playable, they can explicitly delete
         let alreadyCompletedAsset = await findDownloadedAsset(playbackID: playbackID)
