@@ -145,7 +145,12 @@ class DefaultFairPlayStreamingSessionManager<
     
     private func offlineDRMConfigOnQueue(for playbackID: String) async -> DRMConfig? {
         return await withCheckedContinuation { continuation in
-            queue.async { [offlineDownloadKeyLookup] in
+            queue.async { [logger, weak self] in
+                guard let self else {
+                    logger.warning("looked up offline DRMConfig after cleanup")
+                    continuation.resume(returning: nil)
+                    return
+                }
                 continuation.resume(returning: offlineDownloadKeyLookup[playbackID])
             }
         }
