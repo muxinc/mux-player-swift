@@ -11,6 +11,7 @@ import AVFoundation
 
 /// Mock ``KeyRequest`` with some basic recording & verification
 class MockKeyRequest : KeyRequest {
+    
     // our fake 'request' just records calls and args
     typealias InnerRequest = [(String, [Any?])]
     
@@ -57,7 +58,7 @@ class MockKeyRequest : KeyRequest {
     }
     
     func respondByRequestingPersistableContentKeyRequestOnAnyOS() throws {
-        fakeRequest.append(("respondByPersistableContentKeyRequestOnAnyOS", nil))
+        fakeRequest.append(("respondByPersistableContentKeyRequestOnAnyOS", []))
     }
     
     func persistableContentKey(fromKeyVendorResponse ckcData: Data, options: [String : Any]) {
@@ -65,6 +66,18 @@ class MockKeyRequest : KeyRequest {
         fakeRequest.append(("respondByPersistableContentKeyRequestOnAnyOS", args))
     }
     
+    func makeStreamingContentKeyRequestData(forApp appIdentifier: Data, contentIdentifier: Data?, options: [String : Any]?) async throws -> Data {
+        let args: [Any?] = [appIdentifier, contentIdentifier, options]
+        fakeRequest.append((#function, args))
+        return Data()
+    }
+    
+    func persistableContentKey(fromKeyVendorResponse: Data, options: [String : Any]?) throws -> Data {
+        let args: [Any?] = [fromKeyVendorResponse, options]
+        fakeRequest.append((#function, args))
+        return Data()
+    }
+
     // MARK: verificaitons
     
     /// Verifies that the given method was called the given number of times

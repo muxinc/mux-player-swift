@@ -141,7 +141,7 @@ class ContentKeySessionDelegateTests : XCTestCase {
             fakeIdentifier: makeFakeSkdUrl(fakePlaybackID: "fake-playback")
         )
         
-        contentKeySessionDelegate.handleSpcObtainedFromCDM(
+        contentKeySessionDelegate.handleSpcObtainedFromCDMForOnlineKey(
             spcData: "fake-spc-data".data(using: .utf8)!,
             playbackID: "fake-playback",
             request: mockRequest
@@ -169,7 +169,7 @@ class ContentKeySessionDelegateTests : XCTestCase {
             options: .init(playbackToken: "playback-token", drmToken: "drm-token"),
             rootDomain: "example.com")
 
-        contentKeySessionDelegate.handleSpcObtainedFromCDM(
+        contentKeySessionDelegate.handleSpcObtainedFromCDMForOnlineKey(
             spcData: "fake-spc-data".data(using: .utf8)!,
             playbackID: "fake-playback",
             request: mockRequest

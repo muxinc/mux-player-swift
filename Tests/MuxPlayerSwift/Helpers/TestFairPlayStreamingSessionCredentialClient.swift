@@ -14,6 +14,14 @@ import os
 /// sucess or failure as-configured
 class TestFairPlayStreamingSessionCredentialClient: FairPlayStreamingSessionCredentialClient {
     
+    func requestCertificate(playbackID: String) async throws -> Data {
+        return Data()
+    }
+    
+    func requestLicence(spcData: Data, playbackID: String) async throws -> Data {
+        return Data()
+    }
+    
     private let fakeCert: Data?
     private let fakeLicense: Data?
     private let failsWith: FairPlaySessionError!

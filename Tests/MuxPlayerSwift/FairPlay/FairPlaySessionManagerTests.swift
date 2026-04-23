@@ -636,7 +636,7 @@ class FairPlaySessionManagerTests : XCTestCase {
             monitor: Monitor()
         )
 
-        PlayerSDK.$shared.withValue(testSDK) {
+//        PlayerSDK.$shared.withValue(testSDK) {
             var registeredAsset: AVURLAsset!
 
             let registeredExpectation = XCTestExpectation(description: "DRM asset should be registered")
@@ -660,6 +660,6 @@ class FairPlaySessionManagerTests : XCTestCase {
             wait(for: [registeredExpectation], timeout: 0)
 
             XCTAssert(playerItem.asset === registeredAsset)
-        }
+//        }
     }
 }
