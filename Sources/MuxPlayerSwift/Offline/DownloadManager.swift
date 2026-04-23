@@ -200,6 +200,7 @@ actor DownloadManager {
         
         logger.info("Saved CKC to file at: \(newCkcFileURL.absoluteString)")
         
+        PlayerSDK.shared.fairPlaySessionManager.removeOfflineDownloadSession(playbackID: playbackID)
     }
     
     func updateExpirationPhase(playbackID: String, phase: ExpirationPhase) async {
@@ -446,8 +447,6 @@ actor DownloadManager {
             logger.debug("[Mux-Offline] Ignoring stale error callback for playbackID \(playbackID), task id=\(task.taskIdentifier)")
             return
         }
-        
-        PlayerSDK.shared.fairPlaySessionManager.removeOfflineDownloadSession(playbackID: playbackID)
 
         // Ensure localPath is set even if willDownloadTo's Task hasn't
         // run yet (actor task scheduling is not FIFO)
