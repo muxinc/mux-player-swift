@@ -183,7 +183,7 @@ actor DownloadManager {
         
         // Clean up old file if it exists
         if let existingFile = asset.ckcFilePath {
-            let existingURL = URL(fileURLWithPath: existingFile, relativeTo: URL(fileURLWithPath: NSHomeDirectory()))
+            let existingURL = try persistentKeyFile(playbackID: playbackID, identifier: identifier)
             do {
                 try FileManager.default.removeItem(at: existingURL)
             } catch {
@@ -191,19 +191,20 @@ actor DownloadManager {
             }
         }
         
-        let newCkcFileURL = try persistentKeyFile(playbackID: playbackID, identifier: identifier)
-        logger.info("Saving CKC to file at (relative): \(newCkcFileURL.relativePath)")
-        
-        // update index first. Better to have blank entries here than orphaned files on disk
-        await index.updateCKCFileURL(playbackID: playbackID, ckcFilePath: newCkcFileURL.relativePath)
-        
         try FileManager.default.createDirectory(
             at: DownloadIndex.persistenKeyDirectory(),
             withIntermediateDirectories: true
         )
+        
+        let newCkcFileURL = try persistentKeyFile(playbackID: playbackID, identifier: identifier)
+        logger.info("Saving CKC to file at: \(newCkcFileURL.relativePath)")
+        
+        // update index first. Better to have blank entries here than orphaned files on disk
+        await index.updateCKCFileURL(playbackID: playbackID, ckcFilePath: newCkcFileURL.relativePath)
+        
         try contentKeyData.write(to: newCkcFileURL)
         
-        logger.info("Saved CKC to file at (relative): \(newCkcFileURL.relativePath)")
+        logger.info("Saved CKC to file at: \(newCkcFileURL.absoluteString)")
         
     }
     
