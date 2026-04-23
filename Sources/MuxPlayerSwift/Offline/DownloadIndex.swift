@@ -25,15 +25,18 @@ actor DownloadIndex {
         let assets: [String: StoredAsset]
     }
 
-    private var assets: [String: StoredAsset] = [:]
+    private var assets: [String: StoredAsset]
 
     init() {
         do {
-            if let snapshot = try loadSnapshot() {
+            if let snapshot = try Self.loadSnapshot() {
                 assets = snapshot.assets
+            } else {
+                assets = [:]
             }
         } catch {
             logger.error("[Mux-Offline] DownloadIndex init load error: \(error.localizedDescription)")
+            assets = [:]
         }
     }
 
@@ -226,7 +229,7 @@ actor DownloadIndex {
         }
     }
 
-    private func indexDirectoryURL() throws -> URL {
+    private static func indexDirectoryURL() throws -> URL {
         let fm = FileManager.default
         let base = try fm.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
         let dir = base.appendingPathComponent("com.mux.offline", isDirectory: true)
@@ -238,13 +241,12 @@ actor DownloadIndex {
         do {
             try mutableDir.setResourceValues(values)
         } catch {
-            // not generally an error condition. if the index is restored, callers will see .mustRedownload for all entries. not the end of the world
-            logger.warning("[Mux-Offline] failed to exclude \(mutableDir) from backup. continuing anyway")
+            PlayerSDK.shared.diagnosticsLogger.trace("Couldn't exclude index from backup: \(error)")
         }
         return dir
     }
 
-    private func indexFileURL() throws -> URL {
+    private static func indexFileURL() throws -> URL {
         try indexDirectoryURL().appendingPathComponent("index.plist", isDirectory: false)
     }
 
@@ -253,7 +255,7 @@ actor DownloadIndex {
         encoder.outputFormat = .binary
         let data = try encoder.encode(snapshot)
 
-        let url = try indexFileURL()
+        let url = try Self.indexFileURL()
         let tmp = url.deletingLastPathComponent().appendingPathComponent(UUID().uuidString)
         try data.write(to: tmp, options: .atomic)
         do {
@@ -263,7 +265,7 @@ actor DownloadIndex {
         }
     }
 
-    private func loadSnapshot() throws -> IndexSnapshot? {
+    private static func loadSnapshot() throws -> IndexSnapshot? {
         let url = try indexFileURL()
         guard FileManager.default.fileExists(atPath: url.path) else { return nil }
         let data = try Data(contentsOf: url)
