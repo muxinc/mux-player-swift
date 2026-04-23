@@ -229,7 +229,7 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
         }
         
         // If we already have a persisted content key, use it (this is the offline playback path)
-        if let persistedContentKey = await try downloadManager.findPeristedContentKey(playbackID: playbackID) {
+        if let persistedContentKey = await try downloadManager.findPersistedContentKey(playbackID: playbackID) {
             // Transition to playDuration-based expiration on first offline playback
             await downloadManager.updateExpirationPhase(playbackID: playbackID, phase: .playDuration)
             request.processContentKeyResponse(AVContentKeyResponse(fairPlayStreamingKeyResponseData: persistedContentKey))

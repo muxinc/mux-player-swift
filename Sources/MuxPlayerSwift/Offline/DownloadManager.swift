@@ -85,6 +85,7 @@ actor DownloadManager {
         }
     }
     
+    /// Starts a new Download Task. If there was already a task in progress for this playbackID,
     /// tracks that task's progress instead of starting a new one.
     func startDownloadWithPublisher(
         playbackID: String,
@@ -152,14 +153,14 @@ actor DownloadManager {
     }
     
     /// If an asset is stored in the index (completed or not), and it has a persisted content key, returns it
-    func findPeristedContentKey(playbackID: String) async throws -> Data? {
+    func findPersistedContentKey(playbackID: String) async throws -> Data? {
         guard let storedAsset = await index.get(playbackID: playbackID),
               let localFile = storedAsset.ckcFilePath
         else {
             return nil
         }
         
-        let ckcFileDir = try DownloadIndex.persistenKeyDirectory()
+        let ckcFileDir = try DownloadIndex.persistentKeyDirectory()
         let fileURL = URL(fileURLWithPath: localFile, relativeTo: ckcFileDir)
         guard assetFileExists(at: fileURL) else {
             logger.warning("CKC file doesn't exist for \(playbackID) at \(fileURL.absoluteString)")
@@ -168,7 +169,6 @@ actor DownloadManager {
         return FileManager.default.contents(atPath: fileURL.path)
     }
     
-    /// Starts a new Download Task. If there was already a task in progress for this playbackID,
     func savePersistedContentKey(playbackID: String, identifier: String, contentKeyData: Data) async throws {
         guard let asset = await index.get(playbackID: playbackID) else {
             logger.warning("[Mux-Offline] tried to save persistent key for non-indexed playbackID: \(playbackID)")
@@ -176,7 +176,7 @@ actor DownloadManager {
         }
         
         try FileManager.default.createDirectory(
-            at: DownloadIndex.persistenKeyDirectory(),
+            at: DownloadIndex.persistentKeyDirectory(),
             withIntermediateDirectories: true
         )
 
@@ -288,7 +288,7 @@ actor DownloadManager {
     private func addDRMInfoTo(_ urlAsset: AVURLAsset, playbackID: String) async {
         let persistedContentKey: Data?
         do {
-            persistedContentKey = await try findPeristedContentKey(playbackID: playbackID)
+            persistedContentKey = await try findPersistedContentKey(playbackID: playbackID)
         } catch {
             logger.warning("Couldn't find persisted content key for \(playbackID): \(error)")
             return
@@ -309,12 +309,12 @@ actor DownloadManager {
             .replacingOccurrences(of: "/", with: "_")
             .replacingOccurrences(of: "=", with: "")
         guard let sanitizedIdentifier else {
-            throw FairPlaySessionError.unexpected(message: "Failed to santiize key identifier [\(identifier)]")
+            throw FairPlaySessionError.unexpected(message: "Failed to sanitize key identifier [\(identifier)]")
         }
         
         let sanitizedName = "\(playbackID)-\(sanitizedIdentifier)"
         let fileName = "\(sanitizedName).key"
-        let directoryURL = try DownloadIndex.persistenKeyDirectory()
+        let directoryURL = try DownloadIndex.persistentKeyDirectory()
         return URL(fileURLWithPath: fileName, relativeTo: directoryURL)
     }
     

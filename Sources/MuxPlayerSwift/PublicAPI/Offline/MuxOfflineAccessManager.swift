@@ -90,7 +90,7 @@ public class MuxOfflineAccessManager {
         return await manager.allCompletedAssets()
     }
     
-    public init() {
+    private init() {
         PlayerSDK.shared.diagnosticsLogger.info("initializing MuxOfflineAccessManager")
     }
 }

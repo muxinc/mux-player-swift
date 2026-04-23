@@ -75,7 +75,7 @@ actor DownloadIndex {
             // Delete CKC sidecar if any
             if let ckcFilePath = stored.ckcFilePath {
                 do {
-                    let ckcDir = try Self.persistenKeyDirectory()
+                    let ckcDir = try Self.persistentKeyDirectory()
                     let ckcFile = URL(fileURLWithPath: ckcFilePath, relativeTo: ckcDir)
                     try fm.removeItem(at: ckcFile)
                 } catch {
@@ -201,7 +201,7 @@ actor DownloadIndex {
         return updated
     }
     
-    public static func persistenKeyDirectory() throws -> URL {
+    public static func persistentKeyDirectory() throws -> URL {
         let baseURL = try FileManager.default.url(
             for: .libraryDirectory,
             in: .userDomainMask,
