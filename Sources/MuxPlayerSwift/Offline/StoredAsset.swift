@@ -31,8 +31,8 @@ struct StoredAsset: Codable {
     let redownloadExpiration: Date?
 
     // DRM expiration fields
-    /// When the asset was first downloaded (license creation time)
-    let downloadedAt: Date?
+    /// The start time for computing license expiration
+    let expireLicenseFrom: Date?
     /// Which expiration period applies
     let expirationPhase: ExpirationPhase?
     /// Seconds from license creation until expiration (from JWT licenseExpiration claim)
@@ -41,7 +41,7 @@ struct StoredAsset: Codable {
     let playDurationDuration: TimeInterval?
 
     func isExpired(at now: Date = Date()) -> Bool {
-        guard let downloadedAt else { return false }
+        guard let expireLicenseFrom else { return false }
 
         let duration: TimeInterval?
         switch expirationPhase {
@@ -54,7 +54,7 @@ struct StoredAsset: Codable {
         }
 
         guard let duration else { return false }
-        return now > downloadedAt.addingTimeInterval(duration)
+        return now > expireLicenseFrom.addingTimeInterval(duration)
     }
 }
 
@@ -76,7 +76,7 @@ extension StoredAsset {
             secondaryAudioLanguages: options.secondaryAudioLanguages,
             ckcFilePath: nil,
             redownloadExpiration: nil,
-            downloadedAt: hasDRM ? Date() : nil,
+            expireLicenseFrom: hasDRM ? Date() : nil,
             expirationPhase: hasDRM ? .licenseExpiration : nil,
             licenseExpirationDuration: drmClaims?.licenseExpiration,
             playDurationDuration: drmClaims?.playDuration

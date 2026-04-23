@@ -109,7 +109,7 @@ actor DownloadIndex {
             secondaryAudioLanguages: existing.secondaryAudioLanguages,
             ckcFilePath: existing.ckcFilePath,
             redownloadExpiration: existing.redownloadExpiration,
-            downloadedAt: existing.downloadedAt,
+            expireLicenseFrom: existing.expireLicenseFrom,
             expirationPhase: existing.expirationPhase,
             licenseExpirationDuration: existing.licenseExpirationDuration,
             playDurationDuration: existing.playDurationDuration
@@ -137,7 +137,7 @@ actor DownloadIndex {
             secondaryAudioLanguages: existing.secondaryAudioLanguages,
             ckcFilePath: ckcFilePath,
             redownloadExpiration: existing.redownloadExpiration,
-            downloadedAt: existing.downloadedAt,
+            expireLicenseFrom: existing.expireLicenseFrom,
             expirationPhase: existing.expirationPhase,
             licenseExpirationDuration: existing.licenseExpirationDuration,
             playDurationDuration: existing.playDurationDuration
@@ -165,7 +165,7 @@ actor DownloadIndex {
             secondaryAudioLanguages: existing.secondaryAudioLanguages,
             ckcFilePath: existing.ckcFilePath,
             redownloadExpiration: existing.redownloadExpiration,
-            downloadedAt: existing.downloadedAt,
+            expireLicenseFrom: existing.expireLicenseFrom,
             expirationPhase: existing.expirationPhase,
             licenseExpirationDuration: existing.licenseExpirationDuration,
             playDurationDuration: existing.playDurationDuration
@@ -191,7 +191,7 @@ actor DownloadIndex {
             secondaryAudioLanguages: existing.secondaryAudioLanguages,
             ckcFilePath: existing.ckcFilePath,
             redownloadExpiration: existing.redownloadExpiration,
-            downloadedAt: existing.downloadedAt,
+            expireLicenseFrom: Date(),
             expirationPhase: phase,
             licenseExpirationDuration: existing.licenseExpirationDuration,
             playDurationDuration: existing.playDurationDuration
