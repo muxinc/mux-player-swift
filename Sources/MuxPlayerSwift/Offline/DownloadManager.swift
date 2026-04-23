@@ -128,11 +128,7 @@ actor DownloadManager {
         
         // Adds the asset as a ContentKeyRecipient, if it's DRM-protected
         if case .drm(let drmOptions) = playbackOptions.playbackPolicy {
-            // this has to run on the main thread (on debug builds) because PlayerSDK.shared is TaskLocal and will crash if created in a BG thread
-            //  (begging the question, does making PlayerSDK.shared task-local have any real impact?)
-            await MainActor.run {
-                PlayerSDK.shared.registerOfflineDRMAsset(avAsset, playbackID: playbackID, playbackOptions: playbackOptions)
-            }
+            PlayerSDK.shared.registerOfflineDRMAsset(avAsset, playbackID: playbackID, playbackOptions: playbackOptions)
         }
         
         // start the task now that we're set up
@@ -146,9 +142,7 @@ actor DownloadManager {
         
         if let task = downloadTasksByPlaybackID[playbackID] {
             task.cancel()
-            await MainActor.run {
-                PlayerSDK.shared.fairPlaySessionManager.removeOfflineDownloadSession(playbackID: playbackID)
-            }
+            PlayerSDK.shared.fairPlaySessionManager.removeOfflineDownloadSession(playbackID: playbackID)
             
             downloadTasksByPlaybackID[playbackID] = nil
             // will also clear the subject, to avoid saving stale state
@@ -181,6 +175,11 @@ actor DownloadManager {
             return
         }
         
+        try FileManager.default.createDirectory(
+            at: DownloadIndex.persistenKeyDirectory(),
+            withIntermediateDirectories: true
+        )
+
         // Clean up old file if it exists
         if let existingFile = asset.ckcFilePath {
             let existingURL = try persistentKeyFile(playbackID: playbackID, identifier: identifier)
@@ -190,11 +189,6 @@ actor DownloadManager {
                 logger.trace("Failed to delete existing CKC file (probably didn't exist): \(error)")
             }
         }
-        
-        try FileManager.default.createDirectory(
-            at: DownloadIndex.persistenKeyDirectory(),
-            withIntermediateDirectories: true
-        )
         
         let newCkcFileURL = try persistentKeyFile(playbackID: playbackID, identifier: identifier)
         logger.info("Saving CKC to file at: \(newCkcFileURL.relativePath)")
@@ -300,7 +294,6 @@ actor DownloadManager {
         }
         // We are only sending to the main actor so we know this will be safe
         if let persistedContentKey {
-            // We only need MainActor because PlayerSDK.shared is TaskLocal on debug
             await PlayerSDK.shared.fairPlaySessionManager.addOfflinePlayDRMAsset(
                 urlAsset,
                 playbackID: playbackID,
@@ -423,9 +416,7 @@ actor DownloadManager {
         await index.updateIsComplete(playbackID: playbackID, isComplete: true, completeWithError: true)
         // Once a task errors, we can't resume where we left off, so just delete any partially-downloaded data
         await index.deleteDownloadedFiles(playbackID: playbackID, removeFromIndex: false)
-        await MainActor.run {
-            PlayerSDK.shared.fairPlaySessionManager.removeOfflineDownloadSession(playbackID: playbackID)
-        }
+        PlayerSDK.shared.fairPlaySessionManager.removeOfflineDownloadSession(playbackID: playbackID)
         
         // do these after the awaits, so callers that call startDownload to handle errors actually start one
         sendError(error, for: playbackID)
@@ -456,9 +447,7 @@ actor DownloadManager {
             return
         }
         
-        await MainActor.run {
-            PlayerSDK.shared.fairPlaySessionManager.removeOfflineDownloadSession(playbackID: playbackID)
-        }
+        PlayerSDK.shared.fairPlaySessionManager.removeOfflineDownloadSession(playbackID: playbackID)
 
         // Ensure localPath is set even if willDownloadTo's Task hasn't
         // run yet (actor task scheduling is not FIFO)
