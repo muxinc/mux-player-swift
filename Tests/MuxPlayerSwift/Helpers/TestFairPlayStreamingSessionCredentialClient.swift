@@ -13,15 +13,7 @@ import os
 /// This version does not interact with the network at all, it just signals
 /// sucess or failure as-configured
 class TestFairPlayStreamingSessionCredentialClient: FairPlayStreamingSessionCredentialClient {
-    
-    func requestCertificate(playbackID: String) async throws -> Data {
-        return Data()
-    }
-    
-    func requestLicence(spcData: Data, playbackID: String) async throws -> Data {
-        return Data()
-    }
-    
+
     private let fakeCert: Data?
     private let fakeLicense: Data?
     private let failsWith: FairPlaySessionError!
@@ -33,19 +25,19 @@ class TestFairPlayStreamingSessionCredentialClient: FairPlayStreamingSessionCred
         )
     )
 
-    func requestCertificate(playbackID: String, completion requestCompletion: @escaping (Result<Data, FairPlaySessionError>) -> Void) {
+    func requestCertificate(playbackID: String, online: Bool) async throws -> Data {
         if let fakeCert = fakeCert {
-            requestCompletion(Result.success(fakeCert))
+            return fakeCert
         } else {
-            requestCompletion(Result.failure(failsWith))
+            throw failsWith
         }
     }
-    
-    func requestLicense(spcData: Data, playbackID: String, offline _: Bool, completion requestCompletion: @escaping (Result<Data, FairPlaySessionError>) -> Void) {
+
+    func requestLicense(spcData: Data, playbackID: String, online: Bool) async throws -> Data {
         if let fakeLicense = fakeLicense {
-            requestCompletion(Result.success(fakeLicense))
+            return fakeLicense
         } else {
-            requestCompletion(Result.failure(failsWith))
+            throw failsWith
         }
     }
     

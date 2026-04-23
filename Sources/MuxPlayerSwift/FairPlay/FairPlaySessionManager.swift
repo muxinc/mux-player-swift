@@ -18,23 +18,11 @@ protocol FairPlayStreamingSessionCredentialClient: AnyObject {
     // MARK: Requesting licenses and certs
 
     // Requests the App Certificate for a playback id
-    func requestCertificate(
-        playbackID: String,
-        completion requestCompletion: @escaping (Result<Data, FairPlaySessionError>) -> Void
-    )
+    func requestCertificate(playbackID: String, online: Bool) async throws -> Data
+    
     // Requests a license to play based on the given SPC data
-    // - parameter offline - Not currently used, may not ever be used in short-term, maybe delete?
-    func requestLicense(
-        spcData: Data,
-        playbackID: String,
-        offline _: Bool,
-        completion requestCompletion: @escaping (Result<Data, FairPlaySessionError>) -> Void
-    )
+    func requestLicense(spcData: Data, playbackID: String, online: Bool) async throws -> Data
     
-    func requestCertificate(playbackID: String) async throws -> Data
-    
-    func requestLicence(spcData: Data, playbackID: String) async throws -> Data
-
     var logger: Logger { get set }
 }
 
@@ -156,98 +144,53 @@ class DefaultFairPlayStreamingSessionManager<
         }
     }
     
+    private func onlineDRMConfigOnQueue(for playbackID: String) async -> DRMConfig? {
+        return await withCheckedContinuation { continuation in
+            queue.async { [logger, weak self] in
+                guard let self else {
+                    logger.warning("looked up online DRMConfig after cleanup")
+                    continuation.resume(returning: nil)
+                    return
+                }
+                continuation.resume(returning: onlineKeyConfigLookup[playbackID])
+            }
+        }
+    }
+    
     // MARK: Requesting licenses and certs
     
-    func requestCertificate(playbackID: String) async throws -> Data {
-        guard let config = await offlineDRMConfigOnQueue(for: playbackID) else {
+    func requestCertificate(playbackID: String, online: Bool) async throws -> Data {
+        guard let config = await lookUpDRMConfig(playbackID: playbackID, online: online) else {
+            throw FairPlaySessionError.unexpected(message: "No DRM config tracked for playbackID: \(playbackID)")
+        }
+        return try await self.requestCertificateInner(playbackID: playbackID, drmConfig: config)
+    }
+    
+    func requestLicense(spcData: Data, playbackID: String, online: Bool) async throws -> Data {
+        guard let config = await lookUpDRMConfig(playbackID: playbackID, online: online) else {
             throw FairPlaySessionError.unexpected(message: "No DRM config tracked for playbackID: \(playbackID)")
         }
         
-        // TODO: (future maintenance) request should be async by default, not completion handlers by default
-        return try await withCheckedThrowingContinuation { [weak self] continuation in
-            guard let self = self else {
-                continuation.resume(throwing:
-                    FairPlaySessionError.unexpected(message: "SessionManager terminated while fetching app cert")
-                )
-                return
-            }
-            
-            self.requestCertificateInner(playbackID: playbackID, drmConfig: config) { continuation.resume(with: $0) }
-        }
+        return try await self.requestLicenseInner(
+            spcData: spcData,
+            playbackID: playbackID,
+            drmConfig: config
+        )
     }
     
-    func requestLicence(spcData: Data, playbackID: String) async throws -> Data {
-        guard let config = await offlineDRMConfigOnQueue(for: playbackID) else {
-            throw FairPlaySessionError.unexpected(message: "No DRM config tracked for playbackID: \(playbackID)")
+    private func lookUpDRMConfig(playbackID: String, online: Bool) async -> DRMConfig? {
+        if online {
+            return await onlineDRMConfigOnQueue(for: playbackID)
+        } else {
+            return await offlineDRMConfigOnQueue(for: playbackID)
         }
-        
-        // TODO: (future maintenance) request should be async by default, not completion handlers by default
-        return try await withCheckedThrowingContinuation { [weak self] continuation in
-            guard let self else {
-                continuation.resume(throwing:
-                    FairPlaySessionError.unexpected(message: "SessionManager terminated while fetching license")
-                )
-                return
-            }
-            
-            self.requestLicenseInner(
-                spcData: spcData,
-                playbackID: playbackID,
-                drmConfig: config
-            ) { continuation.resume(with: $0) }
-        }
-    }
-    
-    func requestCertificate(
-        playbackID: String,
-        completion requestCompletion: @escaping (Result<Data, FairPlaySessionError>) -> Void
-    ) {
-        guard let config = onlineKeyConfigLookup[playbackID] else {
-            logger.debug(
-                "No registered DRM configuration for playbackID \(playbackID)."
-            )
-            requestCompletion(
-                .failure(
-                    FairPlaySessionError.unexpected(
-                        message: "No registered DRM configuration for playbackID \(playbackID)"
-                    )
-                )
-            )
-            return
-        }
-        
-        requestCertificateInner(playbackID: playbackID, drmConfig: config, completion: requestCompletion)
-    }
-
-    func requestLicense(
-        spcData: Data,
-        playbackID: String,
-        offline: Bool,
-        completion requestCompletion: @escaping (Result<Data, FairPlaySessionError>) -> Void
-    ) {
-        guard let config = onlineKeyConfigLookup[playbackID] else {
-            logger.debug(
-                "No registered DRM configuration for playbackID \(playbackID)."
-            )
-            requestCompletion(
-                .failure(
-                    FairPlaySessionError.unexpected(
-                        message: "No registered DRM configuration for playbackID \(playbackID)"
-                    )
-                )
-            )
-            return
-        }
-        
-        requestLicenseInner(spcData: spcData, playbackID: playbackID, drmConfig: config, completion: requestCompletion)
     }
     
     /// Requests the App Certificate for a playback id
     private func requestCertificateInner(
         playbackID: String,
-        drmConfig config: DRMConfig,
-        completion requestCompletion: @escaping (Result<Data, FairPlaySessionError>) -> Void
-    ) {
+        drmConfig config: DRMConfig
+    ) async throws -> Data {
         let rootDomain = config.rootDomain
         let drmToken = config.options.drmToken
 
@@ -262,16 +205,11 @@ class DefaultFairPlayStreamingSessionManager<
             let error = FairPlaySessionError.unexpected(
                 message: "Invalid certificate domain"
             )
-            requestCompletion(
-                Result.failure(
-                    error
-                )
-            )
+            throw error
             errorDispatcher.dispatchApplicationCertificateRequestError(
                 error: error,
                 playbackID: playbackID
             )
-            return
         }
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
@@ -279,102 +217,81 @@ class DefaultFairPlayStreamingSessionManager<
         logger.debug(
             "Requesting application certificate from \(url, privacy: .auto(mask: .hash))"
         )
-
-        let dataTask = urlSession.dataTask(with: request) { [requestCompletion] data, response, error in
+        
+        do {
+            let (data, response) = try await urlSession.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse else {
+                // probs not a reasonable case
+                throw FairPlaySessionError.unexpected(message: "certificate data response was not HTTP response")
+            }
+            
+            let responseCode = httpResponse.statusCode
             self.logger.debug(
-                "Application certificate request completed"
+                "Application certificate response code: \(httpResponse.statusCode)"
+            )
+            self.logger.debug(
+                "Application certificate response headers: \(httpResponse.allHeaderFields, privacy: .auto(mask: .hash))"
             )
 
-            var responseCode: Int? = nil
-            if let httpResponse = response as? HTTPURLResponse {
-                responseCode = httpResponse.statusCode
-                self.logger.debug(
-                    "Application certificate response code: \(httpResponse.statusCode)"
-                )
-                self.logger.debug(
-                    "Application certificate response headers: \(httpResponse.allHeaderFields, privacy: .auto(mask: .hash))"
-                )
-                if let data, let utfData = String(
-                    data: data,
-                    encoding: .utf8
-                ) {
-                    self.logger.debug(
-                        "Application certificate data: \(utfData)"
-                    )
-                }
-
-            }
-            // error case: I/O failed
-            if let error = error {
-                self.logger.debug(
-                    "Application certificate request failed with error: \(error.localizedDescription)"
-                )
-                let error = FairPlaySessionError.because(cause: error)
-                requestCompletion(Result.failure(
-                    error
-                ))
-                self.errorDispatcher.dispatchApplicationCertificateRequestError(
-                    error: error,
-                    playbackID: playbackID
-                )
-                return
-            }
             // error case: I/O finished with non-successful response
             guard responseCode == 200 else {
                 self.logger.debug(
                     "Application certificate request failed with response code: \(String(describing: responseCode))"
                 )
+                
+                // Error response should have worthwhile info
+                if let utfData = String(data: data, encoding: .utf8) {
+                    self.logger.debug("Application certificate error response: \(utfData)")
+                }
+                
                 let error = FairPlaySessionError.httpFailed(
                     responseStatusCode: responseCode ?? 0
                 )
-                requestCompletion(
-                    Result.failure(
-                        error
-                    )
-                )
                 self.errorDispatcher.dispatchApplicationCertificateRequestError(
                     error: error,
                     playbackID: playbackID
                 )
-                return
-            }
-            // this edge case (200 with invalid data) is possible from our DRM vendor
-            guard let data = data,
-                  data.count > 0 else {
-                let error = FairPlaySessionError.unexpected(
-                    message: "No cert data with 200 OK response"
-                )
-                self.logger.debug(
-                    "Application certificate request completed with missing data and response code \(responseCode.debugDescription)"
-                )
-                requestCompletion(
-                    Result.failure(
-                        error
-                    )
-                )
-                self.errorDispatcher.dispatchApplicationCertificateRequestError(
-                    error: error,
-                    playbackID: playbackID
-                )
-                return
+                throw error
             }
             
-            self.logger.debug("Application certificate response data:\(data.base64EncodedString(), privacy: .auto(mask: .hash))")
-
-            requestCompletion(Result.success(data))
+            // this edge case (200 with invalid data) is possible from our DRM vendor
+            guard data.count > 0 else {
+                let error = FairPlaySessionError.unexpected(message: "No cert data with 200 OK response")
+                self.logger.debug(
+                    "Application certificate request completed with missing data and response code \(responseCode)"
+                )
+                self.errorDispatcher.dispatchApplicationCertificateRequestError(
+                    error: error,
+                    playbackID: playbackID
+                )
+                throw error
+            }
+            
+            // success!!
+            self.logger.debug("Application certificate bytes: \(data.base64EncodedString())")
+            return data
+        } catch let error as FairPlaySessionError {
+            throw error
+        } catch {
+            self.logger.debug(
+                "Application certificate request failed with error: \(error.localizedDescription)"
+            )
+            let error = FairPlaySessionError.because(cause: error)
+            self.errorDispatcher.dispatchApplicationCertificateRequestError(
+                error: error,
+                playbackID: playbackID
+            )
+            throw error
         }
-        
-        dataTask.resume()
     }
-    
+
     /// Requests a license to play based on the given SPC data
     /// - parameter offline - Not currently used, may not ever be used in short-term, maybe delete?
     private func requestLicenseInner(
         spcData: Data,
         playbackID: String,
-        drmConfig config: DRMConfig,
-        completion requestCompletion: @escaping (Result<Data, FairPlaySessionError>) -> Void
-    ) {
+        drmConfig config: DRMConfig
+    ) async throws -> Data {
 
         let drmToken = config.options.drmToken
         let rootDomain = config.rootDomain
@@ -387,16 +304,11 @@ class DefaultFairPlayStreamingSessionManager<
             let error = FairPlaySessionError.unexpected(
                 message: "Invalid FairPlay license domain"
             )
-            requestCompletion(
-                Result.failure(
-                    error
-                )
-            )
             errorDispatcher.dispatchLicenseRequestError(
                 error: error,
                 playbackID: playbackID
             )
-            return
+            throw error
         }
 
         var request = URLRequest(url: url)
@@ -410,76 +322,60 @@ class DefaultFairPlayStreamingSessionManager<
         request.setValue(String(format: "%lu", request.httpBody?.count ?? 0), forHTTPHeaderField: "Content-Length")
         logger.debug("Sending License/CKC Request to: \(request.url?.absoluteString ?? "nil")")
         logger.debug("\t with header fields: \(String(describing: request.allHTTPHeaderFields))")
-
-        let task = urlSession.dataTask(with: request) { [requestCompletion] data, response, error in
-            // error case: I/O failed
-            if let error = error {
-                self.logger.debug(
-                    "URL Session Task Failed: \(error.localizedDescription)"
-                )
-                let error = FairPlaySessionError.because(cause: error)
-                requestCompletion(Result.failure(
-                    error
-                ))
+        
+        do {
+            let (data, response) = try await urlSession.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse else {
+                // probs not a real case
+                throw FairPlaySessionError.unexpected(message: "license data response was not HTTP response")
+            }
+            let responseCode = httpResponse.statusCode
+            
+            // Server errors
+            guard responseCode == 200 else {
+                self.logger.error("CKC request failed: \(String(describing: responseCode))")
+                if let errorBody = String(data: data, encoding: .utf8) {
+                    self.logger.error("\t with body: \(errorBody)")
+                }
+                
+                let error = FairPlaySessionError.httpFailed(responseStatusCode: responseCode ?? 0)
                 self.errorDispatcher.dispatchLicenseRequestError(
                     error: error,
                     playbackID: playbackID
                 )
-                return
+                throw error
             }
             
-            var responseCode: Int? = nil
-            if let httpResponse = response as? HTTPURLResponse {
-                responseCode = httpResponse.statusCode
-                self.logger.debug(
-                    "License response code: \(httpResponse.statusCode)"
-                )
-                self.logger.debug(
-                    "License response headers: \(httpResponse.allHeaderFields, privacy: .auto(mask: .hash))"
-                )
-            }
-            // error case: I/O finished with non-successful response
-            guard responseCode == 200 else {
-                self.logger.debug(
-                    "CKC request failed: \(String(describing: responseCode))"
-                )
-                let error = FairPlaySessionError.httpFailed(
-                    responseStatusCode: responseCode ?? 0
-                )
-                requestCompletion(Result.failure(
-                    error
-                ))
-                self.errorDispatcher.dispatchLicenseRequestError(
-                    error: error,
-                    playbackID: playbackID
-                )
-
-                return
-            }
             // strange edge case: 200 with no response body
             //  this happened because of a client-side encoding difference causing an error
             //  with our drm vendor and probably shouldn't be reachable, but lets not crash
-            guard let data = data,
-                  data.count > 0
-            else {
+            guard data.count > 0 else {
                 let error = FairPlaySessionError.unexpected(message: "No license data with 200 response")
                 self.logger.debug("No CKC data despite server returning success")
-                requestCompletion(Result.failure(
-                    error
-                ))
                 self.errorDispatcher.dispatchLicenseRequestError(
                     error: error,
                     playbackID: playbackID
                 )
-                return
+                throw error
             }
             
-            let ckcData = data
-            requestCompletion(Result.success(ckcData))
+            // success!
+            self.logger.debug("License/CKC Data: \(data.base64EncodedString())")
+            return data
+            
+        } catch let error as FairPlaySessionError {
+            throw error
+        } catch {
+            self.logger.debug("URL Session Task Failed: \(error.localizedDescription)")
+            let error = FairPlaySessionError.because(cause: error)
+            self.errorDispatcher.dispatchLicenseRequestError(
+                error: error,
+                playbackID: playbackID
+            )
+            throw error
         }
-        task.resume()
     }
-    
+
     // MARK: registering assets
 
     // may be called from anywhere, playback must be possible by the time this function exits
