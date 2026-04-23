@@ -36,9 +36,9 @@ struct StoredAsset: Codable {
     /// Which expiration period applies
     let expirationPhase: ExpirationPhase?
     /// Seconds from license creation until expiration (from JWT licenseExpiration claim)
-    let licenseExpirationDuration: TimeInterval?
+    let licenseExpirationSeconds: TimeInterval?
     /// Seconds from first offline playback until expiration (from JWT playDuration claim)
-    let playDurationDuration: TimeInterval?
+    let playDurationSeconds: TimeInterval?
 
     func isExpired(at now: Date = Date()) -> Bool {
         guard let expireLicenseFrom else { return false }
@@ -46,9 +46,9 @@ struct StoredAsset: Codable {
         let duration: TimeInterval?
         switch expirationPhase {
         case .playDuration:
-            duration = playDurationDuration
+            duration = playDurationSeconds
         case .licenseExpiration:
-            duration = licenseExpirationDuration
+            duration = licenseExpirationSeconds
         case nil:
             return false
         }
@@ -78,8 +78,8 @@ extension StoredAsset {
             redownloadExpiration: nil,
             expireLicenseFrom: hasDRM ? Date() : nil,
             expirationPhase: hasDRM ? .licenseExpiration : nil,
-            licenseExpirationDuration: drmClaims?.licenseExpiration,
-            playDurationDuration: drmClaims?.playDuration
+            licenseExpirationSeconds: drmClaims?.licenseExpiration,
+            playDurationSeconds: drmClaims?.playDuration
         )
     }
 }

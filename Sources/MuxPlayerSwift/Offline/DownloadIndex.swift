@@ -115,8 +115,8 @@ actor DownloadIndex {
             redownloadExpiration: existing.redownloadExpiration,
             expireLicenseFrom: existing.expireLicenseFrom,
             expirationPhase: existing.expirationPhase,
-            licenseExpirationDuration: existing.licenseExpirationDuration,
-            playDurationDuration: existing.playDurationDuration
+            licenseExpirationSeconds: existing.licenseExpirationSeconds,
+            playDurationSeconds: existing.playDurationSeconds
         )
         assets[playbackID] = updated
         persist()
@@ -144,8 +144,8 @@ actor DownloadIndex {
             redownloadExpiration: existing.redownloadExpiration,
             expireLicenseFrom: existing.expireLicenseFrom,
             expirationPhase: existing.expirationPhase,
-            licenseExpirationDuration: existing.licenseExpirationDuration,
-            playDurationDuration: existing.playDurationDuration
+            licenseExpirationSeconds: existing.licenseExpirationSeconds,
+            playDurationSeconds: existing.playDurationSeconds
         )
         assets[playbackID] = updated
         persist()
@@ -173,8 +173,8 @@ actor DownloadIndex {
             redownloadExpiration: existing.redownloadExpiration,
             expireLicenseFrom: existing.expireLicenseFrom,
             expirationPhase: existing.expirationPhase,
-            licenseExpirationDuration: existing.licenseExpirationDuration,
-            playDurationDuration: existing.playDurationDuration
+            licenseExpirationSeconds: existing.licenseExpirationSeconds,
+            playDurationSeconds: existing.playDurationSeconds
         )
         assets[playbackID] = updated
         persist()
@@ -200,8 +200,8 @@ actor DownloadIndex {
             redownloadExpiration: existing.redownloadExpiration,
             expireLicenseFrom: Date(),
             expirationPhase: phase,
-            licenseExpirationDuration: existing.licenseExpirationDuration,
-            playDurationDuration: existing.playDurationDuration
+            licenseExpirationSeconds: existing.licenseExpirationSeconds,
+            playDurationSeconds: existing.playDurationSeconds
         )
         assets[playbackID] = updated
         persist()
