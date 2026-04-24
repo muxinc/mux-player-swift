@@ -300,4 +300,50 @@ class ContentKeySessionDelegateTests : XCTestCase {
         }
     }
 
+    // MARK: - handleContentKeyUpdated tests
+
+    func testContentKeyUpdated_HappyPath_SavesKey() async throws {
+        let fakeKeyData = "updated-key-data".data(using: .utf8)!
+        let keyIdentifier = makeFakeSkdUrl(fakePlaybackID: "fake-playback")
+
+        try await contentKeySessionDelegate.handleContentKeyUpdated(
+            keyIdentifier: keyIdentifier,
+            data: fakeKeyData
+        )
+
+        XCTAssertEqual(mockKeyStore.savedKeys.count, 1)
+        XCTAssertEqual(mockKeyStore.savedKeys.first?.playbackID, "fake-playback")
+        XCTAssertEqual(mockKeyStore.savedKeys.first?.identifier, keyIdentifier)
+        XCTAssertEqual(mockKeyStore.savedKeys.first?.data, fakeKeyData)
+    }
+
+    func testContentKeyUpdated_NonStringIdentifier_DoesNotSave() async throws {
+        try await contentKeySessionDelegate.handleContentKeyUpdated(
+            keyIdentifier: 12345,
+            data: "some-data".data(using: .utf8)!
+        )
+
+        XCTAssertTrue(mockKeyStore.savedKeys.isEmpty)
+    }
+
+    func testContentKeyUpdated_InvalidURL_DoesNotSave() async throws {
+        try await contentKeySessionDelegate.handleContentKeyUpdated(
+            keyIdentifier: "not a url \n\n",
+            data: "some-data".data(using: .utf8)!
+        )
+
+        XCTAssertTrue(mockKeyStore.savedKeys.isEmpty)
+    }
+
+    func testContentKeyUpdated_MissingPlaybackId_DoesNotSave() async throws {
+        let keyIdentifier = makeFakeSkdUrlIncorrect()
+
+        try await contentKeySessionDelegate.handleContentKeyUpdated(
+            keyIdentifier: keyIdentifier,
+            data: "some-data".data(using: .utf8)!
+        )
+
+        XCTAssertTrue(mockKeyStore.savedKeys.isEmpty)
+    }
+
 }
