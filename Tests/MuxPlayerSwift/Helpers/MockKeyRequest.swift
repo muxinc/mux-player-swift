@@ -11,6 +11,7 @@ import AVFoundation
 
 /// Mock ``KeyRequest`` with some basic recording & verification
 class MockKeyRequest : KeyRequest {
+    
     // our fake 'request' just records calls and args
     typealias InnerRequest = [(String, [Any?])]
     
@@ -25,7 +26,7 @@ class MockKeyRequest : KeyRequest {
         }
     }
     
-    func makeContentKeyResponse(data: Data) -> AVContentKeyResponse {
+    func makeContentKeyResponse(fairPlayStreamingKeyResponseData data: Data) -> AVContentKeyResponse {
         // can't use the fairplay data in tests
         return AVContentKeyResponse(authorizationTokenData: "fake-token".data(using: .utf8)!)
     }
@@ -56,6 +57,32 @@ class MockKeyRequest : KeyRequest {
         fakeRequest.append((funcName, args))
     }
     
+    func respondByRequestingPersistableContentKeyRequestOnAnyOS() throws {
+        fakeRequest.append(("respondByPersistableContentKeyRequestOnAnyOS", []))
+    }
+    
+    func persistableContentKey(fromKeyVendorResponse ckcData: Data, options: [String : Any]) {
+        let args: [Any] = [ckcData, options]
+        fakeRequest.append(("respondByPersistableContentKeyRequestOnAnyOS", args))
+    }
+    
+    func makeStreamingContentKeyRequestData(forApp appIdentifier: Data, contentIdentifier: Data?, options: [String : Any]?) async throws -> Data {
+        let args: [Any?] = [appIdentifier, contentIdentifier, options]
+        fakeRequest.append((#function, args))
+        return Data()
+    }
+    
+    func persistableContentKey(fromKeyVendorResponse: Data, options: [String : Any]?) throws -> Data {
+        let args: [Any?] = [fromKeyVendorResponse, options]
+        fakeRequest.append((#function, args))
+        return Data()
+    }
+
+    func createPersistableKeyResponse(data: Data) -> AVContentKeyResponse {
+        fakeRequest.append((#function, [data]))
+        return AVContentKeyResponse(authorizationTokenData: "fake-persistable-token".data(using: .utf8)!)
+    }
+
     // MARK: verificaitons
     
     /// Verifies that the given method was called the given number of times
@@ -76,7 +103,7 @@ class MockKeyRequest : KeyRequest {
         }
     }
     
-    init(fakeIdentifier: String = "fake-identifier") {
+    init(fakeIdentifier: Any = "fake-identifier") {
         self.fakeIdentifier = fakeIdentifier
     }
 }

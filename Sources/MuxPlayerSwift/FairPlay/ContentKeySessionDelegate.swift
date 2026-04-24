@@ -9,17 +9,24 @@ import AVFoundation
 import Foundation
 import os
 
-class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredentialClient> : NSObject, AVContentKeySessionDelegate {
-    
-    weak var sessionManager: SessionManager?
+class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredentialClient & DRMAssetRegistry> : NSObject, AVContentKeySessionDelegate {
 
+    weak var sessionManager: SessionManager?
     var logger: Logger
 
+    private let _persistedKeyStore: PersistedKeyStore?
+
+    private var persistedKeyStore: PersistedKeyStore {
+        _persistedKeyStore ?? MuxOfflineAccessManager.shared.manager
+    }
+
     init(
-        sessionManager: SessionManager
+        sessionManager: SessionManager,
+        persistedKeyStore: PersistedKeyStore? = nil
     ) {
         self.sessionManager = sessionManager
         self.logger = sessionManager.logger
+        self._persistedKeyStore = persistedKeyStore
     }
     
     // MARK: AVContentKeySessionDelegate implementation
@@ -28,15 +35,44 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
         _ session: AVContentKeySession,
         didProvide keyRequest: AVContentKeyRequest
     ) {
+        logger.trace("didProvide AVContentKeyRequest")
         handleContentKeyRequest(
             request: DefaultKeyRequest(wrapping: keyRequest)
         )
+    }
+    
+    func contentKeySession(_ session: AVContentKeySession, didProvide keyRequest: AVPersistableContentKeyRequest) {
+        logger.trace("didProvide AVPersistableContentKeyRequest")
+        Task {
+            do {
+                try await handlePersistableContentKeyRequest(request: DefaultKeyRequest(wrapping: keyRequest))
+            } catch {
+                keyRequest.processContentKeyResponseError(error)
+            }
+        }
+    }
+    
+    func contentKeySession(
+        _ session: AVContentKeySession,
+        didUpdatePersistableContentKey persistableContentKey: Data,
+        forContentKeyIdentifier keyIdentifier: Any
+    ) {
+        logger.trace("contentKeySession: didUpdatePersistableContentKey")
+        Task {
+            do {
+                try await handleContentKeyUpdated(keyIdentifier: keyIdentifier, data: persistableContentKey)
+            } catch {
+                // Delegate provides no way to notify of this
+                logger.error("Failed to update content key: \(error)")
+            }
+        }
     }
     
     func contentKeySession(
         _ session: AVContentKeySession,
         didProvideRenewingContentKeyRequest keyRequest: AVContentKeyRequest
     ) {
+        logger.trace("didProvide didProvideRenewingContentKeyRequest")
         handleContentKeyRequest(request: DefaultKeyRequest(wrapping: keyRequest))
     }
     
@@ -138,17 +174,43 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
         )
     }
     
-    func handleContentKeyRequest(request: any KeyRequest) {
-        logger.debug(
-            "Called \(#function)"
-        )
-
-        guard let sessionManager = self.sessionManager else {
+    func handleContentKeyUpdated(
+        keyIdentifier: Any,
+        data: Data
+    ) async throws {
+        logger.trace("\(#function) called")
+        guard let requestIdentifierString = keyIdentifier as? String,
+              let mediaPlaylistKeyURL = URL(string: requestIdentifierString)
+        else {
             // TODO: Should this also invoke `processContentKeyResponseError`?
-            logger.debug("Missing session manager")
+            logger.debug(
+                "CK request identifier not a valid key url."
+            )
             return
         }
-
+        
+        guard let playbackID = parsePlaybackId(
+            fromSkdLocation: mediaPlaylistKeyURL
+        ) else {
+            logger.debug("\(#function) Error: key SKD location missing playbackId [\(mediaPlaylistKeyURL.absoluteString)]")
+            return
+        }
+        
+        try await persistedKeyStore.savePersistedContentKey(
+            playbackID: playbackID,
+            identifier: requestIdentifierString,
+            contentKeyData: data
+        )
+    }
+    
+    func handlePersistableContentKeyRequest(request: any KeyRequest) async throws {
+        logger.trace("\(#function) called")
+        
+        guard let sessionManager = self.sessionManager else {
+            // could happen if recovering from media services crashing
+            throw FairPlaySessionError.unexpected(message: "\(#function) called with terminated SessionManager")
+        }
+        
         // for hls, "the identifier must be an NSURL that matches a key URI in the Media Playlist." from the docs
         guard let requestIdentifierString = request.identifier as? String,
               let mediaPlaylistKeyURL = URL(string: requestIdentifierString),
@@ -160,7 +222,66 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
             )
             return
         }
+        
+        guard let playbackID = parsePlaybackId(
+            fromSkdLocation: mediaPlaylistKeyURL
+        ) else {
+            logger.debug("\(#function) Error: key SKD location missing playbackId [\(mediaPlaylistKeyURL.absoluteString)]")
+            throw FairPlaySessionError.unexpected(message: "playbackID not present in key uri")
+        }
+        
+        // If we already have a persisted content key, use it (this is the offline playback path)
+        if let persistedContentKey = try await persistedKeyStore.findPersistedContentKey(playbackID: playbackID) {
+            // Transition to playDuration-based expiration on first offline playback
+            await persistedKeyStore.updateExpirationPhase(playbackID: playbackID, phase: .playDuration)
+            request.processContentKeyResponse(
+                request.makeContentKeyResponse(fairPlayStreamingKeyResponseData: persistedContentKey)
+            )
+            return
+        }
 
+        // No content key already? Try to get one
+        let appCertData = try await sessionManager.requestCertificate(playbackID: playbackID)
+        let spcData = try await request.makeStreamingContentKeyRequestData(
+            forApp: appCertData,
+            contentIdentifier: utfEncodedRequestIdentifierString,
+            options: [AVContentKeyRequestProtocolVersionsKey: [1]]
+        )
+        let ckcData = try await sessionManager.requestLicence(spcData: spcData, playbackID: playbackID)
+        
+        let persistableKey = try request.persistableContentKey(fromKeyVendorResponse: ckcData, options: nil)
+        try await persistedKeyStore.savePersistedContentKey(
+            playbackID: playbackID,
+            identifier: requestIdentifierString,
+            contentKeyData: persistableKey
+        )
+        
+        request.processContentKeyResponse(
+            request.makeContentKeyResponse(fairPlayStreamingKeyResponseData: persistableKey)
+        )
+    }
+    
+    func handleContentKeyRequest(request: any KeyRequest) {
+        logger.debug(
+            "Called \(#function)"
+        )
+        
+        guard let sessionManager = self.sessionManager else {
+            logger.debug("Missing session manager")
+            return
+        }
+
+        // for hls, "the identifier must be an NSURL that matches a key URI in the Media Playlist." from the docs
+        guard let requestIdentifierString = request.identifier as? String,
+              let mediaPlaylistKeyURL = URL(string: requestIdentifierString),
+              let utfEncodedRequestIdentifierString = requestIdentifierString.data(using: .utf8)
+        else {
+            logger.debug(
+                "CK request identifier not a valid key url."
+            )
+            return
+        }
+        
         guard let playbackID = parsePlaybackId(
             fromSkdLocation: mediaPlaylistKeyURL
         ) else {
@@ -171,6 +292,18 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
             )
             logger.debug("\(#function) Error: key url SDK location missing playbackId [\(mediaPlaylistKeyURL.absoluteString)]")
             return
+        }
+        
+        // Check for offline - if this is for offline, we trigger the persistable content key flow
+        if sessionManager.hasOfflineDRMConfig(playbackID: playbackID) {
+            do {
+                try request.respondByRequestingPersistableContentKeyRequestOnAnyOS()
+                // no more processing for this key request. we'll get a delegate call with a persistable key request next
+                return
+            } catch {
+                // happens if playing airplay (according to example code). The proper response is to process as an online key
+                //  .. although using an 'offline' drm_token for playing an asset is technically not supported
+            }
         }
 
         // get app cert
@@ -230,7 +363,7 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
             }
             
             // exchange SPC for CKC
-            handleSpcObtainedFromCDM(
+            handleSpcObtainedFromCDMForOnlineKey(
                 spcData: spcData,
                 playbackID: playbackID,
                 request: request
@@ -238,7 +371,7 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
         }
     }
     
-    func handleSpcObtainedFromCDM(
+    func handleSpcObtainedFromCDMForOnlineKey(
         spcData: Data,
         playbackID: String,
         request: any KeyRequest
@@ -270,7 +403,7 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
             logger.debug("Submitting CKC to system")
             // Send CKC to CDM/wherever else so we can finally play our content
             let keyResponse = request.makeContentKeyResponse(
-                data: ckcData
+                fairPlayStreamingKeyResponseData: ckcData
             )
             request.processContentKeyResponse(
                 keyResponse
@@ -289,7 +422,7 @@ protocol KeyRequest {
     
     var identifier: Any? { get }
     
-    func makeContentKeyResponse(data: Data) -> AVContentKeyResponse
+    func makeContentKeyResponse(fairPlayStreamingKeyResponseData data: Data) -> AVContentKeyResponse
     
     func processContentKeyResponse(_ response: AVContentKeyResponse)
     func processContentKeyResponseError(_ error: any Error)
@@ -297,10 +430,22 @@ protocol KeyRequest {
                                             contentIdentifier: Data?,
                                             options: [String : Any]?,
                                             completionHandler handler: @escaping (Data?, (any Error)?) -> Void)
+    
+    func makeStreamingContentKeyRequestData(forApp appIdentifier: Data,
+                                            contentIdentifier: Data?,
+                                            options: [String : Any]?
+    ) async throws -> Data
+
+    // Delegates to different methods depending on which platform we're on
+    func respondByRequestingPersistableContentKeyRequestOnAnyOS() throws
+    // note: key vendor response is a CKC for FairPlay
+    func persistableContentKey(fromKeyVendorResponse: Data, options: [String: Any]?) throws -> Data
+    func createPersistableKeyResponse(data: Data) -> AVContentKeyResponse
 }
 
 // Wraps a real AVContentKeyRequest and straightforwardly delegates to it
 struct DefaultKeyRequest : KeyRequest {
+    
     typealias InnerRequest = AVContentKeyRequest
     
     var identifier: Any? {
@@ -309,7 +454,7 @@ struct DefaultKeyRequest : KeyRequest {
         }
     }
     
-    func makeContentKeyResponse(data: Data) -> AVContentKeyResponse {
+    func makeContentKeyResponse(fairPlayStreamingKeyResponseData data: Data) -> AVContentKeyResponse {
         return AVContentKeyResponse(fairPlayStreamingKeyResponseData: data)
     }
     
@@ -335,6 +480,50 @@ struct DefaultKeyRequest : KeyRequest {
         )
     }
     
+    func makeStreamingContentKeyRequestData(
+        forApp appIdentifier: Data,
+        contentIdentifier: Data?,
+        options: [String : Any]? = nil
+    ) async throws -> Data {
+        return try await withCheckedThrowingContinuation { continuation in
+            self.request.makeStreamingContentKeyRequestData(
+                forApp: appIdentifier, contentIdentifier: contentIdentifier
+            ) { data, error in
+                if let data {
+                    continuation.resume(returning: data)
+                } else if let error {
+                    continuation.resume(throwing: error)
+                } else {
+                    // probably not a real case, but we don't want to hang the request to the system
+                    continuation.resume(throwing: FairPlaySessionError.unexpected(message: "No SPC data or error"))
+                }
+            }
+        }
+    }
+    
+    func respondByRequestingPersistableContentKeyRequestOnAnyOS() throws {
+        #if os(iOS)
+        try self.request.respondByRequestingPersistableContentKeyRequestAndReturnError()
+        #else
+        try self.request.respondByRequestingPersistableContentKeyRequest()
+        #endif
+    }
+    
+    func persistableContentKey(fromKeyVendorResponse: Data, options: [String: Any]?) throws -> Data {
+        guard let persistableKeyRequest = self.request as? AVPersistableContentKeyRequest else {
+            throw FairPlaySessionError.unexpected(message: "Attempted to process streaming key request as persistable request")
+        }
+
+        return try persistableKeyRequest.persistableContentKey(
+            fromKeyVendorResponse: fromKeyVendorResponse,
+            options: options
+        )
+    }
+
+    func createPersistableKeyResponse(data: Data) -> AVContentKeyResponse {
+        return AVContentKeyResponse(fairPlayStreamingKeyResponseData: data)
+    }
+
     let request: InnerRequest
     
     init(wrapping request: InnerRequest) {

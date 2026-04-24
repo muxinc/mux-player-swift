@@ -30,6 +30,10 @@ protocol FairPlayStreamingSessionCredentialClient: AnyObject {
         offline _: Bool,
         completion requestCompletion: @escaping (Result<Data, FairPlaySessionError>) -> Void
     )
+    
+    func requestCertificate(playbackID: String) async throws -> Data
+    
+    func requestLicence(spcData: Data, playbackID: String) async throws -> Data
 
     var logger: Logger { get set }
 }
@@ -37,6 +41,12 @@ protocol FairPlayStreamingSessionCredentialClient: AnyObject {
 // Intended for registering drm-protected AVURLAssets
 protocol DRMAssetRegistry {
     func addDRMAsset(_ urlAsset: AVURLAsset, playbackID: String, options: PlaybackOptions.DRMPlaybackOptions, rootDomain: String)
+
+    func addOfflineDownloadDRMAsset(_ urlAsset: AVURLAsset, playbackID: String, options: PlaybackOptions.DRMPlaybackOptions, rootDomain: String)
+    func removeOfflineDownloadSession(playbackID: String)
+    func addOfflinePlayDRMAsset(_ urlAsset: AVURLAsset, playbackID: String, keyData: Data) async
+    func hasOfflineDRMConfig(playbackID: String) -> Bool
+    func offlineKeyData(playbackID: String) -> Data?
 }
 
 // MARK: - FairPlayStreamingSessionManager
@@ -74,6 +84,7 @@ extension AVContentKeySession: ContentKeyProvider {
 class DefaultFairPlayStreamingSessionManager<
     ContentKeySession: ContentKeyProvider
 >: FairPlayStreamingSessionManager {
+    
     private let queue: DispatchQueue
 
     private var notificationObservers = [NSObjectProtocol]()
@@ -82,8 +93,20 @@ class DefaultFairPlayStreamingSessionManager<
         let options: PlaybackOptions.DRMPlaybackOptions
         let rootDomain: String
     }
-    /// should be accessed on `queue`
-    private var configLookup: [String: DRMConfig] = [:]
+    /// should be accessed on `queue`. Used for the online drm key-fetching flow
+    private var onlineKeyConfigLookup: [String: DRMConfig] = [:]
+    /// should be accessed on `queue`. Used for the offline-download key-fetching flow
+    private var offlineDownloadKeyLookup: [String: DRMConfig] = [:]
+    /// should be accessed on `queue`. Used for the offline-download key-fetching flow
+    private var offlinePlayLookup: [String: Data] = [:]
+    /// should be accessed on `queue`. Per-download content key sessions,
+    /// keyed by playbackID. Each download gets its own session so
+    /// re-downloads can trigger a fresh key request flow.
+    private var downloadKeySessions: [String: ContentKeySession] = [:]
+    /// should be accessed on `queue`. Delegates for per-download sessions.
+    /// Stored to prevent deallocation since AVContentKeySession holds a
+    /// weak reference to its delegate.
+    private var downloadKeyDelegates: [String: AVContentKeySessionDelegate] = [:]
 
     private var contentKeySession: ContentKeySession {
         willSet {
@@ -120,14 +143,66 @@ class DefaultFairPlayStreamingSessionManager<
 
     private let urlSession: URLSession
     
+    private func offlineDRMConfigOnQueue(for playbackID: String) async -> DRMConfig? {
+        return await withCheckedContinuation { continuation in
+            queue.async { [logger, weak self] in
+                guard let self else {
+                    logger.warning("looked up offline DRMConfig after cleanup")
+                    continuation.resume(returning: nil)
+                    return
+                }
+                continuation.resume(returning: offlineDownloadKeyLookup[playbackID])
+            }
+        }
+    }
+    
     // MARK: Requesting licenses and certs
     
-    /// Requests the App Certificate for a playback id
+    func requestCertificate(playbackID: String) async throws -> Data {
+        guard let config = await offlineDRMConfigOnQueue(for: playbackID) else {
+            throw FairPlaySessionError.unexpected(message: "No DRM config tracked for playbackID: \(playbackID)")
+        }
+        
+        // TODO: (future maintenance) request should be async by default, not completion handlers by default
+        return try await withCheckedThrowingContinuation { [weak self] continuation in
+            guard let self = self else {
+                continuation.resume(throwing:
+                    FairPlaySessionError.unexpected(message: "SessionManager terminated while fetching app cert")
+                )
+                return
+            }
+            
+            self.requestCertificateInner(playbackID: playbackID, drmConfig: config) { continuation.resume(with: $0) }
+        }
+    }
+    
+    func requestLicence(spcData: Data, playbackID: String) async throws -> Data {
+        guard let config = await offlineDRMConfigOnQueue(for: playbackID) else {
+            throw FairPlaySessionError.unexpected(message: "No DRM config tracked for playbackID: \(playbackID)")
+        }
+        
+        // TODO: (future maintenance) request should be async by default, not completion handlers by default
+        return try await withCheckedThrowingContinuation { [weak self] continuation in
+            guard let self else {
+                continuation.resume(throwing:
+                    FairPlaySessionError.unexpected(message: "SessionManager terminated while fetching license")
+                )
+                return
+            }
+            
+            self.requestLicenseInner(
+                spcData: spcData,
+                playbackID: playbackID,
+                drmConfig: config
+            ) { continuation.resume(with: $0) }
+        }
+    }
+    
     func requestCertificate(
         playbackID: String,
         completion requestCompletion: @escaping (Result<Data, FairPlaySessionError>) -> Void
     ) {
-        guard let config = configLookup[playbackID] else {
+        guard let config = onlineKeyConfigLookup[playbackID] else {
             logger.debug(
                 "No registered DRM configuration for playbackID \(playbackID)."
             )
@@ -140,7 +215,39 @@ class DefaultFairPlayStreamingSessionManager<
             )
             return
         }
+        
+        requestCertificateInner(playbackID: playbackID, drmConfig: config, completion: requestCompletion)
+    }
 
+    func requestLicense(
+        spcData: Data,
+        playbackID: String,
+        offline: Bool,
+        completion requestCompletion: @escaping (Result<Data, FairPlaySessionError>) -> Void
+    ) {
+        guard let config = onlineKeyConfigLookup[playbackID] else {
+            logger.debug(
+                "No registered DRM configuration for playbackID \(playbackID)."
+            )
+            requestCompletion(
+                .failure(
+                    FairPlaySessionError.unexpected(
+                        message: "No registered DRM configuration for playbackID \(playbackID)"
+                    )
+                )
+            )
+            return
+        }
+        
+        requestLicenseInner(spcData: spcData, playbackID: playbackID, drmConfig: config, completion: requestCompletion)
+    }
+    
+    /// Requests the App Certificate for a playback id
+    private func requestCertificateInner(
+        playbackID: String,
+        drmConfig config: DRMConfig,
+        completion requestCompletion: @escaping (Result<Data, FairPlaySessionError>) -> Void
+    ) {
         let rootDomain = config.rootDomain
         let drmToken = config.options.drmToken
 
@@ -262,25 +369,12 @@ class DefaultFairPlayStreamingSessionManager<
     
     /// Requests a license to play based on the given SPC data
     /// - parameter offline - Not currently used, may not ever be used in short-term, maybe delete?
-    func requestLicense(
+    private func requestLicenseInner(
         spcData: Data,
         playbackID: String,
-        offline: Bool,
+        drmConfig config: DRMConfig,
         completion requestCompletion: @escaping (Result<Data, FairPlaySessionError>) -> Void
     ) {
-        guard let config = configLookup[playbackID] else {
-            logger.debug(
-                "No registered DRM configuration for playbackID \(playbackID)."
-            )
-            requestCompletion(
-                .failure(
-                    FairPlaySessionError.unexpected(
-                        message: "No registered DRM configuration for playbackID \(playbackID)"
-                    )
-                )
-            )
-            return
-        }
 
         let drmToken = config.options.drmToken
         let rootDomain = config.rootDomain
@@ -397,18 +491,76 @@ class DefaultFairPlayStreamingSessionManager<
     ) {
         // contentKeySession delegate callbacks will eventually need this, submit before starting the flow
         queue.async { [weak self] in
-            self?.configLookup[playbackID] = DRMConfig(
+            self?.onlineKeyConfigLookup[playbackID] = DRMConfig(
                 options: options,
                 rootDomain: rootDomain)
         }
         contentKeySession.addContentKeyRecipient(urlAsset)
+    }
+    
+    func addOfflineDownloadDRMAsset(
+        _ urlAsset: AVURLAsset,
+        playbackID: String,
+        options: PlaybackOptions.DRMPlaybackOptions,
+        rootDomain: String
+    ) {
+        // Create a fresh session for this download so re-downloads
+        // always trigger a new key request flow
+        let downloadSession = contentKeySession.recreate()
+        let delegate = ContentKeySessionDelegate(sessionManager: self)
+        downloadSession.setDelegate(delegate, queue: queue)
+        queue.async { [weak self] in
+            self?.offlineDownloadKeyLookup[playbackID] = DRMConfig(
+                options: options,
+                rootDomain: rootDomain
+            )
+            self?.downloadKeySessions[playbackID] = downloadSession
+            self?.downloadKeyDelegates[playbackID] = delegate
+        }
+        downloadSession.addContentKeyRecipient(urlAsset)
+    }
+
+    func removeOfflineDownloadSession(playbackID: String) {
+        queue.async { [weak self] in
+            self?.downloadKeySessions[playbackID]?.setDelegate(nil, queue: nil)
+            self?.downloadKeySessions[playbackID] = nil
+            self?.downloadKeyDelegates[playbackID] = nil
+            self?.offlineDownloadKeyLookup[playbackID] = nil
+        }
+    }
+    
+    func addOfflinePlayDRMAsset(_ urlAsset: AVURLAsset, playbackID: String, keyData: Data) async {
+        await withCheckedContinuation { continuation in
+            queue.async { [weak self] in
+                self?.offlinePlayLookup[playbackID] = keyData
+                continuation.resume()
+            }
+        }
+        self.contentKeySession.addContentKeyRecipient(urlAsset)
+    }
+    
+    func hasOfflineDRMConfig(playbackID: String) -> Bool {
+        // called from ContentKeySessionDelegate, is definitely on .queue
+        return offlinePlayLookup[playbackID] != nil || offlineDownloadKeyLookup[playbackID] != nil
+    }
+    
+    func offlineKeyData(playbackID: String) -> Data? {
+        return offlinePlayLookup[playbackID]
     }
 
     // MARK: error recovery
 
     private func handleMediaServicesLost() {
         queue.async { [weak self] in
-            self?.configLookup.removeAll()
+            guard let self else { return }
+            self.onlineKeyConfigLookup.removeAll()
+            self.offlinePlayLookup.removeAll()
+            self.offlineDownloadKeyLookup.removeAll()
+            for (_, session) in self.downloadKeySessions {
+                session.setDelegate(nil, queue: nil)
+            }
+            self.downloadKeySessions.removeAll()
+            self.downloadKeyDelegates.removeAll()
         }
         contentKeySession = contentKeySession.recreate()
     }
