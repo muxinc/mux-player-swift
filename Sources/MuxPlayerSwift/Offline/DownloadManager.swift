@@ -204,6 +204,11 @@ actor DownloadManager: PersistedKeyStore {
     }
     
     func updateExpirationPhase(playbackID: String, phase: ExpirationPhase) async {
+        let existingRecord = await index.get(playbackID: playbackID)
+        if case .playDuration = phase, case .playDuration = existingRecord?.expirationPhase {
+            logger.trace("Already in playDuration phase. Not updating again.")
+            return
+        }
         await index.updateExpirationPhase(playbackID: playbackID, phase: phase)
     }
 
