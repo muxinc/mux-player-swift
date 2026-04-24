@@ -9,21 +9,28 @@ import AVFoundation
 import Foundation
 import os
 
+protocol PersistedKeyStore {
+    func findPersistedContentKey(playbackID: String) async throws -> Data?
+    func savePersistedContentKey(playbackID: String, identifier: String, contentKeyData: Data) async throws
+    func updateExpirationPhase(playbackID: String, phase: ExpirationPhase) async
+}
+
+extension DownloadManager: PersistedKeyStore {}
+
 class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredentialClient & DRMAssetRegistry> : NSObject, AVContentKeySessionDelegate {
-    
+
     weak var sessionManager: SessionManager?
     var logger: Logger
-    
-    private var downloadManager: DownloadManager {
-        // TODO: Manager ref should come from PlayerSDK, but making it TaskLocal would break stuff..
-        MuxOfflineAccessManager.shared.manager
-    }
+
+    private let persistedKeyStore: PersistedKeyStore
 
     init(
-        sessionManager: SessionManager
+        sessionManager: SessionManager,
+        persistedKeyStore: PersistedKeyStore = MuxOfflineAccessManager.shared.manager
     ) {
         self.sessionManager = sessionManager
         self.logger = sessionManager.logger
+        self.persistedKeyStore = persistedKeyStore
     }
     
     // MARK: AVContentKeySessionDelegate implementation
@@ -193,7 +200,7 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
             return
         }
         
-        try await downloadManager.savePersistedContentKey(
+        try await persistedKeyStore.savePersistedContentKey(
             playbackID: playbackID,
             identifier: requestIdentifierString,
             contentKeyData: data
@@ -228,10 +235,12 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
         }
         
         // If we already have a persisted content key, use it (this is the offline playback path)
-        if let persistedContentKey = try await downloadManager.findPersistedContentKey(playbackID: playbackID) {
+        if let persistedContentKey = try await persistedKeyStore.findPersistedContentKey(playbackID: playbackID) {
             // Transition to playDuration-based expiration on first offline playback
-            await downloadManager.updateExpirationPhase(playbackID: playbackID, phase: .playDuration)
-            request.processContentKeyResponse(AVContentKeyResponse(fairPlayStreamingKeyResponseData: persistedContentKey))
+            await persistedKeyStore.updateExpirationPhase(playbackID: playbackID, phase: .playDuration)
+            request.processContentKeyResponse(
+                request.makeContentKeyResponse(fairPlayStreamingKeyResponseData: persistedContentKey)
+            )
             return
         }
 
@@ -245,13 +254,15 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
         let ckcData = try await sessionManager.requestLicence(spcData: spcData, playbackID: playbackID)
         
         let persistableKey = try request.persistableContentKey(fromKeyVendorResponse: ckcData, options: nil)
-        try await MuxOfflineAccessManager.shared.manager.savePersistedContentKey(
+        try await persistedKeyStore.savePersistedContentKey(
             playbackID: playbackID,
             identifier: requestIdentifierString,
             contentKeyData: persistableKey
         )
         
-        request.processContentKeyResponse(AVContentKeyResponse(fairPlayStreamingKeyResponseData: persistableKey))
+        request.processContentKeyResponse(
+            request.makeContentKeyResponse(fairPlayStreamingKeyResponseData: persistableKey)
+        )
     }
     
     func handleContentKeyRequest(request: any KeyRequest) {
@@ -396,7 +407,7 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
             logger.debug("Submitting CKC to system")
             // Send CKC to CDM/wherever else so we can finally play our content
             let keyResponse = request.makeContentKeyResponse(
-                data: ckcData
+                fairPlayStreamingKeyResponseData: ckcData
             )
             request.processContentKeyResponse(
                 keyResponse
@@ -415,7 +426,7 @@ protocol KeyRequest {
     
     var identifier: Any? { get }
     
-    func makeContentKeyResponse(data: Data) -> AVContentKeyResponse
+    func makeContentKeyResponse(fairPlayStreamingKeyResponseData data: Data) -> AVContentKeyResponse
     
     func processContentKeyResponse(_ response: AVContentKeyResponse)
     func processContentKeyResponseError(_ error: any Error)
@@ -433,6 +444,7 @@ protocol KeyRequest {
     func respondByRequestingPersistableContentKeyRequestOnAnyOS() throws
     // note: key vendor response is a CKC for FairPlay
     func persistableContentKey(fromKeyVendorResponse: Data, options: [String: Any]?) throws -> Data
+    func createPersistableKeyResponse(data: Data) -> AVContentKeyResponse
 }
 
 // Wraps a real AVContentKeyRequest and straightforwardly delegates to it
@@ -446,7 +458,7 @@ struct DefaultKeyRequest : KeyRequest {
         }
     }
     
-    func makeContentKeyResponse(data: Data) -> AVContentKeyResponse {
+    func makeContentKeyResponse(fairPlayStreamingKeyResponseData data: Data) -> AVContentKeyResponse {
         return AVContentKeyResponse(fairPlayStreamingKeyResponseData: data)
     }
     
@@ -505,13 +517,17 @@ struct DefaultKeyRequest : KeyRequest {
         guard let persistableKeyRequest = self.request as? AVPersistableContentKeyRequest else {
             throw FairPlaySessionError.unexpected(message: "Attempted to process streaming key request as persistable request")
         }
-        
+
         return try persistableKeyRequest.persistableContentKey(
             fromKeyVendorResponse: fromKeyVendorResponse,
             options: options
         )
     }
-    
+
+    func createPersistableKeyResponse(data: Data) -> AVContentKeyResponse {
+        return AVContentKeyResponse(fairPlayStreamingKeyResponseData: data)
+    }
+
     let request: InnerRequest
     
     init(wrapping request: InnerRequest) {

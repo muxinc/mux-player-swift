@@ -26,7 +26,7 @@ class MockKeyRequest : KeyRequest {
         }
     }
     
-    func makeContentKeyResponse(data: Data) -> AVContentKeyResponse {
+    func makeContentKeyResponse(fairPlayStreamingKeyResponseData data: Data) -> AVContentKeyResponse {
         // can't use the fairplay data in tests
         return AVContentKeyResponse(authorizationTokenData: "fake-token".data(using: .utf8)!)
     }
@@ -78,6 +78,11 @@ class MockKeyRequest : KeyRequest {
         return Data()
     }
 
+    func createPersistableKeyResponse(data: Data) -> AVContentKeyResponse {
+        fakeRequest.append((#function, [data]))
+        return AVContentKeyResponse(authorizationTokenData: "fake-persistable-token".data(using: .utf8)!)
+    }
+
     // MARK: verificaitons
     
     /// Verifies that the given method was called the given number of times
@@ -98,7 +103,7 @@ class MockKeyRequest : KeyRequest {
         }
     }
     
-    init(fakeIdentifier: String = "fake-identifier") {
+    init(fakeIdentifier: Any = "fake-identifier") {
         self.fakeIdentifier = fakeIdentifier
     }
 }

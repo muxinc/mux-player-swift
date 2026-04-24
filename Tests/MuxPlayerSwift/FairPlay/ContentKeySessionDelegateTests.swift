@@ -15,7 +15,8 @@ class ContentKeySessionDelegateTests : XCTestCase {
     var testDRMAssetRegistry: TestDRMAssetRegistry!
     var testCredentialClient: TestFairPlayStreamingSessionCredentialClient!
     var testSessionManager: TestFairPlayStreamingSessionManager!
-    
+    var mockKeyStore: MockPersistedKeyStore!
+
     // object under test
     var contentKeySessionDelegate: ContentKeySessionDelegate<
         TestFairPlayStreamingSessionManager
@@ -30,31 +31,35 @@ class ContentKeySessionDelegateTests : XCTestCase {
             failsWith: error
         )
         testDRMAssetRegistry = TestDRMAssetRegistry()
+        mockKeyStore = MockPersistedKeyStore()
         testSessionManager = TestFairPlayStreamingSessionManager(
             credentialClient: testCredentialClient,
             drmAssetRegistry: testDRMAssetRegistry
         )
-        
+
         contentKeySessionDelegate = ContentKeySessionDelegate(
-            sessionManager: testSessionManager  
+            sessionManager: testSessionManager,
+            persistedKeyStore: mockKeyStore
         )
     }
-    
+
     private func setUpForSuccess() {
         testCredentialClient = TestFairPlayStreamingSessionCredentialClient(
             fakeCert: "default fake cert".data(using: .utf8)!,
             fakeLicense: "default fake license".data(using: .utf8)!
         )
-        
+
         testDRMAssetRegistry = TestDRMAssetRegistry()
+        mockKeyStore = MockPersistedKeyStore()
 
         testSessionManager = TestFairPlayStreamingSessionManager(
             credentialClient: testCredentialClient,
             drmAssetRegistry: testDRMAssetRegistry
         )
-        
+
         contentKeySessionDelegate = ContentKeySessionDelegate(
-            sessionManager: testSessionManager  
+            sessionManager: testSessionManager,
+            persistedKeyStore: mockKeyStore
         )
     }
     
@@ -174,7 +179,7 @@ class ContentKeySessionDelegateTests : XCTestCase {
             playbackID: "fake-playback",
             request: mockRequest
         )
-        
+
         XCTAssertTrue(
             mockRequest.verifyNotCalled(funcName: "processContentKeyResponseError")
         )
@@ -182,5 +187,117 @@ class ContentKeySessionDelegateTests : XCTestCase {
             mockRequest.verifyWasCalled(funcName: "processContentKeyResponse")
         )
     }
-    
+
+    // MARK: - handlePersistableContentKeyRequest tests
+
+    func testPersistableKeyRequest_NilSessionManager_Throws() async {
+        contentKeySessionDelegate.sessionManager = nil
+        let mockRequest = MockKeyRequest(
+            fakeIdentifier: makeFakeSkdUrl(fakePlaybackID: "fake-playback")
+        )
+
+        do {
+            try await contentKeySessionDelegate.handlePersistableContentKeyRequest(request: mockRequest)
+            XCTFail("Expected error to be thrown")
+        } catch {
+            XCTAssertTrue(
+                mockRequest.verifyNotCalled(funcName: "processContentKeyResponse")
+            )
+        }
+    }
+
+    func testPersistableKeyRequest_InvalidIdentifier_Returns() async throws {
+        let mockRequest = MockKeyRequest(
+            fakeIdentifier: 12345 // non-string identifier
+        )
+
+        try await contentKeySessionDelegate.handlePersistableContentKeyRequest(request: mockRequest)
+
+        XCTAssertTrue(
+            mockRequest.verifyNotCalled(funcName: "processContentKeyResponse")
+        )
+        XCTAssertTrue(
+            mockRequest.verifyNotCalled(funcName: "processContentKeyResponseError")
+        )
+    }
+
+    func testPersistableKeyRequest_MissingPlaybackId_Throws() async {
+        let mockRequest = MockKeyRequest(
+            fakeIdentifier: makeFakeSkdUrlIncorrect()
+        )
+
+        do {
+            try await contentKeySessionDelegate.handlePersistableContentKeyRequest(request: mockRequest)
+            XCTFail("Expected error to be thrown")
+        } catch {
+            XCTAssertTrue(
+                mockRequest.verifyNotCalled(funcName: "processContentKeyResponse")
+            )
+        }
+    }
+
+    func testPersistableKeyRequest_ExistingPersistedKey_UsesItDirectly() async throws {
+        let fakeKeyData = "persisted-key-data".data(using: .utf8)!
+        mockKeyStore.persistedKeys["fake-playback"] = fakeKeyData
+
+        let mockRequest = MockKeyRequest(
+            fakeIdentifier: makeFakeSkdUrl(fakePlaybackID: "fake-playback")
+        )
+
+        try await contentKeySessionDelegate.handlePersistableContentKeyRequest(request: mockRequest)
+
+        // Should use persisted key directly
+        XCTAssertTrue(
+            mockRequest.verifyWasCalled(funcName: "processContentKeyResponse")
+        )
+        // Should not request cert or license
+        XCTAssertTrue(
+            mockRequest.verifyNotCalled(funcName: "makeStreamingContentKeyRequestData(forApp:contentIdentifier:options:)")
+        )
+        // Should update expiration phase
+        XCTAssertEqual(mockKeyStore.updatedPhases.count, 1)
+        XCTAssertEqual(mockKeyStore.updatedPhases.first?.playbackID, "fake-playback")
+        XCTAssertEqual(mockKeyStore.updatedPhases.first?.phase, .playDuration)
+    }
+
+    func testPersistableKeyRequest_NoPersistedKey_FetchesAndSaves() async throws {
+        let mockRequest = MockKeyRequest(
+            fakeIdentifier: makeFakeSkdUrl(fakePlaybackID: "fake-playback")
+        )
+
+        try await contentKeySessionDelegate.handlePersistableContentKeyRequest(request: mockRequest)
+
+        // Should have requested SPC and processed a response
+        XCTAssertTrue(
+            mockRequest.verifyWasCalled(
+                funcName: "makeStreamingContentKeyRequestData(forApp:contentIdentifier:options:)"
+            )
+        )
+        XCTAssertTrue(
+            mockRequest.verifyWasCalled(funcName: "persistableContentKey(fromKeyVendorResponse:options:)")
+        )
+        XCTAssertTrue(
+            mockRequest.verifyWasCalled(funcName: "processContentKeyResponse")
+        )
+        // Should have saved the key
+        XCTAssertEqual(mockKeyStore.savedKeys.count, 1)
+        XCTAssertEqual(mockKeyStore.savedKeys.first?.playbackID, "fake-playback")
+    }
+
+    func testPersistableKeyRequest_CertError_Throws() async {
+        setUpForFailure(error: .unexpected(message: "cert error"))
+        let mockRequest = MockKeyRequest(
+            fakeIdentifier: makeFakeSkdUrl(fakePlaybackID: "fake-playback")
+        )
+
+        do {
+            try await contentKeySessionDelegate.handlePersistableContentKeyRequest(request: mockRequest)
+            XCTFail("Expected error to be thrown")
+        } catch {
+            XCTAssertTrue(
+                mockRequest.verifyNotCalled(funcName: "processContentKeyResponse")
+            )
+        }
+    }
+
 }
