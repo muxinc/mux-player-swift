@@ -229,9 +229,7 @@ actor DownloadManager: PersistedKeyStore {
                         assetStatus: .expired,
                         downloadOptions: DownloadOptions(from: completedAsset)
                     )
-                }
-
-                if assetFileExists(at: assetURL), !completedAsset.completedWithError {
+                } else if assetFileExists(at: assetURL), !completedAsset.completedWithError {
                     return DownloadedAsset(
                         playbackID: completedAsset.playbackID,
                         assetStatus: .playable(asset: urlAsset),
