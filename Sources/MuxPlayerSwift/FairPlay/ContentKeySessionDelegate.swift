@@ -9,28 +9,24 @@ import AVFoundation
 import Foundation
 import os
 
-protocol PersistedKeyStore {
-    func findPersistedContentKey(playbackID: String) async throws -> Data?
-    func savePersistedContentKey(playbackID: String, identifier: String, contentKeyData: Data) async throws
-    func updateExpirationPhase(playbackID: String, phase: ExpirationPhase) async
-}
-
-extension DownloadManager: PersistedKeyStore {}
-
 class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredentialClient & DRMAssetRegistry> : NSObject, AVContentKeySessionDelegate {
 
     weak var sessionManager: SessionManager?
     var logger: Logger
 
-    private let persistedKeyStore: PersistedKeyStore
+    private let _persistedKeyStore: PersistedKeyStore?
+
+    private var persistedKeyStore: PersistedKeyStore {
+        _persistedKeyStore ?? MuxOfflineAccessManager.shared.manager
+    }
 
     init(
         sessionManager: SessionManager,
-        persistedKeyStore: PersistedKeyStore = MuxOfflineAccessManager.shared.manager
+        persistedKeyStore: PersistedKeyStore? = nil
     ) {
         self.sessionManager = sessionManager
         self.logger = sessionManager.logger
-        self.persistedKeyStore = persistedKeyStore
+        self._persistedKeyStore = persistedKeyStore
     }
     
     // MARK: AVContentKeySessionDelegate implementation

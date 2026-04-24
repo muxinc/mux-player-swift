@@ -16,7 +16,7 @@ import os
 // media are isolated here internally. This actor is intended to be called from the external API, `Mux-OfflineAccessManager`,
 // which calls through to this actor without introducing reentrancy issues, or requiring any particular concurrency
 // management from the caller
-actor DownloadManager {
+actor DownloadManager: PersistedKeyStore {
     private let delegateQueue: OperationQueue = {
         let q = OperationQueue()
         q.name = "com.mux.offline.delegate"
@@ -470,4 +470,10 @@ actor DownloadManager {
         downloadTasksByPlaybackID[playbackID] = nil
         detachEvents(for: playbackID)
     }
+}
+
+protocol PersistedKeyStore {
+    func findPersistedContentKey(playbackID: String) async throws -> Data?
+    func savePersistedContentKey(playbackID: String, identifier: String, contentKeyData: Data) async throws
+    func updateExpirationPhase(playbackID: String, phase: ExpirationPhase) async
 }
