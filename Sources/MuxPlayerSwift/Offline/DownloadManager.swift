@@ -301,24 +301,6 @@ actor DownloadManager: PersistedKeyStore {
         }
     }
     
-    private func addDRMInfoTo(_ urlAsset: AVURLAsset, playbackID: String) async {
-        let persistedContentKey: Data?
-        do {
-            persistedContentKey = try await findPersistedContentKey(playbackID: playbackID)
-        } catch {
-            logger.warning("Couldn't find persisted content key for \(playbackID): \(error)")
-            return
-        }
-        // We are only sending to the main actor so we know this will be safe
-        if let persistedContentKey {
-            await PlayerSDK.shared.fairPlaySessionManager.addOfflinePlayDRMAsset(
-                urlAsset,
-                playbackID: playbackID,
-                keyData: persistedContentKey
-            )
-        }
-    }
-    
     private func persistentKeyFile(playbackID: String, identifier: String) throws -> URL {
         let sanitizedIdentifier = identifier.data(using: .utf8)?.base64EncodedString()
             .replacingOccurrences(of: "+", with: "-")

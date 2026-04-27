@@ -440,7 +440,6 @@ protocol KeyRequest {
     func respondByRequestingPersistableContentKeyRequestOnAnyOS() throws
     // note: key vendor response is a CKC for FairPlay
     func persistableContentKey(fromKeyVendorResponse: Data, options: [String: Any]?) throws -> Data
-    func createPersistableKeyResponse(data: Data) -> AVContentKeyResponse
 }
 
 // Wraps a real AVContentKeyRequest and straightforwardly delegates to it
@@ -518,10 +517,6 @@ struct DefaultKeyRequest : KeyRequest {
             fromKeyVendorResponse: fromKeyVendorResponse,
             options: options
         )
-    }
-
-    func createPersistableKeyResponse(data: Data) -> AVContentKeyResponse {
-        return AVContentKeyResponse(fairPlayStreamingKeyResponseData: data)
     }
 
     let request: InnerRequest

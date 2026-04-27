@@ -78,11 +78,6 @@ class MockKeyRequest : KeyRequest {
         return Data()
     }
 
-    func createPersistableKeyResponse(data: Data) -> AVContentKeyResponse {
-        fakeRequest.append((#function, [data]))
-        return AVContentKeyResponse(authorizationTokenData: "fake-persistable-token".data(using: .utf8)!)
-    }
-
     // MARK: verificaitons
     
     /// Verifies that the given method was called the given number of times
