@@ -26,12 +26,12 @@ class TestFairPlayStreamingSessionManager : FairPlayStreamingSessionCredentialCl
         drmAssetRegistry.addDRMAsset(urlAsset, playbackID: playbackID, options: options, rootDomain: rootDomain)
     }
     
-    func requestCertificate(playbackID: String) async throws -> Data {
-        try await credentialClient.requestCertificate(playbackID: playbackID)
+    func requestCertificate(playbackID: String, offline: Bool) async throws -> Data {
+        try await credentialClient.requestCertificate(playbackID: playbackID, offline: offline)
     }
 
-    func requestLicence(spcData: Data, playbackID: String) async throws -> Data {
-        try await credentialClient.requestLicence(spcData: spcData, playbackID: playbackID)
+    func requestLicence(spcData: Data, playbackID: String, offline: Bool) async throws -> Data {
+        try await credentialClient.requestLicence(spcData: spcData, playbackID: playbackID, offline: offline)
     }
 
     func addOfflineDownloadDRMAsset(_ urlAsset: AVURLAsset, playbackID: String, options: MuxPlayerSwift.PlaybackOptions.DRMPlaybackOptions, rootDomain: String) {

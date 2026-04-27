@@ -17,9 +17,9 @@ import os
 protocol FairPlayStreamingSessionCredentialClient: AnyObject {
     // MARK: Requesting licenses and certs
 
-    func requestCertificate(playbackID: String) async throws -> Data
+    func requestCertificate(playbackID: String, offline: Bool) async throws -> Data
 
-    func requestLicence(spcData: Data, playbackID: String) async throws -> Data
+    func requestLicence(spcData: Data, playbackID: String, offline: Bool) async throws -> Data
 
     var logger: Logger { get set }
 }
@@ -129,31 +129,32 @@ class DefaultFairPlayStreamingSessionManager<
 
     private let urlSession: URLSession
     
-    private func offlineDRMConfigOnQueue(for playbackID: String) async -> DRMConfig? {
+    private func drmConfigOnQueue(for playbackID: String, offline: Bool) async -> DRMConfig? {
         return await withCheckedContinuation { continuation in
             queue.async { [logger, weak self] in
                 guard let self else {
-                    logger.warning("looked up offline DRMConfig after cleanup")
+                    logger.warning("looked up DRMConfig after cleanup")
                     continuation.resume(returning: nil)
                     return
                 }
-                continuation.resume(returning: offlineDownloadKeyLookup[playbackID])
+                let lookup = offline ? offlineDownloadKeyLookup : onlineKeyConfigLookup
+                continuation.resume(returning: lookup[playbackID])
             }
         }
     }
-    
+
     // MARK: Requesting licenses and certs
 
-    func requestCertificate(playbackID: String) async throws -> Data {
-        guard let config = await offlineDRMConfigOnQueue(for: playbackID) else {
+    func requestCertificate(playbackID: String, offline: Bool) async throws -> Data {
+        guard let config = await drmConfigOnQueue(for: playbackID, offline: offline) else {
             throw FairPlaySessionError.unexpected(message: "No DRM config tracked for playbackID: \(playbackID)")
         }
 
         return try await requestCertificateInner(playbackID: playbackID, drmConfig: config)
     }
 
-    func requestLicence(spcData: Data, playbackID: String) async throws -> Data {
-        guard let config = await offlineDRMConfigOnQueue(for: playbackID) else {
+    func requestLicence(spcData: Data, playbackID: String, offline: Bool) async throws -> Data {
+        guard let config = await drmConfigOnQueue(for: playbackID, offline: offline) else {
             throw FairPlaySessionError.unexpected(message: "No DRM config tracked for playbackID: \(playbackID)")
         }
 

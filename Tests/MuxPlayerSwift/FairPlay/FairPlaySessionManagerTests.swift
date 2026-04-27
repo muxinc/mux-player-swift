@@ -109,7 +109,7 @@ class FairPlaySessionManagerTests : XCTestCase {
             return (HTTPURLResponse(), nil)
         }
 
-        _ = try? await sessionManager.requestCertificate(playbackID: fakePlaybackId)
+        _ = try? await sessionManager.requestCertificate(playbackID: fakePlaybackId, offline: true)
 
         let urlComponents = URLComponents(string: urlRequest.url!.absoluteString)!
         XCTAssertNotNil(urlComponents.queryItems)
@@ -156,7 +156,7 @@ class FairPlaySessionManagerTests : XCTestCase {
             return (response, "fake ckc data".data(using: .utf8))
         }
 
-        _ = try await sessionManager.requestLicence(spcData: fakeSpcData, playbackID: fakePlaybackId)
+        _ = try await sessionManager.requestLicence(spcData: fakeSpcData, playbackID: fakePlaybackId, offline: true)
 
         let urlComponents = URLComponents(string: urlRequest.url!.absoluteString)!
         XCTAssertNotNil(urlComponents.queryItems)
@@ -212,7 +212,7 @@ class FairPlaySessionManagerTests : XCTestCase {
             return (response, fakeAppCert)
         }
 
-        let result = try await sessionManager.requestCertificate(playbackID: fakePlaybackId)
+        let result = try await sessionManager.requestCertificate(playbackID: fakePlaybackId, offline: true)
         XCTAssertEqual(result, fakeAppCert)
     }
 
@@ -242,7 +242,7 @@ class FairPlaySessionManagerTests : XCTestCase {
         }
 
         do {
-            _ = try await sessionManager.requestCertificate(playbackID: fakePlaybackId)
+            _ = try await sessionManager.requestCertificate(playbackID: fakePlaybackId, offline: true)
             XCTFail("failure should have been reported")
         } catch let fpsError as FairPlaySessionError {
             if case .httpFailed(let code) = fpsError {
@@ -270,7 +270,7 @@ class FairPlaySessionManagerTests : XCTestCase {
         }
 
         do {
-            _ = try await sessionManager.requestCertificate(playbackID: fakePlaybackId)
+            _ = try await sessionManager.requestCertificate(playbackID: fakePlaybackId, offline: true)
             XCTFail("failure should have been reported")
         } catch let fpsError as FairPlaySessionError {
             guard case .because(_) = fpsError else {
@@ -303,7 +303,7 @@ class FairPlaySessionManagerTests : XCTestCase {
         }
 
         do {
-            _ = try await sessionManager.requestCertificate(playbackID: fakePlaybackId)
+            _ = try await sessionManager.requestCertificate(playbackID: fakePlaybackId, offline: true)
             XCTFail("failure should have been reported")
         } catch let fpsError as FairPlaySessionError {
             guard case .unexpected(let message) = fpsError else {
@@ -338,7 +338,7 @@ class FairPlaySessionManagerTests : XCTestCase {
             return (response, fakeLicense)
         }
 
-        let result = try await sessionManager.requestLicence(spcData: fakeSpcData, playbackID: fakePlaybackId)
+        let result = try await sessionManager.requestLicence(spcData: fakeSpcData, playbackID: fakePlaybackId, offline: true)
         XCTAssertEqual(result, fakeLicense)
     }
 
@@ -369,7 +369,7 @@ class FairPlaySessionManagerTests : XCTestCase {
         }
 
         do {
-            _ = try await sessionManager.requestLicence(spcData: fakeSpcData, playbackID: fakePlaybackId)
+            _ = try await sessionManager.requestLicence(spcData: fakeSpcData, playbackID: fakePlaybackId, offline: true)
             XCTFail("failure should have been reported")
         } catch let fpsError as FairPlaySessionError {
             if case .httpFailed(let code) = fpsError {
@@ -398,7 +398,7 @@ class FairPlaySessionManagerTests : XCTestCase {
         }
 
         do {
-            _ = try await sessionManager.requestLicence(spcData: fakeSpcData, playbackID: fakePlaybackId)
+            _ = try await sessionManager.requestLicence(spcData: fakeSpcData, playbackID: fakePlaybackId, offline: true)
             XCTFail("failure should have been reported")
         } catch let fpsError as FairPlaySessionError {
             guard case .because(_) = fpsError else {
@@ -432,7 +432,7 @@ class FairPlaySessionManagerTests : XCTestCase {
         }
 
         do {
-            _ = try await sessionManager.requestLicence(spcData: fakeSpcData, playbackID: fakePlaybackId)
+            _ = try await sessionManager.requestLicence(spcData: fakeSpcData, playbackID: fakePlaybackId, offline: true)
             XCTFail("failure should have been reported")
         } catch let fpsError as FairPlaySessionError {
             guard case .unexpected(let message) = fpsError else {

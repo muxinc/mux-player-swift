@@ -251,13 +251,13 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
         }
 
         // No content key already? Try to get one
-        let appCertData = try await sessionManager.requestCertificate(playbackID: playbackID)
+        let appCertData = try await sessionManager.requestCertificate(playbackID: playbackID, offline: true)
         let spcData = try await request.makeStreamingContentKeyRequestData(
             forApp: appCertData,
             contentIdentifier: utfEncodedRequestIdentifierString,
             options: [AVContentKeyRequestProtocolVersionsKey: [1]]
         )
-        let ckcData = try await sessionManager.requestLicence(spcData: spcData, playbackID: playbackID)
+        let ckcData = try await sessionManager.requestLicence(spcData: spcData, playbackID: playbackID, offline: true)
         
         let persistableKey = try request.persistableContentKey(fromKeyVendorResponse: ckcData, options: nil)
         try await persistedKeyStore.savePersistedContentKey(
@@ -317,13 +317,13 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
         }
         
         // If we're not playing offline, do the handshake for an online key request
-        let certData = try await sessionManager.requestCertificate(playbackID: playbackID)
+        let certData = try await sessionManager.requestCertificate(playbackID: playbackID, offline: false)
         let spcData = try await request.makeStreamingContentKeyRequestData(
             forApp: certData,
             contentIdentifier: utfEncodedRequestIdentifierString,
             options: [AVContentKeyRequestProtocolVersionsKey: [1]]
         )
-        let ckcData = try await sessionManager.requestLicence(spcData: spcData, playbackID: playbackID)
+        let ckcData = try await sessionManager.requestLicence(spcData: spcData, playbackID: playbackID, offline: false)
         
         // Send CKC to CDM/ContentKeySession so we can finally play our content
         logger.debug("Submitting CKC to system")
