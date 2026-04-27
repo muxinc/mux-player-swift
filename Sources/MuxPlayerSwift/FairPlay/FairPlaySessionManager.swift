@@ -17,22 +17,8 @@ import os
 protocol FairPlayStreamingSessionCredentialClient: AnyObject {
     // MARK: Requesting licenses and certs
 
-    // Requests the App Certificate for a playback id
-    func requestCertificate(
-        playbackID: String,
-        completion requestCompletion: @escaping (Result<Data, FairPlaySessionError>) -> Void
-    )
-    // Requests a license to play based on the given SPC data
-    // - parameter offline - Not currently used, may not ever be used in short-term, maybe delete?
-    func requestLicense(
-        spcData: Data,
-        playbackID: String,
-        offline _: Bool,
-        completion requestCompletion: @escaping (Result<Data, FairPlaySessionError>) -> Void
-    )
-    
     func requestCertificate(playbackID: String) async throws -> Data
-    
+
     func requestLicence(spcData: Data, playbackID: String) async throws -> Data
 
     var logger: Logger { get set }
@@ -196,50 +182,6 @@ class DefaultFairPlayStreamingSessionManager<
                 drmConfig: config
             ) { continuation.resume(with: $0) }
         }
-    }
-    
-    func requestCertificate(
-        playbackID: String,
-        completion requestCompletion: @escaping (Result<Data, FairPlaySessionError>) -> Void
-    ) {
-        guard let config = onlineKeyConfigLookup[playbackID] else {
-            logger.debug(
-                "No registered DRM configuration for playbackID \(playbackID)."
-            )
-            requestCompletion(
-                .failure(
-                    FairPlaySessionError.unexpected(
-                        message: "No registered DRM configuration for playbackID \(playbackID)"
-                    )
-                )
-            )
-            return
-        }
-        
-        requestCertificateInner(playbackID: playbackID, drmConfig: config, completion: requestCompletion)
-    }
-
-    func requestLicense(
-        spcData: Data,
-        playbackID: String,
-        offline: Bool,
-        completion requestCompletion: @escaping (Result<Data, FairPlaySessionError>) -> Void
-    ) {
-        guard let config = onlineKeyConfigLookup[playbackID] else {
-            logger.debug(
-                "No registered DRM configuration for playbackID \(playbackID)."
-            )
-            requestCompletion(
-                .failure(
-                    FairPlaySessionError.unexpected(
-                        message: "No registered DRM configuration for playbackID \(playbackID)"
-                    )
-                )
-            )
-            return
-        }
-        
-        requestLicenseInner(spcData: spcData, playbackID: playbackID, drmConfig: config, completion: requestCompletion)
     }
     
     /// Requests the App Certificate for a playback id
