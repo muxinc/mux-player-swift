@@ -53,6 +53,9 @@ struct DownloadAssetRow: View {
         case .downloaded:
             Image(systemName: "play.circle.fill")
                 .foregroundStyle(.blue)
+        case .expired:
+            Image(systemName: "clock.badge.exclamationmark")
+                .foregroundStyle(.orange)
         case .mustRedownload:
             Image(systemName: "exclamationmark.triangle.fill")
                 .foregroundStyle(.orange)
@@ -77,6 +80,10 @@ struct DownloadAssetRow: View {
             Text("Downloaded")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
+        case .expired:
+            Text("Expired")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
         case .mustRedownload:
             Text("Must Redownload")
                 .font(.subheadline)
@@ -99,7 +106,7 @@ struct DownloadAssetRow: View {
         case .downloaded:
             Button("Delete", role: .destructive) { onAction() }
                 .buttonStyle(.borderless)
-        case .mustRedownload, .error:
+        case .expired, .mustRedownload, .error:
             if let onSecondaryAction {
                 Button("Cancel", role: .destructive) { onSecondaryAction() }
                     .buttonStyle(.borderless)
