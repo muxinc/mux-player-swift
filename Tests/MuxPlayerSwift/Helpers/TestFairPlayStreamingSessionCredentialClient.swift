@@ -26,7 +26,7 @@ class TestFairPlayStreamingSessionCredentialClient: FairPlayStreamingSessionCred
         )
     )
 
-    func requestCertificate(playbackID: String) async throws -> Data {
+    func requestCertificate(playbackID: String, offline: Bool) async throws -> Data {
         if let fakeCert {
             return fakeCert
         } else if let certFailsWith {
@@ -36,7 +36,7 @@ class TestFairPlayStreamingSessionCredentialClient: FairPlayStreamingSessionCred
         }
     }
 
-    func requestLicence(spcData: Data, playbackID: String) async throws -> Data {
+    func requestLicence(spcData: Data, playbackID: String, offline: Bool) async throws -> Data {
         if let fakeLicense {
             return fakeLicense
         } else if let licenseFailsWith {
@@ -46,26 +46,6 @@ class TestFairPlayStreamingSessionCredentialClient: FairPlayStreamingSessionCred
         }
     }
 
-
-    func requestCertificate(playbackID: String, completion requestCompletion: @escaping (Result<Data, FairPlaySessionError>) -> Void) {
-        if let fakeCert = fakeCert {
-            requestCompletion(Result.success(fakeCert))
-        } else if let certFailsWith {
-            requestCompletion(Result.failure(certFailsWith))
-        } else {
-            requestCompletion(Result.failure(.unexpected(message: "No fake cert or error configured")))
-        }
-    }
-
-    func requestLicense(spcData: Data, playbackID: String, offline _: Bool, completion requestCompletion: @escaping (Result<Data, FairPlaySessionError>) -> Void) {
-        if let fakeLicense = fakeLicense {
-            requestCompletion(Result.success(fakeLicense))
-        } else if let licenseFailsWith {
-            requestCompletion(Result.failure(licenseFailsWith))
-        } else {
-            requestCompletion(Result.failure(.unexpected(message: "No fake license or error configured")))
-        }
-    }
 
     convenience init(fakeCert: Data, fakeLicense: Data) {
         self.init(fakeCert: fakeCert, fakeLicense: fakeLicense, certFailsWith: nil, licenseFailsWith: nil)

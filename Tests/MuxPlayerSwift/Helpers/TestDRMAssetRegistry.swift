@@ -12,7 +12,7 @@ class TestDRMAssetRegistry : DRMAssetRegistry {
     func addOfflinePlayDRMAsset(_ urlAsset: AVURLAsset, playbackID: String, keyData: Data) async {
     }
     
-    func hasOfflineDRMConfig(playbackID: String) -> Bool {
+    func hasOfflineDRMConfig(playbackID: String) async -> Bool {
         return false
     }
     

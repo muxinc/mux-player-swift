@@ -92,104 +92,98 @@ class ContentKeySessionDelegateTests : XCTestCase {
         XCTAssertEqual(fakePlaybackID, foundPlaybackID)
     }
     
-    func testKeyRequestNoPlaybackId() throws {
+    func testKeyRequestNoPlaybackId() async {
         let mockRequest = MockKeyRequest(
             fakeIdentifier: makeFakeSkdUrlIncorrect()
         )
-        
-        contentKeySessionDelegate.handleContentKeyRequest(request: mockRequest)
-        
+
+        do {
+            try await contentKeySessionDelegate.handleContentKeyRequest(request: mockRequest)
+        } catch {
+            // error is acceptable here too
+        }
+
         XCTAssertTrue(
             mockRequest.verifyWasCalled(
                 funcName: "processContentKeyResponseError"
             )
         )
         XCTAssertTrue(
-            mockRequest.verifyNotCalled(funcName: "makeStreamingContentKeyRequestData")
+            mockRequest.verifyNotCalled(
+                funcName: "makeStreamingContentKeyRequestData(forApp:contentIdentifier:options:)"
+            )
         )
     }
-    
-    func testKeyRequestCertError() throws {
-        setUpForFailure(error: .unexpected(message: "fake error"))
+
+    func testKeyRequestCertError() async {
+        setUpWith(
+            credentialClient: TestFairPlayStreamingSessionCredentialClient(
+                certFailsWith: .unexpected(message: "cert error")
+            )
+        )
         let mockRequest = MockKeyRequest(
             fakeIdentifier: makeFakeSkdUrl(fakePlaybackID: "fake-playback")
         )
-        
-        contentKeySessionDelegate.handleContentKeyRequest(request: mockRequest)
-        XCTAssertTrue(
-            mockRequest.verifyWasCalled(
-                funcName: "processContentKeyResponseError"
+
+        do {
+            try await contentKeySessionDelegate.handleContentKeyRequest(request: mockRequest)
+            XCTFail("Expected error to be thrown")
+        } catch {
+            XCTAssertTrue(
+                mockRequest.verifyNotCalled(
+                    funcName: "makeStreamingContentKeyRequestData(forApp:contentIdentifier:options:)"
+                )
+            )
+            XCTAssertTrue(
+                mockRequest.verifyNotCalled(funcName: "processContentKeyResponse")
+            )
+        }
+    }
+
+    func testKeyRequestLicenseError() async {
+        setUpWith(
+            credentialClient: TestFairPlayStreamingSessionCredentialClient(
+                fakeCert: "fake-cert".data(using: .utf8)!,
+                licenseFailsWith: .unexpected(message: "license error")
             )
         )
-        XCTAssertTrue(
-            mockRequest.verifyNotCalled(funcName: "makeStreamingContentKeyRequestData")
+        let mockRequest = MockKeyRequest(
+            fakeIdentifier: makeFakeSkdUrl(fakePlaybackID: "fake-playback")
         )
+
+        do {
+            try await contentKeySessionDelegate.handleContentKeyRequest(request: mockRequest)
+            XCTFail("Expected error to be thrown")
+        } catch {
+            // Should have gotten past cert and SPC stages
+            XCTAssertTrue(
+                mockRequest.verifyWasCalled(
+                    funcName: "makeStreamingContentKeyRequestData(forApp:contentIdentifier:options:)"
+                )
+            )
+            // But should not have processed a response
+            XCTAssertTrue(
+                mockRequest.verifyNotCalled(funcName: "processContentKeyResponse")
+            )
+        }
     }
-    
-    func testKeyRequestHappyPath() throws {
+
+    func testKeyRequestHappyPath() async throws {
         let mockRequest = MockKeyRequest(
             fakeIdentifier: makeFakeSkdUrl(
                 fakePlaybackID: "fake-playback"
             )
         )
-        testDRMAssetRegistry.addDRMAsset(
-            AVURLAsset(url: URL(string: "https://example.com/playlist.m3u8")!),
-            playbackID: "fake-playback",
-            options: .init(playbackToken: "playback-token", drmToken: "drm-token"),
-            rootDomain: "example.com")
 
-        contentKeySessionDelegate.handleContentKeyRequest(request: mockRequest)
-        
+        try await contentKeySessionDelegate.handleContentKeyRequest(request: mockRequest)
+
         XCTAssertTrue(
             mockRequest.verifyNotCalled(funcName: "processContentKeyResponseError")
         )
-        XCTAssertTrue(
-            mockRequest.verifyWasCalled(funcName: "makeStreamingContentKeyRequestData")
-        )
-    }
-    
-    func testSPCForCKCFailedLicense() throws {
-        setUpForFailure(error: .unexpected(message: "fake error"))
-        let mockRequest = MockKeyRequest(
-            fakeIdentifier: makeFakeSkdUrl(fakePlaybackID: "fake-playback")
-        )
-        
-        contentKeySessionDelegate.handleSpcObtainedFromCDMForOnlineKey(
-            spcData: "fake-spc-data".data(using: .utf8)!,
-            playbackID: "fake-playback",
-            request: mockRequest
-        )
-        
         XCTAssertTrue(
             mockRequest.verifyWasCalled(
-                funcName: "processContentKeyResponseError"
+                funcName: "makeStreamingContentKeyRequestData(forApp:contentIdentifier:options:)"
             )
-        )
-        XCTAssertTrue(
-            mockRequest.verifyNotCalled(funcName: "processContentKeyResponse")
-        )
-    }
-    
-    func testSPCForCKCHappyPath() throws {
-        let mockRequest = MockKeyRequest(
-            fakeIdentifier: makeFakeSkdUrl(
-                fakePlaybackID: "fake-playback"
-            )
-        )
-        testDRMAssetRegistry.addDRMAsset(
-            AVURLAsset(url: URL(string: "https://example.com/playlist.m3u8")!),
-            playbackID: "fake-playback",
-            options: .init(playbackToken: "playback-token", drmToken: "drm-token"),
-            rootDomain: "example.com")
-
-        contentKeySessionDelegate.handleSpcObtainedFromCDMForOnlineKey(
-            spcData: "fake-spc-data".data(using: .utf8)!,
-            playbackID: "fake-playback",
-            request: mockRequest
-        )
-
-        XCTAssertTrue(
-            mockRequest.verifyNotCalled(funcName: "processContentKeyResponseError")
         )
         XCTAssertTrue(
             mockRequest.verifyWasCalled(funcName: "processContentKeyResponse")

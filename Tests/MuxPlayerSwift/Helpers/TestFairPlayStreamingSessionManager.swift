@@ -22,24 +22,16 @@ class TestFairPlayStreamingSessionManager : FairPlayStreamingSessionCredentialCl
         )
     )
 
-    func requestCertificate(playbackID: String, completion requestCompletion: @escaping (Result<Data, FairPlaySessionError>) -> Void) {
-        credentialClient.requestCertificate(playbackID: playbackID, completion: requestCompletion)
-    }
-
-    func requestLicense(spcData: Data, playbackID: String, offline: Bool, completion requestCompletion: @escaping (Result<Data, FairPlaySessionError>) -> Void) {
-        credentialClient.requestLicense(spcData: spcData, playbackID: playbackID, offline: offline, completion: requestCompletion)
-    }
-
     func addDRMAsset(_ urlAsset: AVURLAsset, playbackID: String, options: PlaybackOptions.DRMPlaybackOptions, rootDomain: String) {
         drmAssetRegistry.addDRMAsset(urlAsset, playbackID: playbackID, options: options, rootDomain: rootDomain)
     }
     
-    func requestCertificate(playbackID: String) async throws -> Data {
-        try await credentialClient.requestCertificate(playbackID: playbackID)
+    func requestCertificate(playbackID: String, offline: Bool) async throws -> Data {
+        try await credentialClient.requestCertificate(playbackID: playbackID, offline: offline)
     }
 
-    func requestLicence(spcData: Data, playbackID: String) async throws -> Data {
-        try await credentialClient.requestLicence(spcData: spcData, playbackID: playbackID)
+    func requestLicence(spcData: Data, playbackID: String, offline: Bool) async throws -> Data {
+        try await credentialClient.requestLicence(spcData: spcData, playbackID: playbackID, offline: offline)
     }
 
     func addOfflineDownloadDRMAsset(_ urlAsset: AVURLAsset, playbackID: String, options: MuxPlayerSwift.PlaybackOptions.DRMPlaybackOptions, rootDomain: String) {
@@ -54,8 +46,8 @@ class TestFairPlayStreamingSessionManager : FairPlayStreamingSessionCredentialCl
         await drmAssetRegistry.addOfflinePlayDRMAsset(urlAsset, playbackID: playbackID, keyData: keyData)
     }
 
-    func hasOfflineDRMConfig(playbackID: String) -> Bool {
-        drmAssetRegistry.hasOfflineDRMConfig(playbackID: playbackID)
+    func hasOfflineDRMConfig(playbackID: String) async -> Bool {
+        await drmAssetRegistry.hasOfflineDRMConfig(playbackID: playbackID)
     }
 
     func offlineKeyData(playbackID: String) -> Data? {
