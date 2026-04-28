@@ -16,7 +16,7 @@ class TestDRMAssetRegistry : DRMAssetRegistry {
         return false
     }
     
-    func offlineKeyData(playbackID: String) -> Data? {
+    func offlineKeyData(playbackID: String) async -> Data? {
         return nil
     }
     
