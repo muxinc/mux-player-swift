@@ -305,7 +305,7 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
         }
         
         // Check for offline - if this is for offline, we trigger the persistable content key flow
-        if sessionManager.hasOfflineDRMConfig(playbackID: playbackID) {
+        if await sessionManager.hasOfflineDRMConfig(playbackID: playbackID) {
             do {
                 try request.respondByRequestingPersistableContentKeyRequestOnAnyOS()
                 // no more processing for this key request. we'll get a delegate call with a persistable key request next

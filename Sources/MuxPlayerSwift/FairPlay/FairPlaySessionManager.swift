@@ -31,7 +31,7 @@ protocol DRMAssetRegistry {
     func addOfflineDownloadDRMAsset(_ urlAsset: AVURLAsset, playbackID: String, options: PlaybackOptions.DRMPlaybackOptions, rootDomain: String)
     func removeOfflineDownloadSession(playbackID: String)
     func addOfflinePlayDRMAsset(_ urlAsset: AVURLAsset, playbackID: String, keyData: Data) async
-    func hasOfflineDRMConfig(playbackID: String) -> Bool
+    func hasOfflineDRMConfig(playbackID: String) async -> Bool
     func offlineKeyData(playbackID: String) -> Data?
 }
 
@@ -409,9 +409,18 @@ class DefaultFairPlayStreamingSessionManager<
         self.contentKeySession.addContentKeyRecipient(urlAsset)
     }
     
-    func hasOfflineDRMConfig(playbackID: String) -> Bool {
-        // called from ContentKeySessionDelegate, is definitely on .queue
-        return offlinePlayLookup[playbackID] != nil || offlineDownloadKeyLookup[playbackID] != nil
+    func hasOfflineDRMConfig(playbackID: String) async -> Bool {
+        return await withCheckedContinuation { continuation in
+            queue.async { [logger, weak self] in
+                guard let self else {
+                    logger.warning("looked up offline DRM config after cleanup")
+                    continuation.resume(returning: false)
+                    return
+                }
+                let result = offlinePlayLookup[playbackID] != nil || offlineDownloadKeyLookup[playbackID] != nil
+                continuation.resume(returning: result)
+            }
+        }
     }
     
     func offlineKeyData(playbackID: String) -> Data? {
