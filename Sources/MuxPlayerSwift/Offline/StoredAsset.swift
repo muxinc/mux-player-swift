@@ -23,8 +23,7 @@ struct StoredAsset: Codable {
     let localPath: String?
     let readableTitle: String
     let posterDataBase64: String?
-    let subtitleLanguages: [String]?
-    let secondaryAudioLanguages: [String]?
+    let mediaSelectionPolicy: OfflineMediaSelectionPolicy?
 
     let ckcFilePath: String?
     /// For secure playback: playback token expiration
@@ -72,8 +71,7 @@ extension StoredAsset {
             localPath: nil,
             readableTitle: options.readableTitle,
             posterDataBase64: options.posterData?.base64EncodedString(),
-            subtitleLanguages: options.subtitleLanguages,
-            secondaryAudioLanguages: options.secondaryAudioLanguages,
+            mediaSelectionPolicy: options.mediaSelectionPolicy,
             ckcFilePath: nil,
             redownloadExpiration: nil,
             expireLicenseFrom: hasDRM ? Date() : nil,
