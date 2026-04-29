@@ -30,6 +30,10 @@ final class ExampleOfflineDownloadManager: ObservableObject {
         ExampleAsset(
             playbackID: "zrQ02TP4Br02KycnnAJIM8FPnohUZLZprkDC33nWzJavc",
             title: "SF Video Tech Talk"
+        ),
+        ExampleAsset(
+            playbackID: "wXqpSb3E1bI9xdr0100wIZ016j5WwP1HcfE",
+            title: "Infrastructure Review"
         )
     ]
 
@@ -68,23 +72,17 @@ final class ExampleOfflineDownloadManager: ObservableObject {
         await MuxOfflineAccessManager.shared.removeDownload(playbackID: playbackID)
     }
     
-    func startDownload(for asset: ExampleAsset) async {
-        let playbackOptions = {
-            if let playbackToken = asset.playbackToken {
-                if let drmToken = asset.drmToken {
-                    return PlaybackOptions(playbackToken: playbackToken, drmToken: drmToken)
-                } else {
-                    return PlaybackOptions(playbackToken: playbackToken)
-                }
-            } else {
-                return PlaybackOptions()
-            }
-        }()
-        
+    func startDownload(
+        for asset: ExampleAsset,
+        mediaSelectionPolicy: OfflineMediaSelectionPolicy = .automatic
+    ) async {
         let stream = await MuxOfflineAccessManager.shared.startDownload(
             playbackID: asset.playbackID,
-            playbackOptions: playbackOptions,
-            downloadOptions: DownloadOptions(readableTitle: asset.title)
+            playbackOptions: asset.makePlaybackOptions(),
+            downloadOptions: DownloadOptions(
+                readableTitle: asset.title,
+                mediaSelectionPolicy: mediaSelectionPolicy
+            )
         )
         downloadStates[asset.playbackID] = .downloading(progress: 0.0)
         observeDownload(playbackID: asset.playbackID, stream: stream)

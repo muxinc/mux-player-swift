@@ -88,10 +88,24 @@ actor DownloadManager: PersistedKeyStore {
         }
         
         // configure the new task, and keep track of it
-        let subject = subject(for: playbackID)
         let config = AVAssetDownloadConfiguration(asset: avAsset, title: downloadOptions.readableTitle)
+        config.artworkData = downloadOptions.posterData
+        let mediaSelectionResolution: OfflineMediaSelectionResolution
+        do {
+            mediaSelectionResolution = try await OfflineMediaSelectionResolver.resolve(
+                policy: downloadOptions.mediaSelectionPolicy,
+                for: avAsset
+            )
+        } catch {
+            return Fail(error: error).eraseToAnyPublisher()
+        }
+        if let mediaSelections = mediaSelectionResolution.mediaSelections {
+            config.primaryContentConfiguration.mediaSelections = mediaSelections
+            config.auxiliaryContentConfigurations = []
+        }
         let task = downloadSession.makeAssetDownloadTask(downloadConfiguration: config)
         task.taskDescription = playbackID
+        let subject = subject(for: playbackID)
         // do this before we await the index management, so re-entrant calls don't orphan the task
         downloadTasksByPlaybackID[playbackID] = task
         
@@ -104,7 +118,13 @@ actor DownloadManager: PersistedKeyStore {
             }
             return nil
         }()
-        await index.upsert(StoredAsset.forNewDownload(playbackID: playbackID, options: downloadOptions, drmClaims: drmClaims))
+        await index.upsert(
+            StoredAsset.forNewDownload(
+                playbackID: playbackID,
+                options: downloadOptions,
+                drmClaims: drmClaims
+            )
+        )
         
         // Adds the asset as a ContentKeyRecipient, if it's DRM-protected
         if case .drm(_) = playbackOptions.playbackPolicy {
