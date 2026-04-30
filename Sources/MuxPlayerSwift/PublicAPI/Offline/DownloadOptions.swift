@@ -13,20 +13,16 @@ public struct DownloadOptions {
     public let readableTitle: String
     /// Optional poster image data
     public let posterData: Data?
-    /// Language codes for subtitles (e.g., 'en' or 'en-US')
-    public let subtitleLanguages: [String]?
-    /// Language codes for secondary audio tracks (e.g., 'en' or 'en-US')
-    public let secondaryAudioLanguages: [String]?
+    /// Media selection policy for audio and subtitle tracks.
+    public let mediaSelectionPolicy: OfflineMediaSelectionPolicy
     
     public init(
         readableTitle: String,
         posterData: Data? = nil,
-        subtitleLanguages: [String]? = nil,
-        secondaryAudioLanguages: [String]? = nil
+        mediaSelectionPolicy: OfflineMediaSelectionPolicy = .automatic
     ) {
         self.readableTitle = readableTitle
         self.posterData = posterData
-        self.subtitleLanguages = subtitleLanguages
-        self.secondaryAudioLanguages = secondaryAudioLanguages
+        self.mediaSelectionPolicy = mediaSelectionPolicy
     }
 }

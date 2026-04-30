@@ -16,8 +16,7 @@ extension DownloadOptions {
         } else {
             self.posterData = nil
         }
-        
-        self.subtitleLanguages = storedAsset.subtitleLanguages
-        self.secondaryAudioLanguages = storedAsset.secondaryAudioLanguages
+
+        self.mediaSelectionPolicy = storedAsset.mediaSelectionPolicy ?? .automatic
     }
 }

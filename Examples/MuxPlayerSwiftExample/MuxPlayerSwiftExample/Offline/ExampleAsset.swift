@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import MuxPlayerSwift
 
 struct ExampleAsset: Identifiable {
     let playbackID: String
@@ -26,5 +27,15 @@ struct ExampleAsset: Identifiable {
         self.languages = languages
         self.playbackToken = playbackToken
         self.drmToken = drmToken
+    }
+
+    func makePlaybackOptions() -> PlaybackOptions {
+        guard let playbackToken else {
+            return PlaybackOptions()
+        }
+        guard let drmToken else {
+            return PlaybackOptions(playbackToken: playbackToken)
+        }
+        return PlaybackOptions(playbackToken: playbackToken, drmToken: drmToken)
     }
 }

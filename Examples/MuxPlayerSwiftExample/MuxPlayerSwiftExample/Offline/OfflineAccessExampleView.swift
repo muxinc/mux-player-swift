@@ -10,6 +10,7 @@ import SwiftUI
 
 struct OfflineAccessExampleView: View {
     @StateObject private var manager = ExampleOfflineDownloadManager()
+    @State private var isAssetSelectionPresented = false
     @State private var playerToPresent: AVPlayer?
 
     var body: some View {
@@ -30,12 +31,16 @@ struct OfflineAccessExampleView: View {
             }
 
             Section {
-                NavigationLink {
+                NavigationLink(isActive: $isAssetSelectionPresented) {
                     AssetSelectionView(
                         assets: manager.exampleAssets
-                    ) { asset in
+                    ) { asset, mediaSelectionPolicy in
                         Task {
-                            await manager.startDownload(for: asset)
+                            await manager.startDownload(
+                                for: asset,
+                                mediaSelectionPolicy: mediaSelectionPolicy
+                            )
+                            isAssetSelectionPresented = false
                         }
                     }
                 } label: {
