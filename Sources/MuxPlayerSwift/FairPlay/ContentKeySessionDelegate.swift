@@ -410,17 +410,20 @@ struct DefaultKeyRequest : KeyRequest {
     ) async throws -> Data {
         return try await withCheckedThrowingContinuation { continuation in
             self.request.makeStreamingContentKeyRequestData(
-                forApp: appIdentifier, contentIdentifier: contentIdentifier
-            ) { data, error in
-                if let data {
-                    continuation.resume(returning: data)
-                } else if let error {
-                    continuation.resume(throwing: error)
-                } else {
-                    // probably not a real case, but we don't want to hang the request to the system
-                    continuation.resume(throwing: FairPlaySessionError.unexpected(message: "No SPC data or error"))
+                forApp: appIdentifier,
+                contentIdentifier: contentIdentifier,
+                options: options,
+                completionHandler: { data, error in
+                    if let data {
+                        continuation.resume(returning: data)
+                    } else if let error {
+                        continuation.resume(throwing: error)
+                    } else {
+                        // probably not a real case, but we don't want to hang the request to the system
+                        continuation.resume(throwing: FairPlaySessionError.unexpected(message: "No SPC data or error"))
+                    }
                 }
-            }
+            )
         }
     }
     
