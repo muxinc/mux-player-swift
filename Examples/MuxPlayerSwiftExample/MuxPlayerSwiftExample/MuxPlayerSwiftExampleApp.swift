@@ -5,10 +5,12 @@
 
 import AVFoundation
 import SwiftUI
+import MuxPlayerSwift
 
 @main
 struct MuxPlayerSwiftExampleApp: App {
     init() {
+        MuxOfflineAccessManager.shared.resumePendingDownloadTasks()
         configureAudioSession()
     }
 

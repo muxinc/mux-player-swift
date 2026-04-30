@@ -16,6 +16,14 @@
 		193228DE2ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 193228DD2ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITestsLaunchTests.swift */; };
 		193228EC2ACF6B3400966FE1 /* MuxPlayerSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 193228EB2ACF6B3400966FE1 /* MuxPlayerSwift */; };
 		1966C5302BEB4740005486D5 /* ProcessInfo+EnvironmentVariables.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1966C52F2BEB4740005486D5 /* ProcessInfo+EnvironmentVariables.swift */; };
+		35F3746D2F7F256800289195 /* ExampleAsset.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35F3746C2F7F256800289195 /* ExampleAsset.swift */; };
+		35F3746F2F7F256900289195 /* AssetDownloadState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35F3746E2F7F256900289195 /* AssetDownloadState.swift */; };
+		35F374712F7F258F00289195 /* ExampleOfflineDownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35F374702F7F258F00289195 /* ExampleOfflineDownloadManager.swift */; };
+		35F374732F7F25A000289195 /* DownloadAssetRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35F374722F7F25A000289195 /* DownloadAssetRow.swift */; };
+		35F374752F7F25AC00289195 /* AssetSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35F374742F7F25AC00289195 /* AssetSelectionView.swift */; };
+		35F374772F7F25C500289195 /* OfflineAccessExampleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35F374762F7F25C500289195 /* OfflineAccessExampleView.swift */; };
+		35F374792F7F25CF00289195 /* OfflineAccessExampleHostingController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35F374782F7F25CF00289195 /* OfflineAccessExampleHostingController.swift */; };
+		35FF85862F85893400ECCF43 /* PlayerViewControllerRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35FF85852F85892B00ECCF43 /* PlayerViewControllerRepresentable.swift */; };
 		19DD16AF2BEC010400F4DF4F /* SinglePlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19DD16AE2BEC010400F4DF4F /* SinglePlayer.swift */; };
 		19DD16B12BEC028C00F4DF4F /* SmartCachePlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19DD16B02BEC028C00F4DF4F /* SmartCachePlayer.swift */; };
 		19DD16B32BEC048300F4DF4F /* SinglePlayerLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19DD16B22BEC048300F4DF4F /* SinglePlayerLayer.swift */; };
@@ -54,6 +62,14 @@
 		193228DD2ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MuxPlayerSwiftExampleUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		193D52E82CAC78C0004F20AA /* MuxPlayerSwiftExample.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = MuxPlayerSwiftExample.xctestplan; sourceTree = "<group>"; };
 		1966C52F2BEB4740005486D5 /* ProcessInfo+EnvironmentVariables.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ProcessInfo+EnvironmentVariables.swift"; sourceTree = "<group>"; };
+		35F3746C2F7F256800289195 /* ExampleAsset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExampleAsset.swift; sourceTree = "<group>"; };
+		35F3746E2F7F256900289195 /* AssetDownloadState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssetDownloadState.swift; sourceTree = "<group>"; };
+		35F374702F7F258F00289195 /* ExampleOfflineDownloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExampleOfflineDownloadManager.swift; sourceTree = "<group>"; };
+		35F374722F7F25A000289195 /* DownloadAssetRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadAssetRow.swift; sourceTree = "<group>"; };
+		35F374742F7F25AC00289195 /* AssetSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssetSelectionView.swift; sourceTree = "<group>"; };
+		35F374762F7F25C500289195 /* OfflineAccessExampleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineAccessExampleView.swift; sourceTree = "<group>"; };
+		35F374782F7F25CF00289195 /* OfflineAccessExampleHostingController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineAccessExampleHostingController.swift; sourceTree = "<group>"; };
+		35FF85852F85892B00ECCF43 /* PlayerViewControllerRepresentable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerViewControllerRepresentable.swift; sourceTree = "<group>"; };
 		19DD16AE2BEC010400F4DF4F /* SinglePlayer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SinglePlayer.swift; sourceTree = "<group>"; };
 		19DD16B02BEC028C00F4DF4F /* SmartCachePlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartCachePlayer.swift; sourceTree = "<group>"; };
 		19DD16B22BEC048300F4DF4F /* SinglePlayerLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SinglePlayerLayer.swift; sourceTree = "<group>"; };
@@ -119,6 +135,7 @@
 				19DD16B22BEC048300F4DF4F /* SinglePlayerLayer.swift */,
 				19F6A1CD2C2F23EC00EE408A /* DRMPlayer.swift */,
 				1966C52F2BEB4740005486D5 /* ProcessInfo+EnvironmentVariables.swift */,
+				35F3746B2F7F255D00289195 /* Offline */,
 				193228C32ACF6AC800966FE1 /* Assets.xcassets */,
 
 				193228C82ACF6AC800966FE1 /* Info.plist */,
@@ -141,6 +158,21 @@
 				193228DD2ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITestsLaunchTests.swift */,
 			);
 			path = MuxPlayerSwiftExampleUITests;
+			sourceTree = "<group>";
+		};
+		35F3746B2F7F255D00289195 /* Offline */ = {
+			isa = PBXGroup;
+			children = (
+				35FF85852F85892B00ECCF43 /* PlayerViewControllerRepresentable.swift */,
+				35F3746C2F7F256800289195 /* ExampleAsset.swift */,
+				35F3746E2F7F256900289195 /* AssetDownloadState.swift */,
+				35F374702F7F258F00289195 /* ExampleOfflineDownloadManager.swift */,
+				35F374722F7F25A000289195 /* DownloadAssetRow.swift */,
+				35F374742F7F25AC00289195 /* AssetSelectionView.swift */,
+				35F374762F7F25C500289195 /* OfflineAccessExampleView.swift */,
+				35F374782F7F25CF00289195 /* OfflineAccessExampleHostingController.swift */,
+			);
+			path = Offline;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -279,13 +311,21 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				35F374752F7F25AC00289195 /* AssetSelectionView.swift in Sources */,
+				35F374772F7F25C500289195 /* OfflineAccessExampleView.swift in Sources */,
+				35F374792F7F25CF00289195 /* OfflineAccessExampleHostingController.swift in Sources */,
+				1966C5302BEB4740005486D5 /* ProcessInfo+EnvironmentVariables.swift in Sources */,
+				35FF85862F85893400ECCF43 /* PlayerViewControllerRepresentable.swift in Sources */,
+				35F3746F2F7F256900289195 /* AssetDownloadState.swift in Sources */,
+				35F374712F7F258F00289195 /* ExampleOfflineDownloadManager.swift in Sources */,
+				35F3746D2F7F256800289195 /* ExampleAsset.swift in Sources */,
+				35F374732F7F25A000289195 /* DownloadAssetRow.swift in Sources */,
 				19F6A1CE2C2F23EC00EE408A /* DRMPlayer.swift in Sources */,
 				19DD16B32BEC048300F4DF4F /* SinglePlayerLayer.swift in Sources */,
 				193228BB2ACF6AC700966FE1 /* MuxPlayerSwiftExampleApp.swift in Sources */,
 				19DD16B12BEC028C00F4DF4F /* SmartCachePlayer.swift in Sources */,
 				19DD16AF2BEC010400F4DF4F /* SinglePlayer.swift in Sources */,
 				359DA8042EE8F8E400491BCE /* ContainerPlayer.swift in Sources */,
-				1966C5302BEB4740005486D5 /* ProcessInfo+EnvironmentVariables.swift in Sources */,
 				193228BD2ACF6AC700966FE1 /* RootContentView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

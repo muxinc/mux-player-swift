@@ -53,11 +53,21 @@ struct RootContentView: View {
                     DRMPlayer()
                 } label: {
                     ExampleRow(
-                        title: "DRM Example",
+                        title: "Online DRM Example",
                         subtitle: "Using AVPlayerViewController"
                     )
                 }
                 .accessibilityIdentifier("DRMPlayerRow")
+                
+                NavigationLink {
+                    OfflineAccessExampleView()
+                } label: {
+                    ExampleRow(
+                        title: "Offline Playback",
+                        subtitle: "Including DRM"
+                    )
+                }
+                .accessibilityIdentifier("OfflineAccessRow")
             }
             .navigationTitle("Mux Player Swift")
         }

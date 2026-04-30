@@ -13,10 +13,11 @@ import os
 /// This version does not interact with the network at all, it just signals
 /// sucess or failure as-configured
 class TestFairPlayStreamingSessionCredentialClient: FairPlayStreamingSessionCredentialClient {
-    
+
     private let fakeCert: Data?
     private let fakeLicense: Data?
-    private let failsWith: FairPlaySessionError!
+    private let certFailsWith: FairPlaySessionError?
+    private let licenseFailsWith: FairPlaySessionError?
 
     var logger: Logger = Logger(
         OSLog(
@@ -25,37 +26,52 @@ class TestFairPlayStreamingSessionCredentialClient: FairPlayStreamingSessionCred
         )
     )
 
-    func requestCertificate(playbackID: String, completion requestCompletion: @escaping (Result<Data, FairPlaySessionError>) -> Void) {
-        if let fakeCert = fakeCert {
-            requestCompletion(Result.success(fakeCert))
+    func requestCertificate(playbackID: String, offline: Bool) async throws -> Data {
+        if let fakeCert {
+            return fakeCert
+        } else if let certFailsWith {
+            throw certFailsWith
         } else {
-            requestCompletion(Result.failure(failsWith))
+            throw FairPlaySessionError.unexpected(message: "No fake cert or error configured")
         }
     }
-    
-    func requestLicense(spcData: Data, playbackID: String, offline _: Bool, completion requestCompletion: @escaping (Result<Data, FairPlaySessionError>) -> Void) {
-        if let fakeLicense = fakeLicense {
-            requestCompletion(Result.success(fakeLicense))
+
+    func requestLicence(spcData: Data, playbackID: String, offline: Bool) async throws -> Data {
+        if let fakeLicense {
+            return fakeLicense
+        } else if let licenseFailsWith {
+            throw licenseFailsWith
         } else {
-            requestCompletion(Result.failure(failsWith))
+            throw FairPlaySessionError.unexpected(message: "No fake license or error configured")
         }
     }
-    
+
+
     convenience init(fakeCert: Data, fakeLicense: Data) {
-        self.init(fakeCert: fakeCert, fakeLicense: fakeLicense, failsWith: nil)
+        self.init(fakeCert: fakeCert, fakeLicense: fakeLicense, certFailsWith: nil, licenseFailsWith: nil)
     }
-    
+
     convenience init(failsWith: FairPlaySessionError) {
-        self.init(fakeCert: nil, fakeLicense: nil, failsWith: failsWith)
+        self.init(fakeCert: nil, fakeLicense: nil, certFailsWith: failsWith, licenseFailsWith: failsWith)
     }
-    
+
+    convenience init(certFailsWith: FairPlaySessionError) {
+        self.init(fakeCert: nil, fakeLicense: nil, certFailsWith: certFailsWith, licenseFailsWith: nil)
+    }
+
+    convenience init(fakeCert: Data, licenseFailsWith: FairPlaySessionError) {
+        self.init(fakeCert: fakeCert, fakeLicense: nil, certFailsWith: nil, licenseFailsWith: licenseFailsWith)
+    }
+
     private init(
         fakeCert: Data?,
         fakeLicense: Data?,
-        failsWith: FairPlaySessionError?
+        certFailsWith: FairPlaySessionError?,
+        licenseFailsWith: FairPlaySessionError?
     ) {
         self.fakeCert = fakeCert
         self.fakeLicense = fakeLicense
-        self.failsWith = failsWith
+        self.certFailsWith = certFailsWith
+        self.licenseFailsWith = licenseFailsWith
     }
 }
