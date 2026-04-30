@@ -304,6 +304,7 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
             return
         }
         
+        var offlineRegistered: Bool = false
         // Check for offline - if this is for offline, we trigger the persistable content key flow
         if await sessionManager.hasOfflineDRMConfig(playbackID: playbackID) {
             do {
@@ -313,17 +314,18 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
             } catch {
                 // happens if playing airplay (according to example code). The proper response is to process as an online key
                 //  .. although using an 'offline' drm_token for playing an asset is technically not supported
+                offlineRegistered = true
             }
         }
         
         // If we're not playing offline, do the handshake for an online key request
-        let certData = try await sessionManager.requestCertificate(playbackID: playbackID, offline: false)
+        let certData = try await sessionManager.requestCertificate(playbackID: playbackID, offline: offlineRegistered)
         let spcData = try await request.makeStreamingContentKeyRequestData(
             forApp: certData,
             contentIdentifier: utfEncodedRequestIdentifierString,
             options: [AVContentKeyRequestProtocolVersionsKey: [1]]
         )
-        let ckcData = try await sessionManager.requestLicence(spcData: spcData, playbackID: playbackID, offline: false)
+        let ckcData = try await sessionManager.requestLicence(spcData: spcData, playbackID: playbackID, offline: offlineRegistered)
         
         // Send CKC to CDM/ContentKeySession so we can finally play our content
         logger.debug("Submitting CKC to system")
