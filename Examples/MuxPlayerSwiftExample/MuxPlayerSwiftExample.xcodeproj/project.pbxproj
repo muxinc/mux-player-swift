@@ -7,11 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		193228BB2ACF6AC700966FE1 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 193228BA2ACF6AC700966FE1 /* AppDelegate.swift */; };
-		193228BD2ACF6AC700966FE1 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 193228BC2ACF6AC700966FE1 /* SceneDelegate.swift */; };
-		193228C22ACF6AC700966FE1 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 193228C02ACF6AC700966FE1 /* Main.storyboard */; };
+		193228BB2ACF6AC700966FE1 /* MuxPlayerSwiftExampleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 193228BA2ACF6AC700966FE1 /* MuxPlayerSwiftExampleApp.swift */; };
+		193228BD2ACF6AC700966FE1 /* RootContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 193228BC2ACF6AC700966FE1 /* RootContentView.swift */; };
 		193228C42ACF6AC800966FE1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 193228C32ACF6AC800966FE1 /* Assets.xcassets */; };
-		193228C72ACF6AC800966FE1 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 193228C52ACF6AC800966FE1 /* LaunchScreen.storyboard */; };
+
 		193228D22ACF6AC900966FE1 /* MuxPlayerSwiftExampleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 193228D12ACF6AC900966FE1 /* MuxPlayerSwiftExampleTests.swift */; };
 		193228DC2ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 193228DB2ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITests.swift */; };
 		193228DE2ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 193228DD2ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITestsLaunchTests.swift */; };
@@ -30,6 +29,11 @@
 		35F374772F7F25C500289195 /* OfflineAccessExampleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35F374762F7F25C500289195 /* OfflineAccessExampleView.swift */; };
 		35F374792F7F25CF00289195 /* OfflineAccessExampleHostingController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35F374782F7F25CF00289195 /* OfflineAccessExampleHostingController.swift */; };
 		35FF85862F85893400ECCF43 /* PlayerViewControllerRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35FF85852F85892B00ECCF43 /* PlayerViewControllerRepresentable.swift */; };
+		19DD16AF2BEC010400F4DF4F /* SinglePlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19DD16AE2BEC010400F4DF4F /* SinglePlayer.swift */; };
+		19DD16B12BEC028C00F4DF4F /* SmartCachePlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19DD16B02BEC028C00F4DF4F /* SmartCachePlayer.swift */; };
+		19DD16B32BEC048300F4DF4F /* SinglePlayerLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19DD16B22BEC048300F4DF4F /* SinglePlayerLayer.swift */; };
+		19F6A1CE2C2F23EC00EE408A /* DRMPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19F6A1CD2C2F23EC00EE408A /* DRMPlayer.swift */; };
+		359DA8042EE8F8E400491BCE /* ContainerPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 359DA8032EE8F8D600491BCE /* ContainerPlayer.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -51,11 +55,10 @@
 
 /* Begin PBXFileReference section */
 		193228B72ACF6AC700966FE1 /* MuxPlayerSwiftExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MuxPlayerSwiftExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		193228BA2ACF6AC700966FE1 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		193228BC2ACF6AC700966FE1 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
-		193228C12ACF6AC700966FE1 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		193228BA2ACF6AC700966FE1 /* MuxPlayerSwiftExampleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MuxPlayerSwiftExampleApp.swift; sourceTree = "<group>"; };
+		193228BC2ACF6AC700966FE1 /* RootContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootContentView.swift; sourceTree = "<group>"; };
 		193228C32ACF6AC800966FE1 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		193228C62ACF6AC800966FE1 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+
 		193228C82ACF6AC800966FE1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		193228CD2ACF6AC900966FE1 /* MuxPlayerSwiftExampleTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MuxPlayerSwiftExampleTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		193228D12ACF6AC900966FE1 /* MuxPlayerSwiftExampleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MuxPlayerSwiftExampleTests.swift; sourceTree = "<group>"; };
@@ -77,6 +80,11 @@
 		35F374762F7F25C500289195 /* OfflineAccessExampleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineAccessExampleView.swift; sourceTree = "<group>"; };
 		35F374782F7F25CF00289195 /* OfflineAccessExampleHostingController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineAccessExampleHostingController.swift; sourceTree = "<group>"; };
 		35FF85852F85892B00ECCF43 /* PlayerViewControllerRepresentable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerViewControllerRepresentable.swift; sourceTree = "<group>"; };
+		19DD16AE2BEC010400F4DF4F /* SinglePlayer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SinglePlayer.swift; sourceTree = "<group>"; };
+		19DD16B02BEC028C00F4DF4F /* SmartCachePlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartCachePlayer.swift; sourceTree = "<group>"; };
+		19DD16B22BEC048300F4DF4F /* SinglePlayerLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SinglePlayerLayer.swift; sourceTree = "<group>"; };
+		19F6A1CD2C2F23EC00EE408A /* DRMPlayer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DRMPlayer.swift; sourceTree = "<group>"; };
+		359DA8032EE8F8D600491BCE /* ContainerPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContainerPlayer.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -129,19 +137,18 @@
 		193228B92ACF6AC700966FE1 /* MuxPlayerSwiftExample */ = {
 			isa = PBXGroup;
 			children = (
-				359DA8032EE8F8D600491BCE /* ContainerViewControllerExample.swift */,
-				193228BA2ACF6AC700966FE1 /* AppDelegate.swift */,
-				193228BC2ACF6AC700966FE1 /* SceneDelegate.swift */,
-				19DD16AE2BEC010400F4DF4F /* SinglePlayerExampleController.swift */,
-				19DD16B02BEC028C00F4DF4F /* SmartCacheExampleViewController.swift */,
-				19DD16B22BEC048300F4DF4F /* SinglePlayerLayerExampleViewController.swift */,
-				19F6A1CD2C2F23EC00EE408A /* DRMExampleViewController.swift */,
-				193228C02ACF6AC700966FE1 /* Main.storyboard */,
-				193228C32ACF6AC800966FE1 /* Assets.xcassets */,
-				193228C52ACF6AC800966FE1 /* LaunchScreen.storyboard */,
-				193228C82ACF6AC800966FE1 /* Info.plist */,
+				193228BA2ACF6AC700966FE1 /* MuxPlayerSwiftExampleApp.swift */,
+				193228BC2ACF6AC700966FE1 /* RootContentView.swift */,
+				359DA8032EE8F8D600491BCE /* ContainerPlayer.swift */,
+				19DD16AE2BEC010400F4DF4F /* SinglePlayer.swift */,
+				19DD16B02BEC028C00F4DF4F /* SmartCachePlayer.swift */,
+				19DD16B22BEC048300F4DF4F /* SinglePlayerLayer.swift */,
+				19F6A1CD2C2F23EC00EE408A /* DRMPlayer.swift */,
 				1966C52F2BEB4740005486D5 /* ProcessInfo+EnvironmentVariables.swift */,
 				35F3746B2F7F255D00289195 /* Offline */,
+				193228C32ACF6AC800966FE1 /* Assets.xcassets */,
+
+				193228C82ACF6AC800966FE1 /* Info.plist */,
 			);
 			path = MuxPlayerSwiftExample;
 			sourceTree = "<group>";
@@ -288,9 +295,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				193228C72ACF6AC800966FE1 /* LaunchScreen.storyboard in Resources */,
+
 				193228C42ACF6AC800966FE1 /* Assets.xcassets in Resources */,
-				193228C22ACF6AC700966FE1 /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -331,6 +337,14 @@
 				193228BD2ACF6AC700966FE1 /* SceneDelegate.swift in Sources */,
 				35F3746D2F7F256800289195 /* ExampleAsset.swift in Sources */,
 				35F374732F7F25A000289195 /* DownloadAssetRow.swift in Sources */,
+				19F6A1CE2C2F23EC00EE408A /* DRMPlayer.swift in Sources */,
+				19DD16B32BEC048300F4DF4F /* SinglePlayerLayer.swift in Sources */,
+				193228BB2ACF6AC700966FE1 /* MuxPlayerSwiftExampleApp.swift in Sources */,
+				19DD16B12BEC028C00F4DF4F /* SmartCachePlayer.swift in Sources */,
+				19DD16AF2BEC010400F4DF4F /* SinglePlayer.swift in Sources */,
+				359DA8042EE8F8E400491BCE /* ContainerPlayer.swift in Sources */,
+				1966C5302BEB4740005486D5 /* ProcessInfo+EnvironmentVariables.swift in Sources */,
+				193228BD2ACF6AC700966FE1 /* RootContentView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -367,22 +381,6 @@
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
-		193228C02ACF6AC700966FE1 /* Main.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				193228C12ACF6AC700966FE1 /* Base */,
-			);
-			name = Main.storyboard;
-			sourceTree = "<group>";
-		};
-		193228C52ACF6AC800966FE1 /* LaunchScreen.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				193228C62ACF6AC800966FE1 /* Base */,
-			);
-			name = LaunchScreen.storyboard;
-			sourceTree = "<group>";
-		};
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
@@ -517,8 +515,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MuxPlayerSwiftExample/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UIMainStoryboardFile = Main;
+
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
@@ -548,8 +545,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MuxPlayerSwiftExample/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UIMainStoryboardFile = Main;
+
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;

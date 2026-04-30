@@ -10,6 +10,7 @@ import Foundation
 extension ProcessInfo {
 
 // MARK: Mux Data Environment Key
+
     var environmentKey: String? {
         guard let value = environment["ENV_KEY"],
                 !value.isEmpty else {
@@ -48,35 +49,7 @@ extension ProcessInfo {
         return value
     }
 
-    var secondaryPlaybackID: String? {
-        guard let value = environment["SECONDARY_PLAYBACK_ID"],
-                !value.isEmpty else {
-            return nil
-        }
-
-        return value
-    }
-
-    var secondaryPlaybackToken: String? {
-        guard let value = environment["SECONDARY_PLAYBACK_TOKEN"],
-                !value.isEmpty else {
-            return nil
-        }
-
-        return value
-    }
-
-    var secondaryDRMToken: String? {
-        guard let value = environment["SECONDARY_DRM_TOKEN"],
-                !value.isEmpty else {
-            return nil
-        }
-
-        return value
-    }
-
 // MARK: Mux Video Custom Playback Domain
-
 
     /// Once Mux has provisioned your Custom Domain, set the
     /// `CUSTOM_DOMAIN` environment variable and Mux Player

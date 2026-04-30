@@ -8,16 +8,7 @@ import XCTest
 final class MuxPlayerSwiftExampleUITests: XCTestCase {
 
     override func setUpWithError() throws {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
-
-        // In UI tests it is usually best to stop immediately when a failure occurs.
         continueAfterFailure = false
-
-        // In UI tests it’s important to set the initial state - such as interface orientation - required for your tests before they run. The setUp method is a good place to do this.
-    }
-
-    override func tearDownWithError() throws {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
     }
 
     func launchAndWaitUntilInForeground(
@@ -45,12 +36,14 @@ final class MuxPlayerSwiftExampleUITests: XCTestCase {
         waitFor viewIdentifier: String,
         application: XCUIApplication
     ) throws {
-        let cellElement = application.cells.element(
-            matching: .cell,
+        let cellElement = application.descendants(
+            matching: .any
+        ).element(
+            matching: .any,
             identifier: cellIdentifier
         )
 
-        guard cellElement.exists else {
+        guard cellElement.waitForExistence(timeout: 5.0) else {
             XCTFail("Failed to find cell element: \(cellIdentifier)")
             return
         }
@@ -84,8 +77,7 @@ final class MuxPlayerSwiftExampleUITests: XCTestCase {
         }
     }
 
-
-    func testVideoOnDemandPlayerViewController() throws {
+    func testContainerPlayer() throws {
         let application = XCUIApplication()
 
         try launchAndWaitUntilInForeground(
@@ -93,13 +85,27 @@ final class MuxPlayerSwiftExampleUITests: XCTestCase {
         )
 
         try tapCell(
-            cellIdentifier: "SinglePlayerExample",
+            cellIdentifier: "ContainerPlayerRow",
+            waitFor: "ContainerPlayerView",
+            application: application
+        )
+    }
+
+    func testSinglePlayer() throws {
+        let application = XCUIApplication()
+
+        try launchAndWaitUntilInForeground(
+            application: application
+        )
+
+        try tapCell(
+            cellIdentifier: "SinglePlayerRow",
             waitFor: "SinglePlayerView",
             application: application
         )
     }
 
-    func testVideoOnDemandPlayerLayer() throws {
+    func testSmartCachePlayer() throws {
         let application = XCUIApplication()
 
         try launchAndWaitUntilInForeground(
@@ -107,8 +113,36 @@ final class MuxPlayerSwiftExampleUITests: XCTestCase {
         )
 
         try tapCell(
-            cellIdentifier: "SinglePlayerLayerExample",
+            cellIdentifier: "SmartCachePlayerRow",
+            waitFor: "SmartCachePlayerView",
+            application: application
+        )
+    }
+
+    func testSinglePlayerLayer() throws {
+        let application = XCUIApplication()
+
+        try launchAndWaitUntilInForeground(
+            application: application
+        )
+
+        try tapCell(
+            cellIdentifier: "SinglePlayerLayerRow",
             waitFor: "SinglePlayerLayerView",
+            application: application
+        )
+    }
+
+    func testDRMPlayer() throws {
+        let application = XCUIApplication()
+
+        try launchAndWaitUntilInForeground(
+            application: application
+        )
+
+        try tapCell(
+            cellIdentifier: "DRMPlayerRow",
+            waitFor: "DRMPlayerView",
             application: application
         )
     }
