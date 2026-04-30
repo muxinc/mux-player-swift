@@ -67,7 +67,7 @@ struct RootContentView: View {
                         subtitle: "Including DRM"
                     )
                 }
-                .accessibilityIdentifier("DRMPlayerRow")
+                .accessibilityIdentifier("OfflineAccessRow")
             }
             .navigationTitle("Mux Player Swift")
         }
