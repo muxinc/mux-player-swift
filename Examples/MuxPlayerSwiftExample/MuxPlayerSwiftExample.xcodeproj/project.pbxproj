@@ -16,11 +16,6 @@
 		193228DE2ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 193228DD2ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITestsLaunchTests.swift */; };
 		193228EC2ACF6B3400966FE1 /* MuxPlayerSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 193228EB2ACF6B3400966FE1 /* MuxPlayerSwift */; };
 		1966C5302BEB4740005486D5 /* ProcessInfo+EnvironmentVariables.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1966C52F2BEB4740005486D5 /* ProcessInfo+EnvironmentVariables.swift */; };
-		19DD16AF2BEC010400F4DF4F /* SinglePlayerExampleController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19DD16AE2BEC010400F4DF4F /* SinglePlayerExampleController.swift */; };
-		19DD16B12BEC028C00F4DF4F /* SmartCacheExampleViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19DD16B02BEC028C00F4DF4F /* SmartCacheExampleViewController.swift */; };
-		19DD16B32BEC048300F4DF4F /* SinglePlayerLayerExampleViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19DD16B22BEC048300F4DF4F /* SinglePlayerLayerExampleViewController.swift */; };
-		19F6A1CE2C2F23EC00EE408A /* DRMExampleViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19F6A1CD2C2F23EC00EE408A /* DRMExampleViewController.swift */; };
-		359DA8042EE8F8E400491BCE /* ContainerViewControllerExample.swift in Sources */ = {isa = PBXBuildFile; fileRef = 359DA8032EE8F8D600491BCE /* ContainerViewControllerExample.swift */; };
 		35F3746D2F7F256800289195 /* ExampleAsset.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35F3746C2F7F256800289195 /* ExampleAsset.swift */; };
 		35F3746F2F7F256900289195 /* AssetDownloadState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35F3746E2F7F256900289195 /* AssetDownloadState.swift */; };
 		35F374712F7F258F00289195 /* ExampleOfflineDownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35F374702F7F258F00289195 /* ExampleOfflineDownloadManager.swift */; };
@@ -67,11 +62,6 @@
 		193228DD2ACF6AC900966FE1 /* MuxPlayerSwiftExampleUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MuxPlayerSwiftExampleUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		193D52E82CAC78C0004F20AA /* MuxPlayerSwiftExample.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = MuxPlayerSwiftExample.xctestplan; sourceTree = "<group>"; };
 		1966C52F2BEB4740005486D5 /* ProcessInfo+EnvironmentVariables.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ProcessInfo+EnvironmentVariables.swift"; sourceTree = "<group>"; };
-		19DD16AE2BEC010400F4DF4F /* SinglePlayerExampleController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SinglePlayerExampleController.swift; sourceTree = "<group>"; };
-		19DD16B02BEC028C00F4DF4F /* SmartCacheExampleViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartCacheExampleViewController.swift; sourceTree = "<group>"; };
-		19DD16B22BEC048300F4DF4F /* SinglePlayerLayerExampleViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SinglePlayerLayerExampleViewController.swift; sourceTree = "<group>"; };
-		19F6A1CD2C2F23EC00EE408A /* DRMExampleViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DRMExampleViewController.swift; sourceTree = "<group>"; };
-		359DA8032EE8F8D600491BCE /* ContainerViewControllerExample.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContainerViewControllerExample.swift; sourceTree = "<group>"; };
 		35F3746C2F7F256800289195 /* ExampleAsset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExampleAsset.swift; sourceTree = "<group>"; };
 		35F3746E2F7F256900289195 /* AssetDownloadState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssetDownloadState.swift; sourceTree = "<group>"; };
 		35F374702F7F258F00289195 /* ExampleOfflineDownloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExampleOfflineDownloadManager.swift; sourceTree = "<group>"; };
@@ -321,20 +311,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				19F6A1CE2C2F23EC00EE408A /* DRMExampleViewController.swift in Sources */,
 				35F374752F7F25AC00289195 /* AssetSelectionView.swift in Sources */,
-				19DD16B32BEC048300F4DF4F /* SinglePlayerLayerExampleViewController.swift in Sources */,
-				193228BB2ACF6AC700966FE1 /* AppDelegate.swift in Sources */,
-				19DD16B12BEC028C00F4DF4F /* SmartCacheExampleViewController.swift in Sources */,
 				35F374772F7F25C500289195 /* OfflineAccessExampleView.swift in Sources */,
 				35F374792F7F25CF00289195 /* OfflineAccessExampleHostingController.swift in Sources */,
-				19DD16AF2BEC010400F4DF4F /* SinglePlayerExampleController.swift in Sources */,
-				359DA8042EE8F8E400491BCE /* ContainerViewControllerExample.swift in Sources */,
 				1966C5302BEB4740005486D5 /* ProcessInfo+EnvironmentVariables.swift in Sources */,
 				35FF85862F85893400ECCF43 /* PlayerViewControllerRepresentable.swift in Sources */,
 				35F3746F2F7F256900289195 /* AssetDownloadState.swift in Sources */,
 				35F374712F7F258F00289195 /* ExampleOfflineDownloadManager.swift in Sources */,
-				193228BD2ACF6AC700966FE1 /* SceneDelegate.swift in Sources */,
 				35F3746D2F7F256800289195 /* ExampleAsset.swift in Sources */,
 				35F374732F7F25A000289195 /* DownloadAssetRow.swift in Sources */,
 				19F6A1CE2C2F23EC00EE408A /* DRMPlayer.swift in Sources */,
@@ -343,7 +326,6 @@
 				19DD16B12BEC028C00F4DF4F /* SmartCachePlayer.swift in Sources */,
 				19DD16AF2BEC010400F4DF4F /* SinglePlayer.swift in Sources */,
 				359DA8042EE8F8E400491BCE /* ContainerPlayer.swift in Sources */,
-				1966C5302BEB4740005486D5 /* ProcessInfo+EnvironmentVariables.swift in Sources */,
 				193228BD2ACF6AC700966FE1 /* RootContentView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
