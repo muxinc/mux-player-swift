@@ -4,7 +4,6 @@
 //
 
 import AVFoundation
-import AVKit
 import MuxPlayerSwift
 import SwiftUI
 
@@ -31,18 +30,8 @@ struct OfflineAccessExampleView: View {
             }
 
             Section {
-                NavigationLink(isActive: $isAssetSelectionPresented) {
-                    AssetSelectionView(
-                        assets: manager.exampleAssets
-                    ) { asset, mediaSelectionPolicy in
-                        Task {
-                            await manager.startDownload(
-                                for: asset,
-                                mediaSelectionPolicy: mediaSelectionPolicy
-                            )
-                            isAssetSelectionPresented = false
-                        }
-                    }
+                Button {
+                    isAssetSelectionPresented = true
                 } label: {
                     Label("Download New Asset", systemImage: "plus.circle.fill")
                 }
@@ -50,6 +39,19 @@ struct OfflineAccessExampleView: View {
         }
         .listStyle(.insetGrouped)
         .navigationTitle("Offline Assets")
+        .navigationDestination(isPresented: $isAssetSelectionPresented) {
+            AssetSelectionView(
+                assets: manager.exampleAssets
+            ) { asset, mediaSelectionPolicy in
+                Task {
+                    await manager.startDownload(
+                        for: asset,
+                        mediaSelectionPolicy: mediaSelectionPolicy
+                    )
+                    isAssetSelectionPresented = false
+                }
+            }
+        }
         .task {
             await manager.loadExistingDownloads()
         }

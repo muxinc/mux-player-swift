@@ -1,5 +1,5 @@
 //
-//  OfflineDownloadManager.swift
+//  ExampleOfflineDownloadManager.swift
 //  MuxPlayerSwiftExample
 //
 
