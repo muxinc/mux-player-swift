@@ -14,16 +14,15 @@ struct DownloadAssetRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            icon
+            stateIcon
                 .frame(width: 24, height: 24)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.body.weight(.medium))
-                    .foregroundStyle(.primary)
-
-                statusText
-
+                Text(statusText)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
                 if case .downloading(let progress) = state {
                     ProgressView(value: progress, total: 100)
                 }
@@ -34,64 +33,32 @@ struct DownloadAssetRow: View {
             actionButtons
         }
         .contentShape(Rectangle())
-        .onTapGesture {
-            onTap?()
-        }
+        .onTapGesture { onTap?() }
         .padding(.vertical, 4)
     }
 
     // MARK: - Subviews
 
     @ViewBuilder
-    private var icon: some View {
+    private var stateIcon: some View {
         switch state {
-        case .notDownloaded:
-            EmptyView()
-        case .downloading:
-            Image(systemName: "arrow.down.circle")
-                .foregroundStyle(.blue)
-        case .downloaded:
-            Image(systemName: "play.circle.fill")
-                .foregroundStyle(.blue)
-        case .expired:
-            Image(systemName: "clock.badge.exclamationmark")
-                .foregroundStyle(.orange)
-        case .mustRedownload:
-            Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundStyle(.orange)
-        case .error:
-            Image(systemName: "exclamationmark.circle.fill")
-                .foregroundStyle(.red)
+        case .notDownloaded: EmptyView()
+        case .downloading: Image(systemName: "arrow.down.circle").foregroundStyle(.blue)
+        case .downloaded: Image(systemName: "play.circle.fill").foregroundStyle(.blue)
+        case .expired: Image(systemName: "clock.badge.exclamationmark").foregroundStyle(.orange)
+        case .mustRedownload: Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+        case .error: Image(systemName: "exclamationmark.circle.fill").foregroundStyle(.red)
         }
     }
 
-    @ViewBuilder
-    private var statusText: some View {
+    private var statusText: String {
         switch state {
-        case .notDownloaded:
-            Text("Not Downloaded")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-        case .downloading(let progress):
-            Text("Downloading... \(Int(progress))%")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-        case .downloaded:
-            Text("Downloaded")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-        case .expired:
-            Text("Expired")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-        case .mustRedownload:
-            Text("Must Redownload")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-        case .error(let error):
-            Text(error.localizedDescription)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+        case .notDownloaded: "Not Downloaded"
+        case .downloading(let progress): "Downloading... \(Int(progress))%"
+        case .downloaded: "Downloaded"
+        case .expired: "Expired"
+        case .mustRedownload: "Must Redownload"
+        case .error(let error): error.localizedDescription
         }
     }
 
@@ -101,17 +68,17 @@ struct DownloadAssetRow: View {
         case .notDownloaded:
             EmptyView()
         case .downloading:
-            Button("Cancel", role: .destructive) { onAction() }
+            Button("Cancel", role: .destructive, action: onAction)
                 .buttonStyle(.borderless)
         case .downloaded:
-            Button("Delete", role: .destructive) { onAction() }
+            Button("Delete", role: .destructive, action: onAction)
                 .buttonStyle(.borderless)
         case .expired, .mustRedownload, .error:
             if let onSecondaryAction {
-                Button("Cancel", role: .destructive) { onSecondaryAction() }
+                Button("Cancel", role: .destructive, action: onSecondaryAction)
                     .buttonStyle(.borderless)
             }
-            Button("Retry") { onAction() }
+            Button("Retry", action: onAction)
                 .buttonStyle(.borderless)
         }
     }

@@ -4,26 +4,23 @@
 //
 
 import AVFoundation
-import MuxPlayerSwift
+import AVKit
 import SwiftUI
 
 struct OfflineAccessExampleView: View {
     @StateObject private var manager = ExampleOfflineDownloadManager()
     @State private var isAssetSelectionPresented = false
-    @State private var playerToPresent: AVPlayer?
+    @State private var playerToPresent: PresentedPlayer?
 
     var body: some View {
         List {
             if !manager.downloadStates.isEmpty {
                 Section("My Downloads") {
                     ForEach(manager.sortedDownloadedPlaybackIDs, id: \.self) { playbackID in
-                        let state = manager.downloadStates[playbackID] ?? .notDownloaded
-                        let asset = manager.asset(for: playbackID)
-
                         downloadRow(
                             playbackID: playbackID,
-                            state: state,
-                            asset: asset
+                            state: manager.downloadStates[playbackID] ?? .notDownloaded,
+                            asset: manager.asset(for: playbackID)
                         )
                     }
                 }
@@ -40,14 +37,9 @@ struct OfflineAccessExampleView: View {
         .listStyle(.insetGrouped)
         .navigationTitle("Offline Assets")
         .navigationDestination(isPresented: $isAssetSelectionPresented) {
-            AssetSelectionView(
-                assets: manager.exampleAssets
-            ) { asset, mediaSelectionPolicy in
+            AssetSelectionView(assets: manager.exampleAssets) { asset, mediaSelectionPolicy in
                 Task {
-                    await manager.startDownload(
-                        for: asset,
-                        mediaSelectionPolicy: mediaSelectionPolicy
-                    )
+                    await manager.startDownload(for: asset, mediaSelectionPolicy: mediaSelectionPolicy)
                     isAssetSelectionPresented = false
                 }
             }
@@ -55,9 +47,10 @@ struct OfflineAccessExampleView: View {
         .task {
             await manager.loadExistingDownloads()
         }
-        .fullScreenCover(item: $playerToPresent) { player in
-            PlayerViewControllerRepresentable(player: player)
+        .fullScreenCover(item: $playerToPresent) { presented in
+            OfflinePlayerView(player: presented.player)
                 .ignoresSafeArea()
+                .background(.black)
         }
     }
 
@@ -69,11 +62,21 @@ struct OfflineAccessExampleView: View {
         state: AssetDownloadState,
         asset: ExampleAsset?
     ) -> some View {
+        let title = asset?.title ?? "Unknown Asset"
+        let cancel: () -> Void = { manager.cancelOrDeleteDownload(for: playbackID) }
+
         switch state {
+        case .downloaded:
+            DownloadAssetRow(
+                title: title,
+                state: state,
+                onTap: { playDownloadedAsset(playbackID: playbackID) },
+                onAction: cancel
+            )
         case .expired, .mustRedownload, .error:
             if let asset {
                 DownloadAssetRow(
-                    title: asset.title,
+                    title: title,
                     state: state,
                     onAction: {
                         Task {
@@ -81,38 +84,13 @@ struct OfflineAccessExampleView: View {
                             await manager.startDownload(for: asset)
                         }
                     },
-                    onSecondaryAction: {
-                        manager.cancelOrDeleteDownload(for: playbackID)
-                    }
+                    onSecondaryAction: cancel
                 )
             } else {
-                DownloadAssetRow(
-                    title: "Unknown Asset",
-                    state: state,
-                    onAction: {
-                        manager.cancelOrDeleteDownload(for: playbackID)
-                    }
-                )
+                DownloadAssetRow(title: title, state: state, onAction: cancel)
             }
-        case .downloaded:
-            DownloadAssetRow(
-                title: asset?.title ?? "Unknown Asset",
-                state: state,
-                onTap: {
-                    playDownloadedAsset(playbackID: playbackID)
-                },
-                onAction: {
-                    manager.cancelOrDeleteDownload(for: playbackID)
-                }
-            )
         case .downloading, .notDownloaded:
-            DownloadAssetRow(
-                title: asset?.title ?? "Unknown Asset",
-                state: state,
-                onAction: {
-                    manager.cancelOrDeleteDownload(for: playbackID)
-                }
-            )
+            DownloadAssetRow(title: title, state: state, onAction: cancel)
         }
     }
 
@@ -120,18 +98,42 @@ struct OfflineAccessExampleView: View {
 
     private func playDownloadedAsset(playbackID: String) {
         Task {
-            guard let avAsset = await manager.localAVAsset(for: playbackID) else {
-                return
-            }
-            let playerItem = AVPlayerItem(asset: avAsset)
-            let player = AVPlayer(playerItem: playerItem)
-            playerToPresent = player
+            guard let asset = await manager.localAVAsset(for: playbackID) else { return }
+            let player = AVPlayer(playerItem: AVPlayerItem(asset: asset))
+            playerToPresent = PresentedPlayer(player: player)
         }
     }
 }
 
-// MARK: - AVPlayer + Identifiable (for fullScreenCover)
+// MARK: - Presentation Wrapper
 
-extension AVPlayer: @retroactive Identifiable {
-    public var id: ObjectIdentifier { ObjectIdentifier(self) }
+private struct PresentedPlayer: Identifiable {
+    let id = UUID()
+    let player: AVPlayer
+}
+
+// MARK: - UIKit Bridge
+
+private struct OfflinePlayerView: UIViewControllerRepresentable {
+    let player: AVPlayer
+
+    func makeUIViewController(context: Context) -> AVPlayerViewController {
+        let controller = AVPlayerViewController()
+        controller.player = player
+        player.play()
+        return controller
+    }
+
+    func updateUIViewController(
+        _ uiViewController: AVPlayerViewController,
+        context: Context
+    ) {}
+
+    static func dismantleUIViewController(
+        _ uiViewController: AVPlayerViewController,
+        coordinator: ()
+    ) {
+        uiViewController.player?.pause()
+        uiViewController.player = nil
+    }
 }
