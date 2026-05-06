@@ -10,7 +10,11 @@ enum OfflineMediaSelectionHelper {
     static func allMediaSelections(for asset: AVURLAsset) async throws -> [AVMediaSelection] {
         async let preferredSelection = asset.load(.preferredMediaSelection)
         async let allMediaSelections = asset.load(.allMediaSelections)
-        return try await [preferredSelection] + allMediaSelections
+        return try await preferredFirstUniqueSelections(
+            preferredSelection: preferredSelection,
+            allSelections: allMediaSelections,
+            areEquivalent: { $0.isEqual($1) }
+        )
     }
 
     static func mediaSelectionDescription(_ mediaSelection: AVMediaSelection) async -> String {
@@ -71,6 +75,14 @@ enum OfflineMediaSelectionHelper {
             return nil
         }
         return cachedOptions.first
+    }
+
+    static func preferredFirstUniqueSelections<Selection>(
+        preferredSelection: Selection,
+        allSelections: [Selection],
+        areEquivalent: (Selection, Selection) -> Bool
+    ) -> [Selection] {
+        [preferredSelection] + allSelections.filter { !areEquivalent($0, preferredSelection) }
     }
 
     private static func cachedOptionCount(
