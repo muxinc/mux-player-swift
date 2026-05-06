@@ -30,6 +30,7 @@ public struct DownloadedAsset {
     ///
     /// The returned player uses locally cached media selections and disables AVPlayer's automatic
     /// media selection criteria so playback does not depend on network-only alternates.
+    /// Returns nil when this downloaded asset's status is not `.playable`.
     public func makeOfflinePlayer() async throws -> AVPlayer? {
         guard let asset = avAssetIfPlayable() else { return nil }
 
@@ -45,7 +46,7 @@ public struct DownloadedAsset {
             let preferredSelection = try await preferredSelectionTask
 
             if let group = try await audibleGroupTask,
-               let downloadedAudio = OfflineMediaSelectionResolver.selectedCachedOption(
+               let downloadedAudio = OfflineMediaSelectionHelper.selectedCachedOption(
                     preferredOption: preferredSelection.selectedMediaOption(in: group),
                     cachedOptions: cache.mediaSelectionOptions(in: group),
                     fallbackToFirstCachedOption: true
@@ -53,7 +54,7 @@ public struct DownloadedAsset {
                 item.select(downloadedAudio, in: group)
             }
             if let group = try await legibleGroupTask {
-                let downloadedSubtitle = OfflineMediaSelectionResolver.selectedCachedOption(
+                let downloadedSubtitle = OfflineMediaSelectionHelper.selectedCachedOption(
                     preferredOption: preferredSelection.selectedMediaOption(in: group),
                     cachedOptions: cache.mediaSelectionOptions(in: group),
                     fallbackToFirstCachedOption: false

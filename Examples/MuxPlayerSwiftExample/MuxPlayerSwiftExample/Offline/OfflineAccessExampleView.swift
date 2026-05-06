@@ -173,6 +173,8 @@ private struct DownloadAssetRow: View {
         .padding(.vertical, 4)
     }
 
+    // MARK: - Subviews
+
     @ViewBuilder
     private var stateIcon: some View {
         switch state {

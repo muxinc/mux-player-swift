@@ -47,7 +47,7 @@ class DownloadTaskDelegate: NSObject, AVAssetDownloadDelegate {
         didResolve resolvedMediaSelection: AVMediaSelection
     ) {
         Task {
-            let description = await OfflineMediaSelectionResolver.mediaSelectionDescription(resolvedMediaSelection)
+            let description = await OfflineMediaSelectionHelper.mediaSelectionDescription(resolvedMediaSelection)
             logger.log("[Mux-Offline] didResolveMediaSelection: taskId=\(assetDownloadTask.taskIdentifier) \(description)")
         }
     }

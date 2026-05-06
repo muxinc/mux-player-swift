@@ -2,9 +2,9 @@ import XCTest
 
 @testable import MuxPlayerSwift
 
-final class OfflineMediaSelectionResolverTests: XCTestCase {
+final class OfflineMediaSelectionHelperTests: XCTestCase {
     func testSelectedCachedOptionReturnsPreferredOptionWhenCached() {
-        let selectedOption = OfflineMediaSelectionResolver.selectedCachedOption(
+        let selectedOption = OfflineMediaSelectionHelper.selectedCachedOption(
             preferredOption: "fr",
             cachedOptions: ["en", "fr", "de"],
             fallbackToFirstCachedOption: true
@@ -14,7 +14,7 @@ final class OfflineMediaSelectionResolverTests: XCTestCase {
     }
 
     func testSelectedCachedOptionFallsBackToFirstCachedOptionWhenAllowed() {
-        let selectedOption = OfflineMediaSelectionResolver.selectedCachedOption(
+        let selectedOption = OfflineMediaSelectionHelper.selectedCachedOption(
             preferredOption: "fr",
             cachedOptions: ["en", "de"],
             fallbackToFirstCachedOption: true
@@ -24,7 +24,7 @@ final class OfflineMediaSelectionResolverTests: XCTestCase {
     }
 
     func testSelectedCachedOptionFallsBackToFirstCachedOptionWhenPreferredOptionIsNil() {
-        let selectedOption = OfflineMediaSelectionResolver.selectedCachedOption(
+        let selectedOption = OfflineMediaSelectionHelper.selectedCachedOption(
             preferredOption: nil as String?,
             cachedOptions: ["en", "de"],
             fallbackToFirstCachedOption: true
@@ -34,7 +34,7 @@ final class OfflineMediaSelectionResolverTests: XCTestCase {
     }
 
     func testSelectedCachedOptionReturnsNilWhenFallbackIsDisabled() {
-        let selectedOption = OfflineMediaSelectionResolver.selectedCachedOption(
+        let selectedOption = OfflineMediaSelectionHelper.selectedCachedOption(
             preferredOption: "fr",
             cachedOptions: ["en", "de"],
             fallbackToFirstCachedOption: false
@@ -44,7 +44,7 @@ final class OfflineMediaSelectionResolverTests: XCTestCase {
     }
 
     func testSelectedCachedOptionReturnsNilWhenPreferredOptionIsNilAndFallbackIsDisabled() {
-        let selectedOption = OfflineMediaSelectionResolver.selectedCachedOption(
+        let selectedOption = OfflineMediaSelectionHelper.selectedCachedOption(
             preferredOption: nil as String?,
             cachedOptions: ["en", "de"],
             fallbackToFirstCachedOption: false
@@ -54,7 +54,7 @@ final class OfflineMediaSelectionResolverTests: XCTestCase {
     }
 
     func testSelectedCachedOptionReturnsNilWhenNoOptionsAreCached() {
-        let selectedOption = OfflineMediaSelectionResolver.selectedCachedOption(
+        let selectedOption = OfflineMediaSelectionHelper.selectedCachedOption(
             preferredOption: nil as String?,
             cachedOptions: [],
             fallbackToFirstCachedOption: true

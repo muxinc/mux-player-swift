@@ -1,12 +1,12 @@
 //
-//  OfflineMediaSelectionResolver.swift
+//  OfflineMediaSelectionHelper.swift
 //  MuxPlayerSwift
 //
 
 import AVFoundation
 import Foundation
 
-enum OfflineMediaSelectionResolver {
+enum OfflineMediaSelectionHelper {
     static func allMediaSelections(for asset: AVURLAsset) async throws -> [AVMediaSelection] {
         async let preferredSelection = asset.load(.preferredMediaSelection)
         async let allMediaSelections = asset.load(.allMediaSelections)
