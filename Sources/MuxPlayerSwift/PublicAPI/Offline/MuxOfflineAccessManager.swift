@@ -54,25 +54,6 @@ public class MuxOfflineAccessManager {
             .toAsyncThrowingStream()
     }
 
-    /// Discover audio and subtitle options that can be included in an offline download.
-    ///
-    /// Use returned options with ``OfflineMediaSelectionPolicy/options(_:)`` when your app needs an exact
-    /// track picker. Apps that only need common flows can use ``OfflineMediaSelectionPolicy/all`` or
-    /// ``OfflineMediaSelectionPolicy/languages(audio:subtitles:)`` without calling this method.
-    public func availableMediaOptions(
-        playbackID: String,
-        playbackOptions: PlaybackOptions
-    ) async throws -> OfflineMediaOptions {
-        let urlComponents = URLComponents(playbackID: playbackID, playbackOptions: playbackOptions)
-        guard let url = urlComponents.url else {
-            logger.error("[Mux-Offline] internal error: Invalid URL constructed for playbackID: \(playbackID)")
-            throw URLError(.badURL)
-        }
-
-        let asset = AVURLAsset(url: url)
-        return try await OfflineMediaSelectionResolver.availableOptions(for: asset)
-    }
-    
     /// Observe an already started download
     /// - Parameter playbackID: The Mux playback ID
     /// - Returns: An async stream that emits download events, or nil if no download is in progress
@@ -102,7 +83,7 @@ public class MuxOfflineAccessManager {
     public func findDownloadedAsset(playbackID: String) async -> DownloadedAsset? {
         return await manager.findDownloadedAsset(playbackID: playbackID)
     }
-    
+
     /// Get all downloaded assets
     /// - Returns: An array of all downloaded assets
     public func allDownloadedAssets() async -> [DownloadedAsset] {

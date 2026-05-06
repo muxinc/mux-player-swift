@@ -17,11 +17,13 @@ struct OfflineAccessExampleView: View {
             if !manager.downloadStates.isEmpty {
                 Section("My Downloads") {
                     ForEach(manager.sortedDownloadedPlaybackIDs, id: \.self) { playbackID in
-                        downloadRow(
-                            playbackID: playbackID,
-                            state: manager.downloadStates[playbackID] ?? .notDownloaded,
-                            asset: manager.asset(for: playbackID)
-                        )
+                        if let state = manager.downloadStates[playbackID] {
+                            downloadRow(
+                                playbackID: playbackID,
+                                state: state,
+                                asset: manager.asset(for: playbackID)
+                            )
+                        }
                     }
                 }
             }
@@ -37,9 +39,9 @@ struct OfflineAccessExampleView: View {
         .listStyle(.insetGrouped)
         .navigationTitle("Offline Assets")
         .navigationDestination(isPresented: $isAssetSelectionPresented) {
-            AssetSelectionView(assets: manager.exampleAssets) { asset, mediaSelectionPolicy in
+            AssetSelectionView(assets: manager.exampleAssets) { asset in
                 Task {
-                    await manager.startDownload(for: asset, mediaSelectionPolicy: mediaSelectionPolicy)
+                    await manager.startDownload(for: asset)
                     isAssetSelectionPresented = false
                 }
             }
@@ -89,7 +91,7 @@ struct OfflineAccessExampleView: View {
             } else {
                 DownloadAssetRow(title: title, state: state, onAction: cancel)
             }
-        case .downloading, .notDownloaded:
+        case .downloading:
             DownloadAssetRow(title: title, state: state, onAction: cancel)
         }
     }
@@ -98,9 +100,116 @@ struct OfflineAccessExampleView: View {
 
     private func playDownloadedAsset(playbackID: String) {
         Task {
-            guard let asset = await manager.localAVAsset(for: playbackID) else { return }
-            let player = AVPlayer(playerItem: AVPlayerItem(asset: asset))
+            guard let player = await manager.makeOfflinePlayer(for: playbackID) else { return }
             playerToPresent = PresentedPlayer(player: player)
+        }
+    }
+}
+
+private struct AssetSelectionView: View {
+    let assets: [ExampleAsset]
+    let onAssetSelected: (ExampleAsset) -> Void
+
+    var body: some View {
+        List {
+            Section {
+                ForEach(assets) { asset in
+                    Button {
+                        onAssetSelected(asset)
+                    } label: {
+                        AssetSelectionRow(asset: asset)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .navigationTitle("Select Asset")
+    }
+}
+
+private struct AssetSelectionRow: View {
+    let asset: ExampleAsset
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(asset.title)
+                .foregroundStyle(.primary)
+            Text(asset.playbackID)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+    }
+}
+
+private struct DownloadAssetRow: View {
+    let title: String
+    let state: AssetDownloadState
+    var onTap: (() -> Void)? = nil
+    var onAction: () -> Void
+    var onSecondaryAction: (() -> Void)? = nil
+
+    var body: some View {
+        HStack(spacing: 12) {
+            stateIcon
+                .frame(width: 24, height: 24)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.body.weight(.medium))
+                Text(statusText)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                if case .downloading(let progress) = state {
+                    ProgressView(value: progress, total: 100)
+                }
+            }
+
+            Spacer()
+
+            actionButtons
+        }
+        .contentShape(Rectangle())
+        .onTapGesture { onTap?() }
+        .padding(.vertical, 4)
+    }
+
+    @ViewBuilder
+    private var stateIcon: some View {
+        switch state {
+        case .downloading: Image(systemName: "arrow.down.circle").foregroundStyle(.blue)
+        case .downloaded: Image(systemName: "play.circle.fill").foregroundStyle(.blue)
+        case .expired: Image(systemName: "clock.badge.exclamationmark").foregroundStyle(.orange)
+        case .mustRedownload: Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+        case .error: Image(systemName: "exclamationmark.circle.fill").foregroundStyle(.red)
+        }
+    }
+
+    private var statusText: String {
+        switch state {
+        case .downloading(let progress): "Downloading... \(Int(progress))%"
+        case .downloaded: "Downloaded"
+        case .expired: "Expired"
+        case .mustRedownload: "Must Redownload"
+        case .error(let error): error.localizedDescription
+        }
+    }
+
+    @ViewBuilder
+    private var actionButtons: some View {
+        switch state {
+        case .downloading:
+            Button("Cancel", role: .destructive, action: onAction)
+                .buttonStyle(.borderless)
+        case .downloaded:
+            Button("Delete", role: .destructive, action: onAction)
+                .buttonStyle(.borderless)
+        case .expired, .mustRedownload, .error:
+            if let onSecondaryAction {
+                Button("Cancel", role: .destructive, action: onSecondaryAction)
+                    .buttonStyle(.borderless)
+            }
+            Button("Retry", action: onAction)
+                .buttonStyle(.borderless)
         }
     }
 }

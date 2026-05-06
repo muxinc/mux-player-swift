@@ -16,7 +16,5 @@ extension DownloadOptions {
         } else {
             self.posterData = nil
         }
-
-        self.mediaSelectionPolicy = storedAsset.mediaSelectionPolicy ?? .automatic
     }
 }

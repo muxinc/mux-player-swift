@@ -13,16 +13,12 @@ public struct DownloadOptions {
     public let readableTitle: String
     /// Optional poster image data
     public let posterData: Data?
-    /// Media selection policy for audio and subtitle tracks.
-    public let mediaSelectionPolicy: OfflineMediaSelectionPolicy
     
     public init(
         readableTitle: String,
-        posterData: Data? = nil,
-        mediaSelectionPolicy: OfflineMediaSelectionPolicy = .automatic
+        posterData: Data? = nil
     ) {
         self.readableTitle = readableTitle
         self.posterData = posterData
-        self.mediaSelectionPolicy = mediaSelectionPolicy
     }
 }

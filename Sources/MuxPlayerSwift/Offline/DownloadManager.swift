@@ -51,7 +51,7 @@ actor DownloadManager: PersistedKeyStore {
             logger.warning("[Mux-Offline] findDownloadedAsset: Asset not complete for playbackID \(playbackID)")
             return nil
         }
-        guard let file = storedAsset.localPath else {
+        guard storedAsset.localPath != nil else {
             logger.warning("[Mux-Offline] findDownloadedAsset: No local path saved for completed asset")
             return nil
         }
@@ -90,19 +90,16 @@ actor DownloadManager: PersistedKeyStore {
         // configure the new task, and keep track of it
         let config = AVAssetDownloadConfiguration(asset: avAsset, title: downloadOptions.readableTitle)
         config.artworkData = downloadOptions.posterData
-        let mediaSelectionResolution: OfflineMediaSelectionResolution
+        let mediaSelections: [AVMediaSelection]
         do {
-            mediaSelectionResolution = try await OfflineMediaSelectionResolver.resolve(
-                policy: downloadOptions.mediaSelectionPolicy,
-                for: avAsset
-            )
+            mediaSelections = try await OfflineMediaSelectionResolver.allMediaSelections(for: avAsset)
         } catch {
+            logger.error("[Mux-Offline] startDownload: failed to load media selections for \(playbackID): \(error.localizedDescription)")
             return Fail(error: error).eraseToAnyPublisher()
         }
-        if let mediaSelections = mediaSelectionResolution.mediaSelections {
-            config.primaryContentConfiguration.mediaSelections = mediaSelections
-            config.auxiliaryContentConfigurations = []
-        }
+        config.primaryContentConfiguration.mediaSelections = mediaSelections
+        config.auxiliaryContentConfigurations = []
+        logger.trace("[Mux-Offline] startDownload: playbackID=\(playbackID) mediaSelections=\(mediaSelections.count) auxiliaryConfigurations=\(config.auxiliaryContentConfigurations.count)")
         let task = downloadSession.makeAssetDownloadTask(downloadConfiguration: config)
         task.taskDescription = playbackID
         let subject = subject(for: playbackID)
@@ -307,6 +304,7 @@ actor DownloadManager: PersistedKeyStore {
         
         logger.trace("Checking for asset file")
         if fileExists(at: assetURL), !completedAsset.completedWithError {
+            logAssetCacheState(for: urlAsset, playbackID: completedAsset.playbackID)
             return DownloadedAsset(
                 playbackID: completedAsset.playbackID,
                 assetStatus: .playable(asset: urlAsset),
@@ -338,6 +336,22 @@ actor DownloadManager: PersistedKeyStore {
     
     private func fileExists(at fileURL: URL) -> Bool {
         return FileManager.default.fileExists(atPath: fileURL.path)
+    }
+
+    private func logAssetCacheState(for asset: AVURLAsset, playbackID: String) {
+        guard let assetCache = asset.assetCache else {
+            logger.trace("[Mux-Offline] localAssetCache: playbackID=\(playbackID) assetCache=nil")
+            return
+        }
+
+        Task {
+            do {
+                let counts = try await OfflineMediaSelectionResolver.cachedMediaSelectionCounts(for: asset)
+                logger.trace("[Mux-Offline] localAssetCache: playbackID=\(playbackID) playableOffline=\(assetCache.isPlayableOffline) audio=\(counts.audio) subtitles=\(counts.subtitles)")
+            } catch {
+                logger.trace("[Mux-Offline] localAssetCache: playbackID=\(playbackID) failed=\(error.localizedDescription)")
+            }
+        }
     }
     
     private func tasksFromSession() async -> [URLSessionTask] {

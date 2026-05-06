@@ -4,7 +4,17 @@
 //
 
 import AVFoundation
+import Combine
+import Foundation
 import MuxPlayerSwift
+
+enum AssetDownloadState {
+    case downloading(progress: Double)
+    case downloaded
+    case expired
+    case mustRedownload
+    case error(Error)
+}
 
 @MainActor
 final class ExampleOfflineDownloadManager: ObservableObject {
@@ -50,8 +60,8 @@ final class ExampleOfflineDownloadManager: ObservableObject {
         let completedAssets = await MuxOfflineAccessManager.shared.allDownloadedAssets()
         for asset in completedAssets {
             switch asset.assetStatus {
-            case .playable(let avAsset):
-                downloadStates[asset.playbackID] = .downloaded(avAsset)
+            case .playable:
+                downloadStates[asset.playbackID] = .downloaded
             case .redownloadWhenOnline:
                 downloadStates[asset.playbackID] = .mustRedownload
             case .expired:
@@ -72,17 +82,11 @@ final class ExampleOfflineDownloadManager: ObservableObject {
         await MuxOfflineAccessManager.shared.removeDownload(playbackID: playbackID)
     }
     
-    func startDownload(
-        for asset: ExampleAsset,
-        mediaSelectionPolicy: OfflineMediaSelectionPolicy = .automatic
-    ) async {
+    func startDownload(for asset: ExampleAsset) async {
         let stream = await MuxOfflineAccessManager.shared.startDownload(
             playbackID: asset.playbackID,
             playbackOptions: asset.makePlaybackOptions(),
-            downloadOptions: DownloadOptions(
-                readableTitle: asset.title,
-                mediaSelectionPolicy: mediaSelectionPolicy
-            )
+            downloadOptions: DownloadOptions(readableTitle: asset.title)
         )
         downloadStates[asset.playbackID] = .downloading(progress: 0.0)
         observeDownload(playbackID: asset.playbackID, stream: stream)
@@ -97,14 +101,14 @@ final class ExampleOfflineDownloadManager: ObservableObject {
         }
     }
 
-    /// Returns an `AVURLAsset` suitable for local playback, or `nil`.
-    func localAVAsset(for playbackID: String) async -> AVURLAsset? {
+    /// Returns an `AVPlayer` correctly configured for offline playback, or `nil`.
+    func makeOfflinePlayer(for playbackID: String) async -> AVPlayer? {
         guard let downloaded = await MuxOfflineAccessManager.shared.findDownloadedAsset(
             playbackID: playbackID
         ) else {
             return nil
         }
-        return downloaded.avAssetIfPlayable()
+        return try? await downloaded.makeOfflinePlayer()
     }
 
     // MARK: - Helpers
@@ -148,8 +152,8 @@ final class ExampleOfflineDownloadManager: ObservableObject {
         case .progress(let percent):
             downloadStates[playbackID] = .downloading(progress: percent)
         case .completed(let downloadedAsset):
-            if let avAsset = downloadedAsset.avAssetIfPlayable() {
-                downloadStates[playbackID] = .downloaded(avAsset)
+            if downloadedAsset.avAssetIfPlayable() != nil {
+                downloadStates[playbackID] = .downloaded
             } else {
                 downloadStates[playbackID] = .mustRedownload
             }
