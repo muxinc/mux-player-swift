@@ -40,14 +40,24 @@ public struct DownloadedAsset {
         if let cache = asset.assetCache {
             async let audibleGroupTask = asset.loadMediaSelectionGroup(for: .audible)
             async let legibleGroupTask = asset.loadMediaSelectionGroup(for: .legible)
+            async let preferredSelectionTask = asset.load(.preferredMediaSelection)
+
+            let preferredSelection = try await preferredSelectionTask
 
             if let group = try await audibleGroupTask,
-               let downloadedAudio = cache.mediaSelectionOptions(in: group).first {
+               let downloadedAudio = OfflineMediaSelectionResolver.selectedCachedOption(
+                    preferredOption: preferredSelection.selectedMediaOption(in: group),
+                    cachedOptions: cache.mediaSelectionOptions(in: group),
+                    fallbackToFirstCachedOption: true
+               ) {
                 item.select(downloadedAudio, in: group)
             }
             if let group = try await legibleGroupTask {
-                // nil if no subtitle was downloaded — explicitly off
-                let downloadedSubtitle = cache.mediaSelectionOptions(in: group).first
+                let downloadedSubtitle = OfflineMediaSelectionResolver.selectedCachedOption(
+                    preferredOption: preferredSelection.selectedMediaOption(in: group),
+                    cachedOptions: cache.mediaSelectionOptions(in: group),
+                    fallbackToFirstCachedOption: false
+                )
                 item.select(downloadedSubtitle, in: group)
             }
         }
