@@ -311,7 +311,9 @@ actor DownloadManager: PersistedKeyStore {
         
         logger.trace("[Mux-Offline] makeDownloadedAsset: Checking for asset file")
         if fileExists(at: assetURL), !completedAsset.completedWithError {
+#if DEBUG
             await logAssetCacheState(for: urlAsset, playbackID: completedAsset.playbackID)
+#endif
             return DownloadedAsset(
                 playbackID: completedAsset.playbackID,
                 assetStatus: .playable(asset: urlAsset),
@@ -345,6 +347,7 @@ actor DownloadManager: PersistedKeyStore {
         return FileManager.default.fileExists(atPath: fileURL.path)
     }
 
+#if DEBUG
     private func logAssetCacheState(for asset: AVURLAsset, playbackID: String) async {
         guard let assetCache = asset.assetCache else {
             logger.trace("[Mux-Offline] localAssetCache: playbackID=\(playbackID) assetCache=nil")
@@ -358,6 +361,7 @@ actor DownloadManager: PersistedKeyStore {
             logger.trace("[Mux-Offline] localAssetCache: playbackID=\(playbackID) failed=\(error.localizedDescription)")
         }
     }
+#endif
     
     private func tasksFromSession() async -> [URLSessionTask] {
         return await downloadSession.allTasks
