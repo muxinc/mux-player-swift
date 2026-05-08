@@ -101,14 +101,14 @@ final class ExampleOfflineDownloadManager: ObservableObject {
         }
     }
 
-    /// Returns an `AVPlayer` correctly configured for offline playback, or `nil`.
-    func makeOfflinePlayer(for playbackID: String) async -> AVPlayer? {
+    /// Returns an `AVPlayer` backed by the locally downloaded asset, or `nil`.
+    func makePlayer(for playbackID: String) async -> AVPlayer? {
         guard let downloaded = await MuxOfflineAccessManager.shared.findDownloadedAsset(
             playbackID: playbackID
-        ) else {
+        ), let asset = downloaded.avAssetIfPlayable() else {
             return nil
         }
-        return try? await downloaded.makeOfflinePlayer()
+        return AVPlayer(playerItem: AVPlayerItem(asset: asset))
     }
 
     // MARK: - Helpers

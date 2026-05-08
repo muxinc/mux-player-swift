@@ -63,20 +63,6 @@ enum OfflineMediaSelectionHelper {
         return try await (audio: audioCount, subtitles: subtitleCount)
     }
 
-    static func selectedCachedOption<Option: Equatable>(
-        preferredOption: Option?,
-        cachedOptions: [Option],
-        fallbackToFirstCachedOption: Bool
-    ) -> Option? {
-        if let preferredOption, cachedOptions.contains(preferredOption) {
-            return preferredOption
-        }
-        guard fallbackToFirstCachedOption else {
-            return nil
-        }
-        return cachedOptions.first
-    }
-
     static func preferredFirstUniqueSelections<Selection>(
         preferredSelection: Selection,
         allSelections: [Selection],

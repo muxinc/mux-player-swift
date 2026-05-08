@@ -100,7 +100,7 @@ struct OfflineAccessExampleView: View {
 
     private func playDownloadedAsset(playbackID: String) {
         Task {
-            guard let player = await manager.makeOfflinePlayer(for: playbackID) else { return }
+            guard let player = await manager.makePlayer(for: playbackID) else { return }
             playerToPresent = PresentedPlayer(player: player)
         }
     }
