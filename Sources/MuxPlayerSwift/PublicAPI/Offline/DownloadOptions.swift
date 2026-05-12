@@ -16,7 +16,7 @@ public struct DownloadOptions {
     
     public init(
         readableTitle: String,
-        posterData: Data? = nil,
+        posterData: Data? = nil
     ) {
         self.readableTitle = readableTitle
         self.posterData = posterData

@@ -53,7 +53,7 @@ public class MuxOfflineAccessManager {
             )
             .toAsyncThrowingStream()
     }
-    
+
     /// Observe an already started download
     /// - Parameter playbackID: The Mux playback ID
     /// - Returns: An async stream that emits download events, or nil if no download is in progress
@@ -83,7 +83,7 @@ public class MuxOfflineAccessManager {
     public func findDownloadedAsset(playbackID: String) async -> DownloadedAsset? {
         return await manager.findDownloadedAsset(playbackID: playbackID)
     }
-    
+
     /// Get all downloaded assets
     /// - Returns: An array of all downloaded assets
     public func allDownloadedAssets() async -> [DownloadedAsset] {

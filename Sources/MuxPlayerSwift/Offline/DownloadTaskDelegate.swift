@@ -40,6 +40,17 @@ class DownloadTaskDelegate: NSObject, AVAssetDownloadDelegate {
             await downloadManager.handleFinishedDownload(task: assetDownloadTask, location: location)
         }
     }
+
+    func urlSession(
+        _ session: URLSession,
+        assetDownloadTask: AVAssetDownloadTask,
+        didResolve resolvedMediaSelection: AVMediaSelection
+    ) {
+        Task {
+            let description = await OfflineMediaSelectionHelper.mediaSelectionDescription(resolvedMediaSelection)
+            logger.log("[Mux-Offline] didResolveMediaSelection: taskId=\(assetDownloadTask.taskIdentifier) \(description)")
+        }
+    }
     
     // Called when a task becomes a download task (general URLSession delegate)
     func urlSession(_ session: URLSession, taskIsWaitingForConnectivity task: URLSessionTask) {
@@ -53,8 +64,6 @@ class DownloadTaskDelegate: NSObject, AVAssetDownloadDelegate {
                     didLoad timeRange: CMTimeRange, totalTimeRangesLoaded loadedTimeRanges: [NSValue],
                     timeRangeExpectedToLoad: CMTimeRange) {
         let loaded = loadedTimeRanges.map { $0.timeRangeValue }
-        let loadedDescription = loaded.map { "[start: \($0.start.seconds), dur: \($0.duration.seconds)]" }.joined(separator: ", ")
-        logger.trace("[Mux-Offline] didLoad timeRange start=\(timeRange.start.seconds) dur=\(timeRange.duration.seconds) expectedDur=\(timeRangeExpectedToLoad.duration.seconds) loaded=\(loadedDescription)")
         Task { [downloadManager] in
             await downloadManager.handleProgress(task: assetDownloadTask, loadedTimeRanges: loaded, expectedTimeRange: timeRangeExpectedToLoad)
         }
