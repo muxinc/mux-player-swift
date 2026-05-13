@@ -174,9 +174,4 @@ To allow AVPlayer playback of referrer restricted assets set the allow_no_referr
 
 ## Release
 
-Steps to release a new version of the SDK
-1. Merge any changes directly into `main`.
-2. Update `SemanticVersion.swift` with new version values.
-3. Tag the commit for the release on `main` with the name `vX.Y.Z` where X, Y, and Z are the major, minor, and patch versions of the release respectively.
-4. Create a new GitHub release on `main` for the tag with the tag name as the title and include releases notes in the description.
-5. Update the SDK static documentation by running: `./scripts/generate-static-documentation.sh`.
+Maintainer release instructions live in [RELEASING.md](RELEASING.md).
