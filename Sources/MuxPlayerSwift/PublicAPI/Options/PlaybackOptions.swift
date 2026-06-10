@@ -322,7 +322,8 @@ extension PlaybackOptions {
     public init(
         enableSmartCache: Bool,
         singleRenditionResolutionTier: SingleRenditionResolutionTier,
-        renditionOrder: RenditionOrder = .default
+        renditionOrder: RenditionOrder = .default,
+        clipping: InstantClipping = .none
     ) {
         self.enableSmartCache = enableSmartCache
         switch singleRenditionResolutionTier {
@@ -333,7 +334,7 @@ extension PlaybackOptions {
                     minimumResolutionTier: .atLeast720p,
                     renditionOrder: renditionOrder,
                     useRedundantStreams: true,
-                    instantClipping: .none
+                    instantClipping: clipping
                 )
             )
         case .only1080p:
@@ -343,7 +344,7 @@ extension PlaybackOptions {
                     minimumResolutionTier: .atLeast1080p,
                     renditionOrder: renditionOrder,
                     useRedundantStreams: true,
-                    instantClipping: .none
+                    instantClipping: clipping
                 )
             )
         case .only1440p:
@@ -353,7 +354,7 @@ extension PlaybackOptions {
                     minimumResolutionTier: .atLeast1440p,
                     renditionOrder: renditionOrder,
                     useRedundantStreams: true,
-                    instantClipping: .none
+                    instantClipping: clipping
                 )
             )
         case .only2160p:
@@ -363,7 +364,7 @@ extension PlaybackOptions {
                     minimumResolutionTier: .atLeast2160p,
                     renditionOrder: renditionOrder,
                     useRedundantStreams: true,
-                    instantClipping: .none
+                    instantClipping: clipping
                 )
             )
         }
