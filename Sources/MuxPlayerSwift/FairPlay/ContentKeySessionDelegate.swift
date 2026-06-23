@@ -88,7 +88,7 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
         logger.trace("didProvide didProvideRenewingContentKeyRequest")
         Task {
             do {
-                try await handleContentKeyRequest(request: DefaultKeyRequest(wrapping: keyRequest))
+                try await handleRenewingContentKeyRequest(request: DefaultKeyRequest(wrapping: keyRequest))
             } catch {
                 keyRequest.processContentKeyResponseError(error)
             }
@@ -387,6 +387,20 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
             .joined()
     }
     
+    /// A renewing request means the system no longer trusts the current key
+    /// (e.g. an expiring or obsolete lease), so the cached online license must
+    /// not be reused. Drop it first, then run the normal flow, which will
+    /// re-fetch a fresh license and re-cache it. For offline assets this is a
+    /// no-op (they don't use the online cache).
+    func handleRenewingContentKeyRequest(request: any KeyRequest) async throws {
+        if let identifier = request.identifier as? String,
+           let keyURL = URL(string: identifier),
+           let playbackID = parsePlaybackId(fromSkdLocation: keyURL) {
+            await onlineLicenseCache.remove(playbackID: playbackID)
+        }
+        try await handleContentKeyRequest(request: request)
+    }
+
     func handleContentKeyRequest(request: any KeyRequest) async throws {
         logger.debug(
             "Called \(#function)"

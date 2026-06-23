@@ -478,6 +478,27 @@ class ContentKeySessionDelegateTests : XCTestCase {
         }
     }
 
+    func testRenewingKeyRequest_InvalidatesCacheThenRefetches() async throws {
+        // A renewal must not reuse the cached license: it should drop the cache
+        // entry and fall through to the (persistable) fetch path so a fresh
+        // license is obtained.
+        let token = "online-token"
+        testDRMAssetRegistry.onlineToken = token
+        let fingerprint = ContentKeySessionDelegate<TestFairPlayStreamingSessionManager>.fingerprint(forToken: token, rootDomain: "mux.com")
+        mockOnlineCache.cached["fake-playback"] = ("stale-license".data(using: .utf8)!, fingerprint)
+
+        let mockRequest = MockKeyRequest(
+            fakeIdentifier: makeFakeSkdUrl(fakePlaybackID: "fake-playback")
+        )
+
+        try await contentKeySessionDelegate.handleRenewingContentKeyRequest(request: mockRequest)
+
+        XCTAssertEqual(mockOnlineCache.removedCalls, ["fake-playback"])
+        XCTAssertTrue(
+            mockRequest.verifyWasCalled(funcName: "respondByPersistableContentKeyRequestOnAnyOS")
+        )
+    }
+
     // MARK: - handleContentKeyUpdated tests
 
     func testContentKeyUpdated_OfflineAsset_SavesToDownloadStore() async throws {
