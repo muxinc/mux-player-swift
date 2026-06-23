@@ -16,6 +16,7 @@ class ContentKeySessionDelegateTests : XCTestCase {
     var testCredentialClient: TestFairPlayStreamingSessionCredentialClient!
     var testSessionManager: TestFairPlayStreamingSessionManager!
     var mockKeyStore: MockPersistedKeyStore!
+    var mockOnlineCache: MockOnlineLicenseCache!
 
     // object under test
     var contentKeySessionDelegate: ContentKeySessionDelegate<
@@ -40,6 +41,7 @@ class ContentKeySessionDelegateTests : XCTestCase {
         testCredentialClient = credentialClient
         testDRMAssetRegistry = TestDRMAssetRegistry()
         mockKeyStore = MockPersistedKeyStore()
+        mockOnlineCache = MockOnlineLicenseCache()
         testSessionManager = TestFairPlayStreamingSessionManager(
             credentialClient: testCredentialClient,
             drmAssetRegistry: testDRMAssetRegistry
@@ -47,7 +49,8 @@ class ContentKeySessionDelegateTests : XCTestCase {
 
         contentKeySessionDelegate = ContentKeySessionDelegate(
             sessionManager: testSessionManager,
-            persistedKeyStore: mockKeyStore
+            persistedKeyStore: mockKeyStore,
+            onlineLicenseCache: mockOnlineCache
         )
     }
 
@@ -59,6 +62,7 @@ class ContentKeySessionDelegateTests : XCTestCase {
 
         testDRMAssetRegistry = TestDRMAssetRegistry()
         mockKeyStore = MockPersistedKeyStore()
+        mockOnlineCache = MockOnlineLicenseCache()
 
         testSessionManager = TestFairPlayStreamingSessionManager(
             credentialClient: testCredentialClient,
@@ -67,7 +71,8 @@ class ContentKeySessionDelegateTests : XCTestCase {
 
         contentKeySessionDelegate = ContentKeySessionDelegate(
             sessionManager: testSessionManager,
-            persistedKeyStore: mockKeyStore
+            persistedKeyStore: mockKeyStore,
+            onlineLicenseCache: mockOnlineCache
         )
     }
     
@@ -115,7 +120,53 @@ class ContentKeySessionDelegateTests : XCTestCase {
         )
     }
 
-    func testKeyRequestCertError() async {
+    // An online key request now defers to the persistable-key flow (so the
+    // resulting license can be cached). It should request a persistable
+    // key and do no further work on this request.
+    func testKeyRequest_DefersToPersistableForCaching() async throws {
+        let mockRequest = MockKeyRequest(
+            fakeIdentifier: makeFakeSkdUrl(fakePlaybackID: "fake-playback")
+        )
+
+        try await contentKeySessionDelegate.handleContentKeyRequest(request: mockRequest)
+
+        XCTAssertTrue(
+            mockRequest.verifyWasCalled(funcName: "respondByPersistableContentKeyRequestOnAnyOS")
+        )
+        XCTAssertTrue(
+            mockRequest.verifyNotCalled(
+                funcName: "makeStreamingContentKeyRequestData(forApp:contentIdentifier:options:)"
+            )
+        )
+        XCTAssertTrue(
+            mockRequest.verifyNotCalled(funcName: "processContentKeyResponse")
+        )
+    }
+
+    // When the persistable request can't be made (e.g. AirPlay / no storage
+    // directory), we fall back to a one-shot online key.
+    func testKeyRequest_PersistableUnavailable_FallsBackToOneShot() async throws {
+        let mockRequest = MockKeyRequest(
+            fakeIdentifier: makeFakeSkdUrl(fakePlaybackID: "fake-playback")
+        )
+        mockRequest.persistableRequestError = FakeError()
+
+        try await contentKeySessionDelegate.handleContentKeyRequest(request: mockRequest)
+
+        XCTAssertTrue(
+            mockRequest.verifyNotCalled(funcName: "processContentKeyResponseError")
+        )
+        XCTAssertTrue(
+            mockRequest.verifyWasCalled(
+                funcName: "makeStreamingContentKeyRequestData(forApp:contentIdentifier:options:)"
+            )
+        )
+        XCTAssertTrue(
+            mockRequest.verifyWasCalled(funcName: "processContentKeyResponse")
+        )
+    }
+
+    func testKeyRequest_OneShotFallback_CertError() async {
         setUpWith(
             credentialClient: TestFairPlayStreamingSessionCredentialClient(
                 certFailsWith: .unexpected(message: "cert error")
@@ -124,6 +175,7 @@ class ContentKeySessionDelegateTests : XCTestCase {
         let mockRequest = MockKeyRequest(
             fakeIdentifier: makeFakeSkdUrl(fakePlaybackID: "fake-playback")
         )
+        mockRequest.persistableRequestError = FakeError()
 
         do {
             try await contentKeySessionDelegate.handleContentKeyRequest(request: mockRequest)
@@ -140,7 +192,7 @@ class ContentKeySessionDelegateTests : XCTestCase {
         }
     }
 
-    func testKeyRequestLicenseError() async {
+    func testKeyRequest_OneShotFallback_LicenseError() async {
         setUpWith(
             credentialClient: TestFairPlayStreamingSessionCredentialClient(
                 fakeCert: "fake-cert".data(using: .utf8)!,
@@ -150,6 +202,7 @@ class ContentKeySessionDelegateTests : XCTestCase {
         let mockRequest = MockKeyRequest(
             fakeIdentifier: makeFakeSkdUrl(fakePlaybackID: "fake-playback")
         )
+        mockRequest.persistableRequestError = FakeError()
 
         do {
             try await contentKeySessionDelegate.handleContentKeyRequest(request: mockRequest)
@@ -166,28 +219,6 @@ class ContentKeySessionDelegateTests : XCTestCase {
                 mockRequest.verifyNotCalled(funcName: "processContentKeyResponse")
             )
         }
-    }
-
-    func testKeyRequestHappyPath() async throws {
-        let mockRequest = MockKeyRequest(
-            fakeIdentifier: makeFakeSkdUrl(
-                fakePlaybackID: "fake-playback"
-            )
-        )
-
-        try await contentKeySessionDelegate.handleContentKeyRequest(request: mockRequest)
-
-        XCTAssertTrue(
-            mockRequest.verifyNotCalled(funcName: "processContentKeyResponseError")
-        )
-        XCTAssertTrue(
-            mockRequest.verifyWasCalled(
-                funcName: "makeStreamingContentKeyRequestData(forApp:contentIdentifier:options:)"
-            )
-        )
-        XCTAssertTrue(
-            mockRequest.verifyWasCalled(funcName: "processContentKeyResponse")
-        )
     }
 
     // MARK: - handlePersistableContentKeyRequest tests
@@ -239,6 +270,7 @@ class ContentKeySessionDelegateTests : XCTestCase {
     }
 
     func testPersistableKeyRequest_ExistingPersistedKey_UsesItDirectly() async throws {
+        testDRMAssetRegistry.offlineConfigured = true
         let fakeKeyData = "persisted-key-data".data(using: .utf8)!
         mockKeyStore.persistedKeys["fake-playback"] = fakeKeyData
 
@@ -263,6 +295,7 @@ class ContentKeySessionDelegateTests : XCTestCase {
     }
 
     func testPersistableKeyRequest_NoPersistedKey_FetchesAndSaves() async throws {
+        testDRMAssetRegistry.offlineConfigured = true
         let mockRequest = MockKeyRequest(
             fakeIdentifier: makeFakeSkdUrl(fakePlaybackID: "fake-playback")
         )
@@ -292,6 +325,7 @@ class ContentKeySessionDelegateTests : XCTestCase {
                 certFailsWith: .unexpected(message: "cert error")
             )
         )
+        testDRMAssetRegistry.offlineConfigured = true
         let mockRequest = MockKeyRequest(
             fakeIdentifier: makeFakeSkdUrl(fakePlaybackID: "fake-playback")
         )
@@ -318,6 +352,7 @@ class ContentKeySessionDelegateTests : XCTestCase {
                 licenseFailsWith: .unexpected(message: "license error")
             )
         )
+        testDRMAssetRegistry.offlineConfigured = true
         let mockRequest = MockKeyRequest(
             fakeIdentifier: makeFakeSkdUrl(fakePlaybackID: "fake-playback")
         )
@@ -341,9 +376,112 @@ class ContentKeySessionDelegateTests : XCTestCase {
         }
     }
 
+    // MARK: - Online license caching
+
+    func testOnlinePersistableKeyRequest_CacheHit_UsesCachedLicenseNoNetwork() async throws {
+        let token = "online-token"
+        testDRMAssetRegistry.onlineToken = token
+        let fingerprint = ContentKeySessionDelegate<TestFairPlayStreamingSessionManager>.fingerprint(forToken: token, rootDomain: "mux.com")
+        let cachedLicense = "cached-license".data(using: .utf8)!
+        mockOnlineCache.cached["fake-playback"] = (cachedLicense, fingerprint)
+
+        let mockRequest = MockKeyRequest(
+            fakeIdentifier: makeFakeSkdUrl(fakePlaybackID: "fake-playback")
+        )
+
+        try await contentKeySessionDelegate.handlePersistableContentKeyRequest(request: mockRequest)
+
+        // Served from cache: no cert/license network round trip, nothing stored.
+        XCTAssertTrue(mockRequest.verifyWasCalled(funcName: "processContentKeyResponse"))
+        XCTAssertTrue(
+            mockRequest.verifyNotCalled(
+                funcName: "makeStreamingContentKeyRequestData(forApp:contentIdentifier:options:)"
+            )
+        )
+        XCTAssertTrue(mockOnlineCache.storedCalls.isEmpty)
+    }
+
+    func testOnlinePersistableKeyRequest_CacheMiss_FetchesAndCaches() async throws {
+        let token = "online-token"
+        testDRMAssetRegistry.onlineToken = token
+
+        let mockRequest = MockKeyRequest(
+            fakeIdentifier: makeFakeSkdUrl(fakePlaybackID: "fake-playback")
+        )
+
+        try await contentKeySessionDelegate.handlePersistableContentKeyRequest(request: mockRequest)
+
+        XCTAssertTrue(
+            mockRequest.verifyWasCalled(
+                funcName: "makeStreamingContentKeyRequestData(forApp:contentIdentifier:options:)"
+            )
+        )
+        XCTAssertTrue(
+            mockRequest.verifyWasCalled(funcName: "persistableContentKey(fromKeyVendorResponse:options:)")
+        )
+        XCTAssertTrue(mockRequest.verifyWasCalled(funcName: "processContentKeyResponse"))
+
+        // Cached under the current token's fingerprint; not saved to the offline store.
+        XCTAssertEqual(mockOnlineCache.storedCalls.count, 1)
+        XCTAssertEqual(mockOnlineCache.storedCalls.first?.playbackID, "fake-playback")
+        XCTAssertEqual(
+            mockOnlineCache.storedCalls.first?.fingerprint,
+            ContentKeySessionDelegate<TestFairPlayStreamingSessionManager>.fingerprint(forToken: token, rootDomain: "mux.com")
+        )
+        XCTAssertTrue(mockKeyStore.savedKeys.isEmpty)
+    }
+
+    func testOnlinePersistableKeyRequest_TokenChanged_Refetches() async throws {
+        // A stale entry cached under an old token must not be served when the app
+        // supplies a new token; we re-fetch and re-cache under the new one.
+        let oldFingerprint = ContentKeySessionDelegate<TestFairPlayStreamingSessionManager>.fingerprint(forToken: "old-token", rootDomain: "mux.com")
+        mockOnlineCache.cached["fake-playback"] = ("stale-license".data(using: .utf8)!, oldFingerprint)
+
+        let newToken = "new-token"
+        testDRMAssetRegistry.onlineToken = newToken
+
+        let mockRequest = MockKeyRequest(
+            fakeIdentifier: makeFakeSkdUrl(fakePlaybackID: "fake-playback")
+        )
+
+        try await contentKeySessionDelegate.handlePersistableContentKeyRequest(request: mockRequest)
+
+        XCTAssertTrue(
+            mockRequest.verifyWasCalled(
+                funcName: "makeStreamingContentKeyRequestData(forApp:contentIdentifier:options:)"
+            )
+        )
+        XCTAssertEqual(mockOnlineCache.storedCalls.count, 1)
+        XCTAssertEqual(
+            mockOnlineCache.storedCalls.first?.fingerprint,
+            ContentKeySessionDelegate<TestFairPlayStreamingSessionManager>.fingerprint(forToken: newToken, rootDomain: "mux.com")
+        )
+    }
+
+    func testOnlinePersistableKeyRequest_CertError_Throws() async {
+        setUpWith(
+            credentialClient: TestFairPlayStreamingSessionCredentialClient(
+                certFailsWith: .unexpected(message: "cert error")
+            )
+        )
+        testDRMAssetRegistry.onlineToken = "online-token"
+        let mockRequest = MockKeyRequest(
+            fakeIdentifier: makeFakeSkdUrl(fakePlaybackID: "fake-playback")
+        )
+
+        do {
+            try await contentKeySessionDelegate.handlePersistableContentKeyRequest(request: mockRequest)
+            XCTFail("Expected error to be thrown")
+        } catch {
+            XCTAssertTrue(mockRequest.verifyNotCalled(funcName: "processContentKeyResponse"))
+            XCTAssertTrue(mockOnlineCache.storedCalls.isEmpty)
+        }
+    }
+
     // MARK: - handleContentKeyUpdated tests
 
-    func testContentKeyUpdated_HappyPath_SavesKey() async throws {
+    func testContentKeyUpdated_OfflineAsset_SavesToDownloadStore() async throws {
+        testDRMAssetRegistry.offlineConfigured = true
         let fakeKeyData = "updated-key-data".data(using: .utf8)!
         let keyIdentifier = makeFakeSkdUrl(fakePlaybackID: "fake-playback")
 
@@ -356,6 +494,29 @@ class ContentKeySessionDelegateTests : XCTestCase {
         XCTAssertEqual(mockKeyStore.savedKeys.first?.playbackID, "fake-playback")
         XCTAssertEqual(mockKeyStore.savedKeys.first?.identifier, keyIdentifier)
         XCTAssertEqual(mockKeyStore.savedKeys.first?.data, fakeKeyData)
+        XCTAssertTrue(mockOnlineCache.storedCalls.isEmpty)
+    }
+
+    func testContentKeyUpdated_OnlineAsset_UpdatesOnlineCache() async throws {
+        // Online asset (no offline config): an updated persistable key must go to
+        // the online license cache, not the offline download store.
+        testDRMAssetRegistry.onlineToken = "online-token"
+        let fakeKeyData = "updated-online-key".data(using: .utf8)!
+        let keyIdentifier = makeFakeSkdUrl(fakePlaybackID: "fake-playback")
+
+        try await contentKeySessionDelegate.handleContentKeyUpdated(
+            keyIdentifier: keyIdentifier,
+            data: fakeKeyData
+        )
+
+        XCTAssertTrue(mockKeyStore.savedKeys.isEmpty)
+        XCTAssertEqual(mockOnlineCache.storedCalls.count, 1)
+        XCTAssertEqual(mockOnlineCache.storedCalls.first?.playbackID, "fake-playback")
+        XCTAssertEqual(mockOnlineCache.storedCalls.first?.ckc, fakeKeyData)
+        XCTAssertEqual(
+            mockOnlineCache.storedCalls.first?.fingerprint,
+            ContentKeySessionDelegate<TestFairPlayStreamingSessionManager>.fingerprint(forToken: "online-token", rootDomain: "mux.com")
+        )
     }
 
     func testContentKeyUpdated_NonStringIdentifier_DoesNotSave() async throws {
