@@ -381,7 +381,7 @@ class ContentKeySessionDelegateTests : XCTestCase {
     func testOnlinePersistableKeyRequest_CacheHit_UsesCachedLicenseNoNetwork() async throws {
         let token = "online-token"
         testDRMAssetRegistry.onlineToken = token
-        let fingerprint = ContentKeySessionDelegate<TestFairPlayStreamingSessionManager>.fingerprint(forToken: token, rootDomain: "mux.com")
+        let fingerprint = try ContentKeySessionDelegate<TestFairPlayStreamingSessionManager>.fingerprint(forToken: token, rootDomain: "mux.com")
         let cachedLicense = "cached-license".data(using: .utf8)!
         mockOnlineCache.cached["fake-playback"] = (cachedLicense, fingerprint)
 
@@ -426,7 +426,7 @@ class ContentKeySessionDelegateTests : XCTestCase {
         XCTAssertEqual(mockOnlineCache.storedCalls.first?.playbackID, "fake-playback")
         XCTAssertEqual(
             mockOnlineCache.storedCalls.first?.fingerprint,
-            ContentKeySessionDelegate<TestFairPlayStreamingSessionManager>.fingerprint(forToken: token, rootDomain: "mux.com")
+            try ContentKeySessionDelegate<TestFairPlayStreamingSessionManager>.fingerprint(forToken: token, rootDomain: "mux.com")
         )
         XCTAssertTrue(mockKeyStore.savedKeys.isEmpty)
     }
@@ -434,7 +434,7 @@ class ContentKeySessionDelegateTests : XCTestCase {
     func testOnlinePersistableKeyRequest_TokenChanged_Refetches() async throws {
         // A stale entry cached under an old token must not be served when the app
         // supplies a new token; we re-fetch and re-cache under the new one.
-        let oldFingerprint = ContentKeySessionDelegate<TestFairPlayStreamingSessionManager>.fingerprint(forToken: "old-token", rootDomain: "mux.com")
+        let oldFingerprint = try ContentKeySessionDelegate<TestFairPlayStreamingSessionManager>.fingerprint(forToken: "old-token", rootDomain: "mux.com")
         mockOnlineCache.cached["fake-playback"] = ("stale-license".data(using: .utf8)!, oldFingerprint)
 
         let newToken = "new-token"
@@ -454,7 +454,7 @@ class ContentKeySessionDelegateTests : XCTestCase {
         XCTAssertEqual(mockOnlineCache.storedCalls.count, 1)
         XCTAssertEqual(
             mockOnlineCache.storedCalls.first?.fingerprint,
-            ContentKeySessionDelegate<TestFairPlayStreamingSessionManager>.fingerprint(forToken: newToken, rootDomain: "mux.com")
+            try ContentKeySessionDelegate<TestFairPlayStreamingSessionManager>.fingerprint(forToken: newToken, rootDomain: "mux.com")
         )
     }
 
@@ -484,7 +484,7 @@ class ContentKeySessionDelegateTests : XCTestCase {
         // license is obtained.
         let token = "online-token"
         testDRMAssetRegistry.onlineToken = token
-        let fingerprint = ContentKeySessionDelegate<TestFairPlayStreamingSessionManager>.fingerprint(forToken: token, rootDomain: "mux.com")
+        let fingerprint = try ContentKeySessionDelegate<TestFairPlayStreamingSessionManager>.fingerprint(forToken: token, rootDomain: "mux.com")
         mockOnlineCache.cached["fake-playback"] = ("stale-license".data(using: .utf8)!, fingerprint)
 
         let mockRequest = MockKeyRequest(
@@ -497,6 +497,41 @@ class ContentKeySessionDelegateTests : XCTestCase {
         XCTAssertTrue(
             mockRequest.verifyWasCalled(funcName: "respondByPersistableContentKeyRequestOnAnyOS")
         )
+    }
+
+    func testRenewingKeyRequest_OfflineAsset_Throws() async {
+        // Offline licenses can't be renewed (we don't persist the drm_token), so
+        // a renewal should throw rather than no-op/hang, and must not touch the
+        // online cache.
+        testDRMAssetRegistry.offlineConfigured = true
+        let mockRequest = MockKeyRequest(
+            fakeIdentifier: makeFakeSkdUrl(fakePlaybackID: "fake-playback")
+        )
+
+        do {
+            try await contentKeySessionDelegate.handleRenewingContentKeyRequest(request: mockRequest)
+            XCTFail("Expected renewing an offline asset to throw")
+        } catch {
+            XCTAssertTrue(mockOnlineCache.removedCalls.isEmpty)
+        }
+    }
+
+    func testOnlinePersistableKeyRequest_MissingToken_Throws() async {
+        // No online drm_token configured (onlineToken is nil by default) →
+        // fingerprinting throws, and we must not fetch or cache a bogus entry.
+        let mockRequest = MockKeyRequest(
+            fakeIdentifier: makeFakeSkdUrl(fakePlaybackID: "fake-playback")
+        )
+
+        do {
+            try await contentKeySessionDelegate.handlePersistableContentKeyRequest(request: mockRequest)
+            XCTFail("Expected missing DRM token to throw")
+        } catch {
+            XCTAssertTrue(mockOnlineCache.storedCalls.isEmpty)
+            XCTAssertTrue(
+                mockRequest.verifyNotCalled(funcName: "makeStreamingContentKeyRequestData(forApp:contentIdentifier:options:)")
+            )
+        }
     }
 
     // MARK: - handleContentKeyUpdated tests
@@ -536,7 +571,7 @@ class ContentKeySessionDelegateTests : XCTestCase {
         XCTAssertEqual(mockOnlineCache.storedCalls.first?.ckc, fakeKeyData)
         XCTAssertEqual(
             mockOnlineCache.storedCalls.first?.fingerprint,
-            ContentKeySessionDelegate<TestFairPlayStreamingSessionManager>.fingerprint(forToken: "online-token", rootDomain: "mux.com")
+            try ContentKeySessionDelegate<TestFairPlayStreamingSessionManager>.fingerprint(forToken: "online-token", rootDomain: "mux.com")
         )
     }
 

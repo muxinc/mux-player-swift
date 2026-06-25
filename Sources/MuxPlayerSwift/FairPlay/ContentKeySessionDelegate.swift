@@ -225,7 +225,7 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
             )
         } else {
             let credentials = await sessionManager?.onlineDRMCredentials(playbackID: playbackID)
-            let fingerprint = Self.fingerprint(
+            let fingerprint = try Self.fingerprint(
                 forToken: credentials?.drmToken,
                 rootDomain: credentials?.rootDomain
             )
@@ -336,7 +336,7 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
         contentIdentifier: Data
     ) async throws {
         let credentials = await sessionManager.onlineDRMCredentials(playbackID: playbackID)
-        let fingerprint = Self.fingerprint(
+        let fingerprint = try Self.fingerprint(
             forToken: credentials?.drmToken,
             rootDomain: credentials?.rootDomain
         )
@@ -378,26 +378,44 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
     /// when the token or root domain changes. Deliberately excludes the `skd://`
     /// key identifier (it can carry a per-session token, which would break
     /// cross-session caching); multi-key assets are a non-goal.
-    static func fingerprint(forToken token: String?, rootDomain: String?) -> String {
-        guard let token else { return "no-token" }
-        let material = "\(rootDomain ?? "")\u{1f}\(token)"
-        guard let data = material.data(using: .utf8) else { return "no-token" }
+    ///
+    /// Throws if the DRM token is missing — an exceptional state we don't want to
+    /// silently cache a bogus, unusable entry for. The error propagates up to the
+    /// `contentKeySession(_:didProvide:)` callbacks, which report it to the
+    /// system via `processContentKeyResponseError`.
+    static func fingerprint(forToken token: String?, rootDomain: String?) throws -> String {
+        guard let token else {
+            throw FairPlaySessionError.unexpected(message: "Missing DRM token; cannot fingerprint online credentials")
+        }
+        let data = Data("\(rootDomain ?? "")\u{1f}\(token)".utf8)
         return SHA256.hash(data: data)
             .map { String(format: "%02x", $0) }
             .joined()
     }
     
     /// A renewing request means the system no longer trusts the current key
-    /// (e.g. an expiring or obsolete lease), so the cached online license must
-    /// not be reused. Drop it first, then run the normal flow, which will
-    /// re-fetch a fresh license and re-cache it. For offline assets this is a
-    /// no-op (they don't use the online cache).
+    /// (e.g. an expiring or obsolete lease).
+    ///
+    /// - Online: drop the cached license so the normal flow re-fetches a fresh
+    ///   one and re-caches it.
+    /// - Offline: we can't renew (we don't persist the `drm_token`), so throw to
+    ///   notify the system via `processContentKeyResponseError` rather than hang
+    ///   or silently re-serve a stale key. The asset must be re-downloaded.
     func handleRenewingContentKeyRequest(request: any KeyRequest) async throws {
-        if let identifier = request.identifier as? String,
-           let keyURL = URL(string: identifier),
-           let playbackID = parsePlaybackId(fromSkdLocation: keyURL) {
-            await onlineLicenseCache.remove(playbackID: playbackID)
+        guard let identifier = request.identifier as? String,
+              let keyURL = URL(string: identifier),
+              let playbackID = parsePlaybackId(fromSkdLocation: keyURL) else {
+            try await handleContentKeyRequest(request: request)
+            return
         }
+
+        if await sessionManager?.hasOfflineDRMConfig(playbackID: playbackID) == true {
+            throw FairPlaySessionError.unexpected(
+                message: "Cannot renew an offline DRM license for \(playbackID); the asset must be re-downloaded"
+            )
+        }
+
+        await onlineLicenseCache.remove(playbackID: playbackID)
         try await handleContentKeyRequest(request: request)
     }
 
