@@ -140,9 +140,11 @@ final class MuxPlayerSwiftExampleUITests: XCTestCase {
             application: application
         )
 
+        // No playback/DRM tokens are configured in CI, so the DRM screen shows
+        // its setup instructions instead of the player.
         try tapCell(
             cellIdentifier: "DRMPlayerRow",
-            waitFor: "DRMPlayerView",
+            waitFor: "DRMSetupInstructionsView",
             application: application
         )
     }
