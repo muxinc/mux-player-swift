@@ -44,7 +44,22 @@ final class ExampleOfflineDownloadManager: ObservableObject {
         ExampleAsset(
             playbackID: "wXqpSb3E1bI9xdr0100wIZ016j5WwP1HcfE",
             title: "Infrastructure Review"
-        )
+        ),
+
+        // The assets above are public, so they download without any tokens.
+        //
+        // To try OFFLINE DRM, uncomment the entry below and fill in your own
+        // values. Offline DRM needs a DRM-enabled playback ID plus two signed
+        // tokens — a playback token and a DRM token — both signed with your Mux
+        // signing key. With those, the FairPlay license is downloaded alongside
+        // the media so the asset plays back offline. Don't commit real tokens.
+        //
+        // ExampleAsset(
+        //     playbackID: "YOUR_DRM_PLAYBACK_ID",
+        //     title: "My DRM Asset (offline)",
+        //     playbackToken: "YOUR_PLAYBACK_TOKEN",
+        //     drmToken: "YOUR_DRM_TOKEN"
+        // ),
     ]
 
     /// Download states keyed by playback ID.
