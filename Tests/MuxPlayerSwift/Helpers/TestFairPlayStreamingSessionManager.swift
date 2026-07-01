@@ -53,6 +53,10 @@ class TestFairPlayStreamingSessionManager : FairPlayStreamingSessionCredentialCl
     func offlineKeyData(playbackID: String) async -> Data? {
         await drmAssetRegistry.offlineKeyData(playbackID: playbackID)
     }
+
+    func onlineDRMCredentials(playbackID: String) async -> (drmToken: String, rootDomain: String)? {
+        await drmAssetRegistry.onlineDRMCredentials(playbackID: playbackID)
+    }
     
     init(credentialClient: any FairPlayStreamingSessionCredentialClient,
          drmAssetRegistry: any DRMAssetRegistry) {

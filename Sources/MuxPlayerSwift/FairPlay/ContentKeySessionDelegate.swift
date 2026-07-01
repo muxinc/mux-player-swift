@@ -6,6 +6,7 @@
 //
 
 import AVFoundation
+import CryptoKit
 import Foundation
 import os
 
@@ -20,13 +21,21 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
         _persistedKeyStore ?? MuxOfflineAccessManager.shared.manager
     }
 
+    private let _onlineLicenseCache: OnlineLicenseCaching?
+
+    private var onlineLicenseCache: OnlineLicenseCaching {
+        _onlineLicenseCache ?? OnlineDRMLicenseCache.shared
+    }
+
     init(
         sessionManager: SessionManager,
-        persistedKeyStore: PersistedKeyStore? = nil
+        persistedKeyStore: PersistedKeyStore? = nil,
+        onlineLicenseCache: OnlineLicenseCaching? = nil
     ) {
         self.sessionManager = sessionManager
         self.logger = sessionManager.logger
         self._persistedKeyStore = persistedKeyStore
+        self._onlineLicenseCache = onlineLicenseCache
     }
     
     // MARK: AVContentKeySessionDelegate implementation
@@ -79,7 +88,7 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
         logger.trace("didProvide didProvideRenewingContentKeyRequest")
         Task {
             do {
-                try await handleContentKeyRequest(request: DefaultKeyRequest(wrapping: keyRequest))
+                try await handleRenewingContentKeyRequest(request: DefaultKeyRequest(wrapping: keyRequest))
             } catch {
                 keyRequest.processContentKeyResponseError(error)
             }
@@ -205,22 +214,37 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
             logger.debug("\(#function) Error: key SKD location missing playbackId [\(mediaPlaylistKeyURL.absoluteString)]")
             return
         }
-        
-        try await persistedKeyStore.savePersistedContentKey(
-            playbackID: playbackID,
-            identifier: requestIdentifierString,
-            contentKeyData: data
-        )
+
+        // Route the updated key to the right store: offline downloads persist
+        // to the on-disk key store; online assets update the short-term license cache.
+        if await sessionManager?.hasOfflineDRMConfig(playbackID: playbackID) == true {
+            try await persistedKeyStore.savePersistedContentKey(
+                playbackID: playbackID,
+                identifier: requestIdentifierString,
+                contentKeyData: data
+            )
+        } else {
+            let credentials = await sessionManager?.onlineDRMCredentials(playbackID: playbackID)
+            let fingerprint = try Self.fingerprint(
+                forToken: credentials?.drmToken,
+                rootDomain: credentials?.rootDomain
+            )
+            await onlineLicenseCache.store(
+                playbackID: playbackID,
+                tokenFingerprint: fingerprint,
+                ckc: data
+            )
+        }
     }
     
     func handlePersistableContentKeyRequest(request: any KeyRequest) async throws {
         logger.trace("\(#function) called")
-        
+
         guard let sessionManager = self.sessionManager else {
             // could happen if recovering from media services crashing
             throw FairPlaySessionError.unexpected(message: "\(#function) called with terminated SessionManager")
         }
-        
+
         // for hls, "the identifier must be an NSURL that matches a key URI in the Media Playlist." from the docs
         guard let requestIdentifierString = request.identifier as? String,
               let mediaPlaylistKeyURL = URL(string: requestIdentifierString),
@@ -232,14 +256,45 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
             )
             return
         }
-        
+
         guard let playbackID = parsePlaybackId(
             fromSkdLocation: mediaPlaylistKeyURL
         ) else {
             logger.debug("\(#function) Error: key SKD location missing playbackId [\(mediaPlaylistKeyURL.absoluteString)]")
             throw FairPlaySessionError.unexpected(message: "playbackID not present in key uri")
         }
-        
+
+        // An offline asset (downloading or playing back) uses the on-disk
+        // download key store and drm_token-claims-based expiration. An online
+        // asset uses the short-term online license cache.
+        if await sessionManager.hasOfflineDRMConfig(playbackID: playbackID) {
+            try await handleOfflinePersistableContentKeyRequest(
+                request: request,
+                sessionManager: sessionManager,
+                playbackID: playbackID,
+                requestIdentifierString: requestIdentifierString,
+                contentIdentifier: utfEncodedRequestIdentifierString
+            )
+        } else {
+            try await handleOnlineCachedContentKeyRequest(
+                request: request,
+                sessionManager: sessionManager,
+                playbackID: playbackID,
+                contentIdentifier: utfEncodedRequestIdentifierString
+            )
+        }
+    }
+
+    /// Offline download / playback path: serve a previously-persisted key if we
+    /// have one, otherwise fetch a persistable license and save it to the
+    /// download key store.
+    private func handleOfflinePersistableContentKeyRequest(
+        request: any KeyRequest,
+        sessionManager: SessionManager,
+        playbackID: String,
+        requestIdentifierString: String,
+        contentIdentifier: Data
+    ) async throws {
         // If we already have a persisted content key, use it (this is the offline playback path)
         if let persistedContentKey = try await persistedKeyStore.findPersistedContentKey(playbackID: playbackID) {
             // Transition to playDuration-based expiration on first offline playback
@@ -254,23 +309,116 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
         let appCertData = try await sessionManager.requestCertificate(playbackID: playbackID, offline: true)
         let spcData = try await request.makeStreamingContentKeyRequestData(
             forApp: appCertData,
-            contentIdentifier: utfEncodedRequestIdentifierString,
+            contentIdentifier: contentIdentifier,
             options: [AVContentKeyRequestProtocolVersionsKey: [1]]
         )
         let ckcData = try await sessionManager.requestLicence(spcData: spcData, playbackID: playbackID, offline: true)
-        
+
         let persistableKey = try request.persistableContentKey(fromKeyVendorResponse: ckcData, options: nil)
         try await persistedKeyStore.savePersistedContentKey(
             playbackID: playbackID,
             identifier: requestIdentifierString,
             contentKeyData: persistableKey
         )
-        
+
         request.processContentKeyResponse(
             request.makeContentKeyResponse(fairPlayStreamingKeyResponseData: persistableKey)
         )
     }
+
+    /// Online playback path: reuse a cached license if one is still
+    /// valid for the current `drm_token`, otherwise do the full handshake and
+    /// cache the resulting persistable license for next time.
+    private func handleOnlineCachedContentKeyRequest(
+        request: any KeyRequest,
+        sessionManager: SessionManager,
+        playbackID: String,
+        contentIdentifier: Data
+    ) async throws {
+        let credentials = await sessionManager.onlineDRMCredentials(playbackID: playbackID)
+        let fingerprint = try Self.fingerprint(
+            forToken: credentials?.drmToken,
+            rootDomain: credentials?.rootDomain
+        )
+
+        // Cache hit: reuse the persisted license, no network round trip.
+        if let cachedLicense = await onlineLicenseCache.cachedLicense(
+            playbackID: playbackID,
+            tokenFingerprint: fingerprint
+        ) {
+            logger.debug("Using cached online license for \(playbackID, privacy: .public)")
+            request.processContentKeyResponse(
+                request.makeContentKeyResponse(fairPlayStreamingKeyResponseData: cachedLicense)
+            )
+            return
+        }
+
+        // Cache miss: do the handshake and cache the persistable license.
+        let certData = try await sessionManager.requestCertificate(playbackID: playbackID, offline: false)
+        let spcData = try await request.makeStreamingContentKeyRequestData(
+            forApp: certData,
+            contentIdentifier: contentIdentifier,
+            options: [AVContentKeyRequestProtocolVersionsKey: [1]]
+        )
+        let ckcData = try await sessionManager.requestLicence(spcData: spcData, playbackID: playbackID, offline: false)
+
+        let persistableKey = try request.persistableContentKey(fromKeyVendorResponse: ckcData, options: nil)
+        await onlineLicenseCache.store(
+            playbackID: playbackID,
+            tokenFingerprint: fingerprint,
+            ckc: persistableKey
+        )
+
+        request.processContentKeyResponse(
+            request.makeContentKeyResponse(fairPlayStreamingKeyResponseData: persistableKey)
+        )
+    }
+
+    /// Stable fingerprint of the online DRM credentials so the cache invalidates
+    /// when the token or root domain changes. Deliberately excludes the `skd://`
+    /// key identifier (it can carry a per-session token, which would break
+    /// cross-session caching); multi-key assets are a non-goal.
+    ///
+    /// Throws if the DRM token is missing — an exceptional state we don't want to
+    /// silently cache a bogus, unusable entry for. The error propagates up to the
+    /// `contentKeySession(_:didProvide:)` callbacks, which report it to the
+    /// system via `processContentKeyResponseError`.
+    static func fingerprint(forToken token: String?, rootDomain: String?) throws -> String {
+        guard let token else {
+            throw FairPlaySessionError.unexpected(message: "Missing DRM token; cannot fingerprint online credentials")
+        }
+        let data = Data("\(rootDomain ?? "")\u{1f}\(token)".utf8)
+        return SHA256.hash(data: data)
+            .map { String(format: "%02x", $0) }
+            .joined()
+    }
     
+    /// A renewing request means the system no longer trusts the current key
+    /// (e.g. an expiring or obsolete lease).
+    ///
+    /// - Online: drop the cached license so the normal flow re-fetches a fresh
+    ///   one and re-caches it.
+    /// - Offline: we can't renew (we don't persist the `drm_token`), so throw to
+    ///   notify the system via `processContentKeyResponseError` rather than hang
+    ///   or silently re-serve a stale key. The asset must be re-downloaded.
+    func handleRenewingContentKeyRequest(request: any KeyRequest) async throws {
+        guard let identifier = request.identifier as? String,
+              let keyURL = URL(string: identifier),
+              let playbackID = parsePlaybackId(fromSkdLocation: keyURL) else {
+            try await handleContentKeyRequest(request: request)
+            return
+        }
+
+        if await sessionManager?.hasOfflineDRMConfig(playbackID: playbackID) == true {
+            throw FairPlaySessionError.unexpected(
+                message: "Cannot renew an offline DRM license for \(playbackID); the asset must be re-downloaded"
+            )
+        }
+
+        await onlineLicenseCache.remove(playbackID: playbackID)
+        try await handleContentKeyRequest(request: request)
+    }
+
     func handleContentKeyRequest(request: any KeyRequest) async throws {
         logger.debug(
             "Called \(#function)"
@@ -304,36 +452,35 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
             return
         }
         
-        var offlineRegistered: Bool = false
-        // Check for offline - if this is for offline, we trigger the persistable content key flow
-        if await sessionManager.hasOfflineDRMConfig(playbackID: playbackID) {
-            do {
-                try request.respondByRequestingPersistableContentKeyRequestOnAnyOS()
-                // no more processing for this key request. we'll get a delegate call with a persistable key request next
-                return
-            } catch {
-                // happens if playing airplay (according to example code). The proper response is to process as an online key
-                //  .. although using an 'offline' drm_token for playing an asset is technically not supported
-                offlineRegistered = true
-            }
+        let isOffline = await sessionManager.hasOfflineDRMConfig(playbackID: playbackID)
+
+        // Use the persistable-key flow for both offline (required) and online
+        // (so the license can be cached and reused). If it's unavailable
+        // (AirPlay, or a session with no storage directory), fall back below to
+        // a one-shot key.
+        do {
+            try request.respondByRequestingPersistableContentKeyRequestOnAnyOS()
+            // No more processing here; we'll get a persistable key request next.
+            return
+        } catch {
+            logger.debug("Persistable key request unavailable, using one-shot key: \(error.localizedDescription)")
         }
-        
-        // If we're not playing offline, do the handshake for an online key request
-        let certData = try await sessionManager.requestCertificate(playbackID: playbackID, offline: offlineRegistered)
+
+        // Fallback: one-shot (ephemeral) key, no caching. Use the asset's
+        // offline token if it's an offline asset (not really supported, but
+        // preserves prior behavior), otherwise the online token.
+        let certData = try await sessionManager.requestCertificate(playbackID: playbackID, offline: isOffline)
         let spcData = try await request.makeStreamingContentKeyRequestData(
             forApp: certData,
             contentIdentifier: utfEncodedRequestIdentifierString,
             options: [AVContentKeyRequestProtocolVersionsKey: [1]]
         )
-        let ckcData = try await sessionManager.requestLicence(spcData: spcData, playbackID: playbackID, offline: offlineRegistered)
-        
+        let ckcData = try await sessionManager.requestLicence(spcData: spcData, playbackID: playbackID, offline: isOffline)
+
         // Send CKC to CDM/ContentKeySession so we can finally play our content
         logger.debug("Submitting CKC to system")
-        let keyResponse = request.makeContentKeyResponse(
-            fairPlayStreamingKeyResponseData: ckcData
-        )
         request.processContentKeyResponse(
-            keyResponse
+            request.makeContentKeyResponse(fairPlayStreamingKeyResponseData: ckcData)
         )
         logger.debug("Protected content now available for processing")
         // Done! no further interaction is required from us to play.

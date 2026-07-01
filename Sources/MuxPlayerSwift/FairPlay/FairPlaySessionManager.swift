@@ -33,6 +33,11 @@ protocol DRMAssetRegistry {
     func addOfflinePlayDRMAsset(_ urlAsset: AVURLAsset, playbackID: String, keyData: Data) async
     func hasOfflineDRMConfig(playbackID: String) async -> Bool
     func offlineKeyData(playbackID: String) async -> Data?
+    /// The `drm_token` and root domain tracked for an *online* DRM asset, if
+    /// any. Used to fingerprint the request so the online license cache can
+    /// invalidate when the app supplies a new token (or domain) for the same
+    /// playbackID.
+    func onlineDRMCredentials(playbackID: String) async -> (drmToken: String, rootDomain: String)?
 }
 
 // MARK: - FairPlayStreamingSessionManager
@@ -432,6 +437,23 @@ class DefaultFairPlayStreamingSessionManager<
                     return
                 }
                 continuation.resume(returning: offlinePlayLookup[playbackID])
+            }
+        }
+    }
+
+    func onlineDRMCredentials(playbackID: String) async -> (drmToken: String, rootDomain: String)? {
+        return await withCheckedContinuation { continuation in
+            queue.async { [logger, weak self] in
+                guard let self else {
+                    logger.warning("looked up online DRM credentials after cleanup")
+                    continuation.resume(returning: nil)
+                    return
+                }
+                if let config = onlineKeyConfigLookup[playbackID] {
+                    continuation.resume(returning: (config.options.drmToken, config.rootDomain))
+                } else {
+                    continuation.resume(returning: nil)
+                }
             }
         }
     }

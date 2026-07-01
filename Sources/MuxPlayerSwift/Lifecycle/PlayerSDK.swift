@@ -42,7 +42,7 @@ class PlayerSDK {
         )
         #else
         let sessionManager = DefaultFairPlayStreamingSessionManager(
-            contentKeySession: AVContentKeySession(keySystem: .fairPlayStreaming),
+            contentKeySession: PlayerSDK.makeFairPlayContentKeySession(),
             errorDispatcher: monitor
         )
         sessionManager.sessionDelegate = ContentKeySessionDelegate(
@@ -53,6 +53,49 @@ class PlayerSDK {
             monitor: monitor
         )
         #endif
+    }
+
+    /// Creates the FairPlay content key session, backed by a persistent on-disk
+    /// storage directory. The storage directory is required to vend
+    /// `AVPersistableContentKeyRequest`s, which we use both for offline DRM and
+    /// for short-term caching of online licenses. If the directory
+    /// can't be created we fall back to a session with no storage, which simply
+    /// disables persistable-key features rather than crashing.
+    static func makeFairPlayContentKeySession() -> AVContentKeySession {
+        if let storageURL = try? contentKeySessionStorageDirectory() {
+            return AVContentKeySession(
+                keySystem: .fairPlayStreaming,
+                storageDirectoryAt: storageURL
+            )
+        } else {
+            return AVContentKeySession(keySystem: .fairPlayStreaming)
+        }
+    }
+
+    /// On-disk directory used by `AVContentKeySession` for its persistable-key
+    /// bookkeeping. This is separate from where we store the CKC bytes
+    /// themselves (offline download keys live under `mux-offline`, online
+    /// cached licenses under the online license cache).
+    static func contentKeySessionStorageDirectory() throws -> URL {
+        let fileManager = FileManager.default
+        let base = try fileManager.url(
+            for: .applicationSupportDirectory,
+            in: .userDomainMask,
+            appropriateFor: nil,
+            create: true
+        )
+        var directory = base.appendingPathComponent(
+            "com.mux.player/content-key-session",
+            isDirectory: true
+        )
+        try fileManager.createDirectory(
+            at: directory,
+            withIntermediateDirectories: true
+        )
+        var values = URLResourceValues()
+        values.isExcludedFromBackup = true
+        try? directory.setResourceValues(values)
+        return directory
     }
 
     init(

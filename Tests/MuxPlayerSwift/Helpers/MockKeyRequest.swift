@@ -17,7 +17,12 @@ class MockKeyRequest : KeyRequest {
     
     private var fakeRequest: InnerRequest = []
     private let fakeIdentifier: Any
-    
+
+    /// When set, `respondByRequestingPersistableContentKeyRequestOnAnyOS()`
+    /// throws this error — simulating AirPlay / a session with no storage
+    /// directory, which forces the one-shot (ephemeral) key fallback.
+    var persistableRequestError: Error?
+
     // MARK: Protocol impl
     
     var identifier: Any? {
@@ -59,6 +64,9 @@ class MockKeyRequest : KeyRequest {
     
     func respondByRequestingPersistableContentKeyRequestOnAnyOS() throws {
         fakeRequest.append(("respondByPersistableContentKeyRequestOnAnyOS", []))
+        if let persistableRequestError {
+            throw persistableRequestError
+        }
     }
     
     func persistableContentKey(fromKeyVendorResponse ckcData: Data, options: [String : Any]) {
