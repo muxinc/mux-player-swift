@@ -9,6 +9,8 @@ import Foundation
 import AVFoundation
 import os
 
+#if os(iOS)
+
 /// Manager for downloading and accessing Mux video content for offline playback
 public class MuxOfflineAccessManager {
     public static let shared = MuxOfflineAccessManager()
@@ -94,3 +96,12 @@ public class MuxOfflineAccessManager {
         PlayerSDK.shared.diagnosticsLogger.info("initializing MuxOfflineAccessManager")
     }
 }
+
+#elseif os(tvOS)
+
+/// Offline downloads are unavailable on tvOS because AVFoundation doesn't
+/// provide its asset-download APIs on that platform.
+@available(tvOS, unavailable, message: "Offline downloads are unavailable on tvOS.")
+public final class MuxOfflineAccessManager {}
+
+#endif

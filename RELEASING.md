@@ -15,7 +15,7 @@ This guide describes the current maintainer release process for `mux-player-swif
    `main`.
 2. Create `releases/vX.Y.Z` from `origin/main`, update
    `Sources/MuxPlayerSwift/PublicAPI/Version/SemanticVersion.swift`, run the
-   iOS build, and open a release PR.
+   iOS build and tvOS compatibility build, and open a release PR.
 3. After the release PR is approved and merged, fetch `main`, verify the tag
    does not already exist, tag the merged `origin/main` commit as `vX.Y.Z`, and
    push the tag.
@@ -90,6 +90,7 @@ version.
 6. Validate the version bump.
    ```sh
    xcodebuild -scheme MuxPlayerSwift -destination generic/platform=iOS -derivedDataPath .build-derived-release build
+   ./scripts/build-tvos.sh
    ```
 
 7. Commit the version bump.

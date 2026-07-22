@@ -2,6 +2,9 @@ agents:
   queue: "macOS-Monterey-12-4"
 
 steps:
+  - command: "./scripts/build-tvos.sh"
+    label: ":tv: tvOS Compatibility Build Pass"
+  - wait
   - command: "./scripts/run-unit-tests.sh MuxPlayerSwift"
     label: ":xcode_simulator: Unit Test Pass"
   - wait
@@ -18,4 +21,3 @@ steps:
   - wait
   - command: "echo $BUILDKITE_HOOKS_PATH && ls -ls $BUILDKITE_HOOKS_PATH && buildkite-agent artifact download \"Examples/MuxPlayerSwiftExample/MuxPlayerSwiftExample.ipa\" . && buildkite-agent artifact download \"Examples/MuxPlayerSwiftExample/MuxPlayerSwiftExampleUITests-Runner.ipa\" . && ./scripts/upload-example-application-to-sauce-labs.sh"
     label: ":saucelabs: UI Tests Pass on Real Device"
-

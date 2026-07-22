@@ -17,9 +17,11 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
 
     private let _persistedKeyStore: PersistedKeyStore?
 
+    #if os(iOS)
     private var persistedKeyStore: PersistedKeyStore {
         _persistedKeyStore ?? MuxOfflineAccessManager.shared.manager
     }
+    #endif
 
     private let _onlineLicenseCache: OnlineLicenseCaching?
 
@@ -215,26 +217,29 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
             return
         }
 
-        // Route the updated key to the right store: offline downloads persist
-        // to the on-disk key store; online assets update the short-term license cache.
+        // Route updated offline keys to the on-disk store on iOS. tvOS only
+        // follows the online playback path.
+        #if os(iOS)
         if await sessionManager?.hasOfflineDRMConfig(playbackID: playbackID) == true {
             try await persistedKeyStore.savePersistedContentKey(
                 playbackID: playbackID,
                 identifier: requestIdentifierString,
                 contentKeyData: data
             )
-        } else {
-            let credentials = await sessionManager?.onlineDRMCredentials(playbackID: playbackID)
-            let fingerprint = try Self.fingerprint(
-                forToken: credentials?.drmToken,
-                rootDomain: credentials?.rootDomain
-            )
-            await onlineLicenseCache.store(
-                playbackID: playbackID,
-                tokenFingerprint: fingerprint,
-                ckc: data
-            )
+            return
         }
+        #endif
+
+        let credentials = await sessionManager?.onlineDRMCredentials(playbackID: playbackID)
+        let fingerprint = try Self.fingerprint(
+            forToken: credentials?.drmToken,
+            rootDomain: credentials?.rootDomain
+        )
+        await onlineLicenseCache.store(
+            playbackID: playbackID,
+            tokenFingerprint: fingerprint,
+            ckc: data
+        )
     }
     
     func handlePersistableContentKeyRequest(request: any KeyRequest) async throws {
@@ -264,9 +269,9 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
             throw FairPlaySessionError.unexpected(message: "playbackID not present in key uri")
         }
 
-        // An offline asset (downloading or playing back) uses the on-disk
-        // download key store and drm_token-claims-based expiration. An online
-        // asset uses the short-term online license cache.
+        // An offline iOS asset uses the on-disk download key store. All online
+        // assets, including tvOS playback, follow the online request path.
+        #if os(iOS)
         if await sessionManager.hasOfflineDRMConfig(playbackID: playbackID) {
             try await handleOfflinePersistableContentKeyRequest(
                 request: request,
@@ -275,16 +280,19 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
                 requestIdentifierString: requestIdentifierString,
                 contentIdentifier: utfEncodedRequestIdentifierString
             )
-        } else {
-            try await handleOnlineCachedContentKeyRequest(
-                request: request,
-                sessionManager: sessionManager,
-                playbackID: playbackID,
-                contentIdentifier: utfEncodedRequestIdentifierString
-            )
+            return
         }
+        #endif
+
+        try await handleOnlineCachedContentKeyRequest(
+            request: request,
+            sessionManager: sessionManager,
+            playbackID: playbackID,
+            contentIdentifier: utfEncodedRequestIdentifierString
+        )
     }
 
+    #if os(iOS)
     /// Offline download / playback path: serve a previously-persisted key if we
     /// have one, otherwise fetch a persistable license and save it to the
     /// download key store.
@@ -325,6 +333,7 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
             request.makeContentKeyResponse(fairPlayStreamingKeyResponseData: persistableKey)
         )
     }
+    #endif
 
     /// Online playback path: reuse a cached license if one is still
     /// valid for the current `drm_token`, otherwise do the full handshake and
@@ -409,11 +418,13 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
             return
         }
 
+        #if os(iOS)
         if await sessionManager?.hasOfflineDRMConfig(playbackID: playbackID) == true {
             throw FairPlaySessionError.unexpected(
                 message: "Cannot renew an offline DRM license for \(playbackID); the asset must be re-downloaded"
             )
         }
+        #endif
 
         await onlineLicenseCache.remove(playbackID: playbackID)
         try await handleContentKeyRequest(request: request)
@@ -452,7 +463,11 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
             return
         }
         
+        #if os(iOS)
         let isOffline = await sessionManager.hasOfflineDRMConfig(playbackID: playbackID)
+        #else
+        let isOffline = false
+        #endif
 
         // Use the persistable-key flow for both offline (required) and online
         // (so the license can be cached and reused). If it's unavailable
@@ -579,6 +594,12 @@ struct DefaultKeyRequest : KeyRequest {
     func respondByRequestingPersistableContentKeyRequestOnAnyOS() throws {
         #if os(iOS)
         try self.request.respondByRequestingPersistableContentKeyRequestAndReturnError()
+        #elseif os(tvOS)
+        // Persistable online license caching on tvOS is deferred until the SDK
+        // officially supports and runtime-tests that platform.
+        throw FairPlaySessionError.unexpected(
+            message: "Persistable content keys are unavailable for tvOS compatibility"
+        )
         #else
         try self.request.respondByRequestingPersistableContentKeyRequest()
         #endif

@@ -10,6 +10,8 @@ import AVFoundation
 import Combine
 import os
 
+#if os(iOS)
+
 // MARK: - DownloadManager
 
 // Operations on Downloads, including tasks in-progress, key requests, key storage, and indexing downloaded
@@ -511,6 +513,8 @@ actor DownloadManager: PersistedKeyStore {
         detachEvents(for: playbackID)
     }
 }
+
+#endif
 
 protocol PersistedKeyStore {
     func findPersistedContentKey(playbackID: String) async throws -> Data?

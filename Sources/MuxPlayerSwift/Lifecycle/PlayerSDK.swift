@@ -186,6 +186,7 @@ class PlayerSDK {
         }
     }
     
+    #if os(iOS)
     func registerOfflineDRMAsset(
         _ urlAsset: AVURLAsset,
         playbackID: String,
@@ -201,6 +202,7 @@ class PlayerSDK {
             )
         }
     }
+    #endif
 
     func registerPlayerLayer(
         playerLayer: AVPlayerLayer,

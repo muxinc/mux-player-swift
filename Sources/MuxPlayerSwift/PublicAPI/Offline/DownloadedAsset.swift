@@ -9,6 +9,7 @@ import Foundation
 import AVFoundation
 
 /// A downloaded video asset
+@available(tvOS, unavailable, message: "Offline downloads are unavailable on tvOS.")
 public struct DownloadedAsset {
     /// The Mux playback ID
     public let playbackID: String

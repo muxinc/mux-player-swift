@@ -8,6 +8,7 @@
 import Foundation
 
 /// Options for configuring a download
+@available(tvOS, unavailable, message: "Offline downloads are unavailable on tvOS.")
 public struct DownloadOptions {
     /// A human-readable title for the download
     public let readableTitle: String

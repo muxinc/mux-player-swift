@@ -14,6 +14,8 @@ enum ExpirationPhase: String, Codable {
     case playDuration
 }
 
+#if os(iOS)
+
 // internal DTO for our index of downloaded assets
 struct StoredAsset: Codable {
     let isComplete: Bool
@@ -100,3 +102,5 @@ extension StoredAsset: CustomDebugStringConvertible {
         return jsonString
     }
 }
+
+#endif

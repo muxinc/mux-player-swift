@@ -7,6 +7,8 @@
 
 import Combine
 
+#if os(iOS)
+
 extension AnyPublisher where Failure == any Error {
     func toAsyncThrowingStream() -> AsyncThrowingStream<Output, Failure> {
         AsyncThrowingStream { continuation in
@@ -30,3 +32,5 @@ extension AnyPublisher where Failure == any Error {
         }
     }
 }
+
+#endif
