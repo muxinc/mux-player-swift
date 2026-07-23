@@ -8,6 +8,7 @@
 import Foundation
 
 /// Events emitted during a download
+@available(tvOS, unavailable, message: "Offline downloads are unavailable on tvOS.")
 public enum DownloadEvent {
     /// The download has started
     case started

@@ -6,6 +6,8 @@
 //
 import Foundation
 
+#if os(iOS)
+
 extension DownloadOptions {
     init(from storedAsset: StoredAsset) {
         self.readableTitle = storedAsset.readableTitle
@@ -18,3 +20,5 @@ extension DownloadOptions {
         }
     }
 }
+
+#endif

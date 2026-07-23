@@ -9,6 +9,7 @@ import Foundation
 import AVFoundation
 
 /// The status of a downloaded asset
+@available(tvOS, unavailable, message: "Offline downloads are unavailable on tvOS.")
 public enum AssetStatus {
     /// The asset is ready to play
     case playable(asset: AVURLAsset)

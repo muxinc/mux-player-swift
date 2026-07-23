@@ -5,6 +5,8 @@
 
 import Foundation
 
+#if os(iOS)
+
 struct DRMTokenClaims {
     /// Seconds from license creation until expiration (when not yet played)
     let licenseExpiration: TimeInterval?
@@ -43,3 +45,5 @@ struct DRMTokenClaims {
         )
     }
 }
+
+#endif

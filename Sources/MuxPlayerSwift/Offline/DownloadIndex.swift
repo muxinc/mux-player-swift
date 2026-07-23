@@ -8,6 +8,8 @@
 import Foundation
 import os
 
+#if os(iOS)
+
 // Stores a persistent index of downloaded media, along with sidecar data, DRM keys, etc
 actor DownloadIndex {
     
@@ -264,3 +266,5 @@ actor DownloadIndex {
         return try PropertyListDecoder().decode(IndexSnapshot.self, from: data)
     }
 }
+
+#endif

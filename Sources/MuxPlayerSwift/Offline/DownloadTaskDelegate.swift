@@ -9,6 +9,8 @@ import Foundation
 import AVFoundation
 import os
 
+#if os(iOS)
+
 class DownloadTaskDelegate: NSObject, AVAssetDownloadDelegate {
     #if DEBUG
     private let logger = Logger(OSLog(subsystem: "com.mux.player", category: "Mux-Offline"))
@@ -77,3 +79,5 @@ class DownloadTaskDelegate: NSObject, AVAssetDownloadDelegate {
         }
     }
 }
+
+#endif

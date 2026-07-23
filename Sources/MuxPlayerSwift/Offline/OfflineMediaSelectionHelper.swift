@@ -6,6 +6,8 @@
 import AVFoundation
 import Foundation
 
+#if os(iOS)
+
 enum OfflineMediaSelectionHelper {
     static func allMediaSelections(for asset: AVURLAsset) async throws -> [AVMediaSelection] {
         async let preferredSelection = asset.load(.preferredMediaSelection)
@@ -87,3 +89,5 @@ enum OfflineMediaSelectionHelper {
         return "\(option.displayName) [\(language)]"
     }
 }
+
+#endif
