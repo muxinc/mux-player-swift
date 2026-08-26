@@ -213,6 +213,11 @@ actor DownloadManager: PersistedKeyStore {
                 drmToken: drmToken,
                 rootDomain: customDomain ?? PlaybackOptions.defaultRootDomain
             )
+        } catch FairPlaySessionError.renewalAlreadyInProgress {
+            // Not a failure, and not something to report as one: the earlier
+            // call still owns this renewal and will report its outcome
+            logger.log("[Mux-Offline] renewOfflineLicense: Already renewing \(playbackID); declining this request")
+            throw OfflineLicenseRenewalError.renewalInProgress
         } catch {
             logger.error("[Mux-Offline] renewOfflineLicense: Failed for \(playbackID): \(error)")
             throw OfflineLicenseRenewalError.licenseRequestFailed(error)

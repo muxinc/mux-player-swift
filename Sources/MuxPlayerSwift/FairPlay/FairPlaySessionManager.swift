@@ -459,9 +459,7 @@ class DefaultFairPlayStreamingSessionManager<
         rootDomain: String
     ) async throws {
         guard await beginRenewal(playbackID: playbackID) else {
-            throw FairPlaySessionError.unexpected(
-                message: "A license renewal is already in progress for \(playbackID)"
-            )
+            throw FairPlaySessionError.renewalAlreadyInProgress(playbackID: playbackID)
         }
 
         // A renewal has no AVURLAsset recipient, so nothing but this scope keeps
@@ -689,4 +687,8 @@ enum FairPlaySessionError : Error {
     case because(cause: any Error)
     case httpFailed(responseStatusCode: Int)
     case unexpected(message: String)
+    /// A license renewal was requested for a playbackID that already has one in
+    /// flight. Distinct from the other cases because nothing went wrong: the
+    /// earlier renewal is still running and this request was simply declined.
+    case renewalAlreadyInProgress(playbackID: String)
 }

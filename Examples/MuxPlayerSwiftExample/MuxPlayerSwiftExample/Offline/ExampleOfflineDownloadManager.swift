@@ -130,6 +130,9 @@ final class ExampleOfflineDownloadManager: ObservableObject {
             } else {
                 downloadStates[asset.playbackID] = .mustRedownload
             }
+        } catch OfflineLicenseRenewalError.renewalInProgress {
+            // Double tap. The first renewal owns the row's state, so leave it be.
+            print("[Example] Already renewing \(asset.playbackID)")
         } catch OfflineLicenseRenewalError.licenseRequestFailed(let cause) {
             // Renewal needs connectivity, so this one is worth retrying later.
             // The asset itself is untouched, so put its old state back.

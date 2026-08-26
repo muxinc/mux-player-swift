@@ -16,6 +16,10 @@ public enum OfflineLicenseRenewalError: Error {
     /// A download for this playback ID is running right now, which fetches its
     /// own license. Wait for it to finish.
     case downloadInProgress
+    /// A renewal for this playback ID is already running, so this one was
+    /// declined and its `drmToken` went unused. Nothing failed: the earlier call
+    /// is still going and will report the outcome, so this is safe to ignore.
+    case renewalInProgress
     /// The download has no content key identifier recorded, which is the case for
     /// anything downloaded before this SDK version. Re-download the asset to make
     /// it renewable.

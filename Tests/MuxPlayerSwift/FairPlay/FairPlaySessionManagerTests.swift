@@ -613,11 +613,11 @@ class FairPlaySessionManagerTests : XCTestCase {
             )
             XCTFail("a concurrent renewal should have been rejected")
         } catch let error as FairPlaySessionError {
-            guard case .unexpected(let message) = error else {
-                XCTFail("A concurrent renewal should report .unexpected")
+            guard case .renewalAlreadyInProgress(let rejectedPlaybackID) = error else {
+                XCTFail("A concurrent renewal should report .renewalAlreadyInProgress")
                 return
             }
-            XCTAssertTrue(message.contains("already in progress"))
+            XCTAssertEqual(rejectedPlaybackID, fakePlaybackID)
         }
 
         // The first renewal is still the one holding the slot
