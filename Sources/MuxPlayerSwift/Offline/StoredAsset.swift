@@ -18,27 +18,34 @@ enum ExpirationPhase: String, Codable {
 
 // internal DTO for our index of downloaded assets
 struct StoredAsset: Codable {
-    let isComplete: Bool
-    let completedWithError: Bool
+    var isComplete: Bool
+    var completedWithError: Bool
 
-    let playbackID: String
-    let localPath: String?
-    let readableTitle: String
-    let posterDataBase64: String?
+    var playbackID: String
+    var localPath: String?
+    var readableTitle: String
+    var posterDataBase64: String?
 
-    let ckcFilePath: String?
+    var ckcFilePath: String?
     /// For secure playback: playback token expiration
-    let redownloadExpiration: Date?
+    var redownloadExpiration: Date?
 
     // DRM expiration fields
     /// The start time for computing license expiration
-    let expireLicenseFrom: Date?
+    var expireLicenseFrom: Date?
     /// Which expiration period applies
-    let expirationPhase: ExpirationPhase?
+    var expirationPhase: ExpirationPhase?
     /// Seconds from license creation until expiration (from JWT licenseExpiration claim)
-    let licenseExpirationSeconds: TimeInterval?
+    var licenseExpirationSeconds: TimeInterval?
     /// Seconds from first offline playback until expiration (from JWT playDuration claim)
-    let playDurationSeconds: TimeInterval?
+    var playDurationSeconds: TimeInterval?
+
+    /// The `skd://` key URI this asset's content key was requested under, as
+    /// provided by AVFoundation during the download. Renewing the license later
+    /// requires re-requesting the key under this exact identifier, because the
+    /// content key is bound to it. Absent for downloads made before we started
+    /// recording it, which therefore can't be renewed.
+    var keyIdentifier: String?
 
     func isExpired(at now: Date = Date()) -> Bool {
         guard let expireLicenseFrom else { return false }
@@ -77,7 +84,8 @@ extension StoredAsset {
             expireLicenseFrom: hasDRM ? Date() : nil,
             expirationPhase: hasDRM ? .licenseExpiration : nil,
             licenseExpirationSeconds: drmClaims?.licenseExpiration,
-            playDurationSeconds: drmClaims?.playDuration
+            playDurationSeconds: drmClaims?.playDuration,
+            keyIdentifier: nil
         )
     }
 }

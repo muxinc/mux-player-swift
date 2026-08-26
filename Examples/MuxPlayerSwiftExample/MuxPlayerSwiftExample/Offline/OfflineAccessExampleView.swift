@@ -66,6 +66,12 @@ struct OfflineAccessExampleView: View {
     ) -> some View {
         let title = asset?.title ?? "Unknown Asset"
         let cancel: () -> Void = { manager.cancelOrDeleteDownload(for: playbackID) }
+        // A DRM asset's license can be renewed in place, which beats
+        // re-downloading the media when all that's expired is the license
+        let renew: (() -> Void)? = {
+            guard let asset, asset.drmToken != nil else { return nil }
+            return { Task { await manager.renewLicense(for: asset) } }
+        }()
 
         switch state {
         case .downloaded:
@@ -73,7 +79,8 @@ struct OfflineAccessExampleView: View {
                 title: title,
                 state: state,
                 onTap: { playDownloadedAsset(playbackID: playbackID) },
-                onAction: cancel
+                onAction: cancel,
+                onRenew: renew
             )
         case .expired, .mustRedownload, .error:
             if let asset {
@@ -86,12 +93,13 @@ struct OfflineAccessExampleView: View {
                             await manager.startDownload(for: asset)
                         }
                     },
-                    onSecondaryAction: cancel
+                    onSecondaryAction: cancel,
+                    onRenew: renew
                 )
             } else {
                 DownloadAssetRow(title: title, state: state, onAction: cancel)
             }
-        case .downloading:
+        case .downloading, .renewingLicense:
             DownloadAssetRow(title: title, state: state, onAction: cancel)
         }
     }
@@ -147,6 +155,8 @@ private struct DownloadAssetRow: View {
     var onTap: (() -> Void)? = nil
     var onAction: () -> Void
     var onSecondaryAction: (() -> Void)? = nil
+    /// Only set for DRM assets, which are the only ones with a license to renew
+    var onRenew: (() -> Void)? = nil
 
     var body: some View {
         HStack(spacing: 12) {
@@ -180,6 +190,7 @@ private struct DownloadAssetRow: View {
         switch state {
         case .downloading: Image(systemName: "arrow.down.circle").foregroundStyle(.blue)
         case .downloaded: Image(systemName: "play.circle.fill").foregroundStyle(.blue)
+        case .renewingLicense: ProgressView()
         case .expired: Image(systemName: "clock.badge.exclamationmark").foregroundStyle(.orange)
         case .mustRedownload: Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
         case .error: Image(systemName: "exclamationmark.circle.fill").foregroundStyle(.red)
@@ -190,6 +201,7 @@ private struct DownloadAssetRow: View {
         switch state {
         case .downloading(let progress): "Downloading... \(Int(progress))%"
         case .downloaded: "Downloaded"
+        case .renewingLicense: "Renewing license..."
         case .expired: "Expired"
         case .mustRedownload: "Must Redownload"
         case .error(let error): error.localizedDescription
@@ -202,12 +214,23 @@ private struct DownloadAssetRow: View {
         case .downloading:
             Button("Cancel", role: .destructive, action: onAction)
                 .buttonStyle(.borderless)
+        case .renewingLicense:
+            EmptyView()
         case .downloaded:
+            if let onRenew {
+                Button("Renew", action: onRenew)
+                    .buttonStyle(.borderless)
+            }
             Button("Delete", role: .destructive, action: onAction)
                 .buttonStyle(.borderless)
         case .expired, .mustRedownload, .error:
             if let onSecondaryAction {
                 Button("Cancel", role: .destructive, action: onSecondaryAction)
+                    .buttonStyle(.borderless)
+            }
+            // For an expired DRM license, renewing avoids re-downloading the media
+            if let onRenew {
+                Button("Renew", action: onRenew)
                     .buttonStyle(.borderless)
             }
             Button("Retry", action: onAction)

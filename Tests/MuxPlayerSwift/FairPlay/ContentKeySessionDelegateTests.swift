@@ -376,6 +376,143 @@ class ContentKeySessionDelegateTests : XCTestCase {
         }
     }
 
+    // MARK: - Offline license renewal
+
+    func testPersistableKeyRequest_Renewal_IgnoresPersistedKeyAndFetchesReplacement() async throws {
+        testDRMAssetRegistry.offlineConfigured = true
+        testDRMAssetRegistry.renewingOfflineLicense = true
+        mockKeyStore.persistedKeys["fake-playback"] = "stale-key-data".data(using: .utf8)!
+
+        let keyURI = makeFakeSkdUrl(fakePlaybackID: "fake-playback")
+        let mockRequest = MockKeyRequest(fakeIdentifier: keyURI)
+
+        try await contentKeySessionDelegate.handlePersistableContentKeyRequest(request: mockRequest)
+
+        // The already-persisted key is what we're replacing, so it must not short-circuit the fetch
+        XCTAssertTrue(
+            mockRequest.verifyWasCalled(
+                funcName: "makeStreamingContentKeyRequestData(forApp:contentIdentifier:options:)"
+            )
+        )
+        XCTAssertTrue(
+            mockRequest.verifyWasCalled(funcName: "processContentKeyResponse")
+        )
+        // The replacement is saved under the same identifier the download used
+        XCTAssertEqual(mockKeyStore.savedKeys.count, 1)
+        XCTAssertEqual(mockKeyStore.savedKeys.first?.playbackID, "fake-playback")
+        XCTAssertEqual(mockKeyStore.savedKeys.first?.identifier, keyURI)
+        // Renewing doesn't count as playing offline
+        XCTAssertTrue(mockKeyStore.updatedPhases.isEmpty)
+
+        XCTAssertEqual(testDRMAssetRegistry.renewalResults.count, 1)
+        let reported = try XCTUnwrap(testDRMAssetRegistry.renewalResults.first)
+        XCTAssertEqual(reported.playbackID, "fake-playback")
+        guard case .success = reported.result else {
+            XCTFail("Renewal should have been reported as successful")
+            return
+        }
+    }
+
+    func testPersistableKeyRequest_Renewal_LicenseError_ReportsFailure() async {
+        setUpWith(
+            credentialClient: TestFairPlayStreamingSessionCredentialClient(
+                fakeCert: "fake-cert".data(using: .utf8)!,
+                licenseFailsWith: .unexpected(message: "license error")
+            )
+        )
+        testDRMAssetRegistry.offlineConfigured = true
+        testDRMAssetRegistry.renewingOfflineLicense = true
+
+        let mockRequest = MockKeyRequest(
+            fakeIdentifier: makeFakeSkdUrl(fakePlaybackID: "fake-playback")
+        )
+
+        do {
+            try await contentKeySessionDelegate.handlePersistableContentKeyRequest(request: mockRequest)
+            XCTFail("Expected error to be thrown")
+        } catch {
+            // The waiting caller has to hear about it rather than time out
+            XCTAssertEqual(testDRMAssetRegistry.renewalResults.count, 1)
+            guard case .failure = testDRMAssetRegistry.renewalResults.first?.result else {
+                XCTFail("Renewal should have been reported as failed")
+                return
+            }
+            XCTAssertTrue(mockKeyStore.savedKeys.isEmpty)
+        }
+    }
+
+    func testKeyRequest_Renewal_PersistableKeyUnavailable_ReportsFailure() async {
+        testDRMAssetRegistry.offlineConfigured = true
+        testDRMAssetRegistry.renewingOfflineLicense = true
+
+        let mockRequest = MockKeyRequest(
+            fakeIdentifier: makeFakeSkdUrl(fakePlaybackID: "fake-playback")
+        )
+        mockRequest.persistableRequestError = FairPlaySessionError.unexpected(
+            message: "no persistable keys here"
+        )
+
+        do {
+            try await contentKeySessionDelegate.handleContentKeyRequest(request: mockRequest)
+            XCTFail("Expected error to be thrown")
+        } catch {
+            // A one-shot key is no use to a renewal, so don't fetch one
+            XCTAssertTrue(
+                mockRequest.verifyNotCalled(
+                    funcName: "makeStreamingContentKeyRequestData(forApp:contentIdentifier:options:)"
+                )
+            )
+            XCTAssertEqual(testDRMAssetRegistry.renewalResults.count, 1)
+            guard case .failure = testDRMAssetRegistry.renewalResults.first?.result else {
+                XCTFail("Renewal should have been reported as failed")
+                return
+            }
+        }
+    }
+
+    // A key request the system fails outright never reaches our handlers, so this
+    // is what keeps the waiting renewal from sitting on the backstop timeout
+    func testReportFailedRenewal_HandsTheSystemErrorToTheWaitingRenewal() async throws {
+        testDRMAssetRegistry.offlineConfigured = true
+        testDRMAssetRegistry.renewingOfflineLicense = true
+
+        await contentKeySessionDelegate.reportFailedRenewal(
+            keyRequestIdentifier: makeFakeSkdUrl(fakePlaybackID: "fake-playback"),
+            error: FakeError()
+        )
+
+        XCTAssertEqual(testDRMAssetRegistry.renewalResults.count, 1)
+        let reported = try XCTUnwrap(testDRMAssetRegistry.renewalResults.first)
+        XCTAssertEqual(reported.playbackID, "fake-playback")
+        guard case .failure(let error) = reported.result else {
+            XCTFail("Renewal should have been reported as failed")
+            return
+        }
+        XCTAssertTrue(error is FakeError)
+    }
+
+    func testReportFailedRenewal_IgnoresRequestsWithNoRenewalWaiting() async {
+        testDRMAssetRegistry.renewingOfflineLicense = false
+
+        await contentKeySessionDelegate.reportFailedRenewal(
+            keyRequestIdentifier: makeFakeSkdUrl(fakePlaybackID: "fake-playback"),
+            error: FakeError()
+        )
+
+        XCTAssertTrue(testDRMAssetRegistry.renewalResults.isEmpty)
+    }
+
+    func testReportFailedRenewal_IgnoresAnIdentifierWithNoPlaybackId() async {
+        testDRMAssetRegistry.renewingOfflineLicense = true
+
+        await contentKeySessionDelegate.reportFailedRenewal(
+            keyRequestIdentifier: makeFakeSkdUrlIncorrect(),
+            error: FakeError()
+        )
+
+        XCTAssertTrue(testDRMAssetRegistry.renewalResults.isEmpty)
+    }
+
     // MARK: - Online license caching
 
     func testOnlinePersistableKeyRequest_CacheHit_UsesCachedLicenseNoNetwork() async throws {

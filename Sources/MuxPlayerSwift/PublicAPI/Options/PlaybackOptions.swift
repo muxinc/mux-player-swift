@@ -463,11 +463,14 @@ extension PlaybackOptions {
     }
     
     // MARK: Internal helpers
-    
+
+    /// Used when no custom domain is in play.
+    internal static let defaultRootDomain = "mux.com"
+
     /// Gets the root domain to be used when constructing URLs for playback, keys, etc.
     /// If there is a custom domain, this function returns that value, otherwise it returns the
     /// default `mux.com`.
     internal func rootDomain() -> String {
-        return customDomain ?? "mux.com"
+        return customDomain ?? Self.defaultRootDomain
     }
 }

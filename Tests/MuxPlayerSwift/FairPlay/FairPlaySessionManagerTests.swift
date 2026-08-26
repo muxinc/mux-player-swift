@@ -477,4 +477,153 @@ class FairPlaySessionManagerTests : XCTestCase {
 
         XCTAssert(playerItem.asset === registeredAsset)
     }
+
+    // MARK: - Offline license renewal
+
+    /// A manager whose content key session we can watch, since renewal drives the
+    /// session directly rather than through an AVURLAsset recipient.
+    private func makeManagerForRenewal() -> (
+        manager: DefaultFairPlayStreamingSessionManager<TestContentKeySession>,
+        contentKeySession: TestContentKeySession
+    ) {
+        let mockURLSessionConfig = URLSessionConfiguration.default
+        mockURLSessionConfig.protocolClasses = [MockURLProtocol.self]
+        let contentKeySession = TestContentKeySession()
+        let manager = DefaultFairPlayStreamingSessionManager(
+            contentKeySession: contentKeySession,
+            errorDispatcher: Monitor(),
+            urlSessionConfiguration: mockURLSessionConfig,
+            targetQueue: DispatchQueue(label: "test target queue")
+        )
+        manager.sessionDelegate = ContentKeySessionDelegate(sessionManager: manager)
+        return (manager, contentKeySession)
+    }
+
+    func testRenewOfflineLicense_RequestsTheStoredKeyIdentifierWithTheNewToken() async throws {
+        let (manager, contentKeySession) = makeManagerForRenewal()
+        let fakePlaybackID = "fake_playback_id"
+        // Carries the token the asset was downloaded with; the content key is
+        // bound to this exact string, so a renewal has to reuse it verbatim
+        let keyIdentifier = "skd://fake.domain/?playbackId=\(fakePlaybackID)&token=expired-drm-token"
+        let newDrmToken = "new-drm-token"
+
+        var certRequestURL: URL?
+        MockURLProtocol.requestHandler = { request in
+            certRequestURL = request.url
+            let response = HTTPURLResponse(
+                url: request.url!,
+                statusCode: 200,
+                httpVersion: "HTTP/1.1",
+                headerFields: nil
+            )!
+            return (response, "fake-cert".data(using: .utf8))
+        }
+
+        // Stand in for AVFoundation vending a key request for the identifier
+        var hadDelegateWhenRequested = false
+        contentKeySession.configureRecreatedSession = { renewalSession in
+            renewalSession.onProcessContentKeyRequest = { _ in
+                hadDelegateWhenRequested = renewalSession.delegate != nil
+                Task {
+                    _ = try? await manager.requestCertificate(playbackID: fakePlaybackID, offline: true)
+                    manager.finishOfflineLicenseRenewal(playbackID: fakePlaybackID, result: .success(()))
+                }
+            }
+        }
+
+        try await manager.renewOfflineLicense(
+            playbackID: fakePlaybackID,
+            keyIdentifier: keyIdentifier,
+            drmToken: newDrmToken,
+            rootDomain: "custom.domain.com"
+        )
+
+        // A fresh session per renewal, so a stale key request can't satisfy it
+        let renewalSession = try XCTUnwrap(contentKeySession.recreatedSessions.first)
+        XCTAssertTrue(hadDelegateWhenRequested)
+        // No player, no AVURLAsset recipient
+        XCTAssertTrue(renewalSession.contentKeyRecipients.isEmpty)
+        XCTAssertEqual(renewalSession.processedKeyRequestIdentifiers.count, 1)
+        let requestedIdentifier = try XCTUnwrap(renewalSession.processedKeyRequestIdentifiers.first) as? String
+        XCTAssertEqual(requestedIdentifier, keyIdentifier)
+
+        // Credential requests during the renewal use the new token and domain
+        let certURL = try XCTUnwrap(certRequestURL)
+        XCTAssertEqual(certURL.host, "license.custom.domain.com")
+        let queryItems = try XCTUnwrap(
+            URLComponents(url: certURL, resolvingAgainstBaseURL: false)?.queryItems
+        )
+        XCTAssertEqual(queryItems.first(where: { $0.name == "token" })?.value, newDrmToken)
+    }
+
+    func testRenewOfflineLicense_PropagatesAReportedFailure() async throws {
+        let (manager, contentKeySession) = makeManagerForRenewal()
+        let fakePlaybackID = "fake_playback_id"
+
+        contentKeySession.configureRecreatedSession = { renewalSession in
+            renewalSession.onProcessContentKeyRequest = { _ in
+                manager.finishOfflineLicenseRenewal(
+                    playbackID: fakePlaybackID,
+                    result: .failure(FakeError())
+                )
+            }
+        }
+
+        do {
+            try await manager.renewOfflineLicense(
+                playbackID: fakePlaybackID,
+                keyIdentifier: "skd://fake.domain/?playbackId=\(fakePlaybackID)",
+                drmToken: "new-drm-token",
+                rootDomain: "mux.com"
+            )
+            XCTFail("failure should have been reported")
+        } catch {
+            XCTAssertTrue(error is FakeError)
+        }
+    }
+
+    func testRenewOfflineLicense_RejectsASecondRenewalForTheSamePlaybackID() async throws {
+        let (manager, contentKeySession) = makeManagerForRenewal()
+        let fakePlaybackID = "fake_playback_id"
+        let keyIdentifier = "skd://fake.domain/?playbackId=\(fakePlaybackID)"
+
+        let keyRequestStarted = XCTestExpectation(description: "first renewal should start a key request")
+        contentKeySession.configureRecreatedSession = { renewalSession in
+            renewalSession.onProcessContentKeyRequest = { _ in
+                keyRequestStarted.fulfill()
+            }
+        }
+
+        let firstRenewal = Task {
+            try await manager.renewOfflineLicense(
+                playbackID: fakePlaybackID,
+                keyIdentifier: keyIdentifier,
+                drmToken: "new-drm-token",
+                rootDomain: "mux.com"
+            )
+        }
+        await fulfillment(of: [keyRequestStarted], timeout: 5)
+
+        do {
+            try await manager.renewOfflineLicense(
+                playbackID: fakePlaybackID,
+                keyIdentifier: keyIdentifier,
+                drmToken: "another-drm-token",
+                rootDomain: "mux.com"
+            )
+            XCTFail("a concurrent renewal should have been rejected")
+        } catch let error as FairPlaySessionError {
+            guard case .unexpected(let message) = error else {
+                XCTFail("A concurrent renewal should report .unexpected")
+                return
+            }
+            XCTAssertTrue(message.contains("already in progress"))
+        }
+
+        // The first renewal is still the one holding the slot
+        XCTAssertEqual(contentKeySession.recreatedSessions.count, 1)
+
+        manager.finishOfflineLicenseRenewal(playbackID: fakePlaybackID, result: .success(()))
+        try await firstRenewal.value
+    }
 }
