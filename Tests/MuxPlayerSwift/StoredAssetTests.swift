@@ -9,14 +9,21 @@ final class StoredAssetTests: XCTestCase {
         ckcFilePath: String?,
         keyIdentifier: String?
     ) -> StoredAsset {
-        var asset = StoredAsset.forNewDownload(
+        StoredAsset(
+            isComplete: true,
+            completedWithError: false,
             playbackID: playbackID,
-            options: DownloadOptions(readableTitle: "Test Asset"),
-            drmClaims: nil
+            localPath: "Library/media/\(playbackID).movpkg",
+            readableTitle: "Test Asset",
+            posterDataBase64: nil,
+            ckcFilePath: ckcFilePath,
+            redownloadExpiration: nil,
+            expireLicenseFrom: nil,
+            expirationPhase: nil,
+            licenseExpirationSeconds: nil,
+            playDurationSeconds: nil,
+            keyIdentifier: keyIdentifier
         )
-        asset.ckcFilePath = ckcFilePath
-        asset.keyIdentifier = keyIdentifier
-        return asset
     }
 
     func testKeyIdentifierRoundTripsThroughPlist() throws {

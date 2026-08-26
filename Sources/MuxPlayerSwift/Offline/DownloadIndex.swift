@@ -97,21 +97,28 @@ actor DownloadIndex {
 
     // MARK: - Partial Updates
 
-    /// Applies `changes` to the indexed asset and persists the result. Every
-    /// partial update goes through here so new `StoredAsset` fields are carried
-    /// over without having to be repeated in each updater.
     @discardableResult
-    private func mutate(
-        playbackID: String,
-        caller: StaticString = #function,
-        changes: (inout StoredAsset) -> Void
-    ) -> StoredAsset? {
+    func updateIsComplete(playbackID: String, isComplete: Bool, completeWithError: Bool) -> StoredAsset? {
         // not an error case. Deletion can occur re-entrantly before the delegate callback that calls this
-        guard var updated = assets[playbackID] else {
-            logger.warning("[Mux-Offline] DownloadIndex.\(String(describing: caller)): No existing asset for playbackID \(playbackID)")
+        guard let existing = assets[playbackID] else {
+            logger.warning("[Mux-Offline] DownloadIndex.updateIsComplete: No existing asset for playbackID \(playbackID)")
             return nil
         }
-        changes(&updated)
+        let updated = StoredAsset(
+            isComplete: isComplete,
+            completedWithError: completeWithError,
+            playbackID: existing.playbackID,
+            localPath: existing.localPath,
+            readableTitle: existing.readableTitle,
+            posterDataBase64: existing.posterDataBase64,
+            ckcFilePath: existing.ckcFilePath,
+            redownloadExpiration: existing.redownloadExpiration,
+            expireLicenseFrom: existing.expireLicenseFrom,
+            expirationPhase: existing.expirationPhase,
+            licenseExpirationSeconds: existing.licenseExpirationSeconds,
+            playDurationSeconds: existing.playDurationSeconds,
+            keyIdentifier: existing.keyIdentifier
+        )
         assets[playbackID] = updated
         persist()
 
@@ -119,34 +126,84 @@ actor DownloadIndex {
     }
 
     @discardableResult
-    func updateIsComplete(playbackID: String, isComplete: Bool, completeWithError: Bool) -> StoredAsset? {
-        mutate(playbackID: playbackID) {
-            $0.isComplete = isComplete
-            $0.completedWithError = completeWithError
-        }
-    }
-
-    @discardableResult
     func updateCKCFileURL(playbackID: String, ckcFilePath: String?, keyIdentifier: String?) -> StoredAsset? {
-        mutate(playbackID: playbackID) {
-            $0.ckcFilePath = ckcFilePath
-            $0.keyIdentifier = keyIdentifier
+        // not an error case. Deletion can occur re-entrantly before the delegate callback that calls this
+        guard let existing = assets[playbackID] else {
+            logger.warning("[Mux-Offline] DownloadIndex.updateCKCFileURL: No existing asset for playbackID \(playbackID)")
+            return nil
         }
+        let updated = StoredAsset(
+            isComplete: existing.isComplete,
+            completedWithError: existing.completedWithError,
+            playbackID: existing.playbackID,
+            localPath: existing.localPath,
+            readableTitle: existing.readableTitle,
+            posterDataBase64: existing.posterDataBase64,
+            ckcFilePath: ckcFilePath,
+            redownloadExpiration: existing.redownloadExpiration,
+            expireLicenseFrom: existing.expireLicenseFrom,
+            expirationPhase: existing.expirationPhase,
+            licenseExpirationSeconds: existing.licenseExpirationSeconds,
+            playDurationSeconds: existing.playDurationSeconds,
+            keyIdentifier: keyIdentifier
+        )
+        assets[playbackID] = updated
+        persist()
+
+        return updated
     }
 
     @discardableResult
     func updateLocalPathURL(playbackID: String, localPath: String) -> StoredAsset? {
-        mutate(playbackID: playbackID) {
-            $0.localPath = localPath
+        // not an error case. Deletion can occur re-entrantly before the delegate callback that calls this
+        guard let existing = assets[playbackID] else {
+            logger.warning("[Mux-Offline] DownloadIndex.updateLocalPathURL: No existing asset for playbackID \(playbackID)")
+            return nil
         }
+        let updated = StoredAsset(
+            isComplete: existing.isComplete,
+            completedWithError: existing.completedWithError,
+            playbackID: existing.playbackID,
+            localPath: localPath,
+            readableTitle: existing.readableTitle,
+            posterDataBase64: existing.posterDataBase64,
+            ckcFilePath: existing.ckcFilePath,
+            redownloadExpiration: existing.redownloadExpiration,
+            expireLicenseFrom: existing.expireLicenseFrom,
+            expirationPhase: existing.expirationPhase,
+            licenseExpirationSeconds: existing.licenseExpirationSeconds,
+            playDurationSeconds: existing.playDurationSeconds,
+            keyIdentifier: existing.keyIdentifier
+        )
+        assets[playbackID] = updated
+        persist()
+        return updated
     }
 
     @discardableResult
     func updateExpirationPhase(playbackID: String, phase: ExpirationPhase) -> StoredAsset? {
-        mutate(playbackID: playbackID) {
-            $0.expireLicenseFrom = Date()
-            $0.expirationPhase = phase
+        guard let existing = assets[playbackID] else {
+            logger.warning("[Mux-Offline] DownloadIndex.updateExpirationPhase: No existing asset for playbackID \(playbackID)")
+            return nil
         }
+        let updated = StoredAsset(
+            isComplete: existing.isComplete,
+            completedWithError: existing.completedWithError,
+            playbackID: existing.playbackID,
+            localPath: existing.localPath,
+            readableTitle: existing.readableTitle,
+            posterDataBase64: existing.posterDataBase64,
+            ckcFilePath: existing.ckcFilePath,
+            redownloadExpiration: existing.redownloadExpiration,
+            expireLicenseFrom: Date(),
+            expirationPhase: phase,
+            licenseExpirationSeconds: existing.licenseExpirationSeconds,
+            playDurationSeconds: existing.playDurationSeconds,
+            keyIdentifier: existing.keyIdentifier
+        )
+        assets[playbackID] = updated
+        persist()
+        return updated
     }
 
     /// Restarts the expiration clock from a freshly-issued license's claims. The
@@ -154,12 +211,28 @@ actor DownloadIndex {
     /// back to `licenseExpiration`.
     @discardableResult
     func updateLicenseExpiration(playbackID: String, claims: DRMTokenClaims) -> StoredAsset? {
-        mutate(playbackID: playbackID) {
-            $0.expireLicenseFrom = Date()
-            $0.expirationPhase = .licenseExpiration
-            $0.licenseExpirationSeconds = claims.licenseExpiration
-            $0.playDurationSeconds = claims.playDuration
+        guard let existing = assets[playbackID] else {
+            logger.warning("[Mux-Offline] DownloadIndex.updateLicenseExpiration: No existing asset for playbackID \(playbackID)")
+            return nil
         }
+        let updated = StoredAsset(
+            isComplete: existing.isComplete,
+            completedWithError: existing.completedWithError,
+            playbackID: existing.playbackID,
+            localPath: existing.localPath,
+            readableTitle: existing.readableTitle,
+            posterDataBase64: existing.posterDataBase64,
+            ckcFilePath: existing.ckcFilePath,
+            redownloadExpiration: existing.redownloadExpiration,
+            expireLicenseFrom: Date(),
+            expirationPhase: .licenseExpiration,
+            licenseExpirationSeconds: claims.licenseExpiration,
+            playDurationSeconds: claims.playDuration,
+            keyIdentifier: existing.keyIdentifier
+        )
+        assets[playbackID] = updated
+        persist()
+        return updated
     }
     
     public static func persistentKeyDirectory() throws -> URL {
