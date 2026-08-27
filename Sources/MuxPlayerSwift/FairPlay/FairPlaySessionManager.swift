@@ -462,13 +462,15 @@ class DefaultFairPlayStreamingSessionManager<
             throw FairPlaySessionError.renewalAlreadyInProgress(playbackID: playbackID)
         }
 
-        // A renewal has no AVURLAsset recipient, so nothing but this scope keeps
-        // the session alive while its key request is in flight.
+        // A fresh session per renewal, so the key request can't be satisfied by
+        // state left over from an earlier flow. There's no AVURLAsset recipient
+        // here; the key identifier drives the request instead.
         let session = contentKeySession.recreate()
         let delegate = ContentKeySessionDelegate(sessionManager: self)
         session.setDelegate(delegate, queue: queue)
 
         defer {
+            session.setDelegate(nil, queue: nil)
             removeOfflineDownloadSession(playbackID: playbackID)
             queue.async { [weak self] in
                 self?.renewingPlaybackIDs.remove(playbackID)
@@ -505,8 +507,6 @@ class DefaultFairPlayStreamingSessionManager<
                 )
             }
         }
-
-        withExtendedLifetime(session) {}
     }
 
     func isRenewingOfflineLicense(playbackID: String) async -> Bool {
