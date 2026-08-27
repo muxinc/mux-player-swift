@@ -80,13 +80,10 @@ public class MuxOfflineAccessManager {
     }
     
     /// Renew the DRM license of an already-downloaded video, extending how long
-    /// it stays playable offline.
+    /// it stays playable offline without re-downloading the media
     ///
-    /// A downloaded asset's license expires on the schedule in the `drm_token` it
-    /// was downloaded with, and tokens aren't stored, so renewing needs a new
-    /// one. Call this while online and any time you like — an asset whose license
-    /// has already expired can be renewed just as well as one that hasn't. Only
-    /// the license is fetched; the media is never re-downloaded.
+    /// Call this while online and any time you like — an asset whose license
+    /// has already expired can be renewed just as well as one that hasn't.
     ///
     /// - Parameters:
     ///   - playbackID: The Mux playback ID of a completed, DRM-protected download
