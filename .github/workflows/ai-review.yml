@@ -57,6 +57,13 @@ jobs:
     if: github.event.pull_request.head.repo.full_name == github.repository
     steps:
       - name: Check out review tool
+        id: checkout
+        # A bad, missing or EXPIRED REVIEW_TOOL_TOKEN fails here, and this is by
+        # far the likeliest failure mode. Without continue-on-error it reds the
+        # calling repo's PR check, which breaks the observe-only promise
+        # outright: mux-player-android's token expired 2026-08-12 and every PR
+        # there carried a red `ai-review` check for two weeks. Never blocking.
+        continue-on-error: true
         uses: actions/checkout@v4
         with:
           repository: muxinc/code-review-analysis
@@ -67,16 +74,22 @@ jobs:
           persist-credentials: false
 
       - uses: actions/setup-python@v5
+        id: setup
+        continue-on-error: true
         with:
           python-version: "3.12"
           cache: pip
           cache-dependency-path: requirements.txt
 
       - name: Install dependencies
+        id: deps
+        continue-on-error: true
         run: pip install -r requirements.txt
 
       - name: Classify PR (post comment + label, observe-only)
         id: classify
+        # Nothing to classify with if the tool checkout or its deps failed.
+        if: steps.checkout.outcome == 'success' && steps.deps.outcome == 'success'
         # Observe-only: a reviewer crash must never block this repo's PR. On
         # failure this step warns (yellow) and the gated steps below skip.
         continue-on-error: true
@@ -124,3 +137,28 @@ jobs:
           LOG_PATH: rulings.jsonl
         run: |
           python -m live.record_ruling --result-file result.json
+
+      - name: Flag reviewer outage
+        # The reviewer is now unable to red a PR, so a silent failure would go
+        # unnoticed — that is exactly how the android outage above lasted two
+        # weeks. Make it loud on the run itself instead: a warning annotation
+        # and a job summary naming the likely cause. The job still concludes
+        # SUCCESS; monitoring belongs to the tool team, not the calling repo.
+        if: always() && steps.classify.outputs.ok != 'true'
+        run: |
+          if [ "${{ steps.checkout.outcome }}" != "success" ]; then
+            reason="tool checkout failed — REVIEW_TOOL_TOKEN is missing, invalid or EXPIRED for this repo"
+          elif [ "${{ steps.setup.outcome }}" != "success" ] || [ "${{ steps.deps.outcome }}" != "success" ]; then
+            reason="python setup / dependency install failed"
+          else
+            reason="classification failed — see the step log above"
+          fi
+          echo "::warning title=AI review did not run::$reason"
+          {
+            echo "## AI Review — did not run"
+            echo ""
+            echo "**$reason**"
+            echo ""
+            echo "No comment, label or ruling was produced for this PR. This is"
+            echo "observe-only, so nothing is blocked and this check stays green."
+          } >> "$GITHUB_STEP_SUMMARY"
