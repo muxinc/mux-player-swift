@@ -470,49 +470,6 @@ class ContentKeySessionDelegateTests : XCTestCase {
         }
     }
 
-    // A key request the system fails outright never reaches our handlers, so this
-    // is what keeps the waiting renewal from sitting on the backstop timeout
-    func testReportFailedRenewal_HandsTheSystemErrorToTheWaitingRenewal() async throws {
-        testDRMAssetRegistry.offlineConfigured = true
-        testDRMAssetRegistry.renewingOfflineLicense = true
-
-        await contentKeySessionDelegate.reportFailedRenewal(
-            keyRequestIdentifier: makeFakeSkdUrl(fakePlaybackID: "fake-playback"),
-            error: FakeError()
-        )
-
-        XCTAssertEqual(testDRMAssetRegistry.renewalResults.count, 1)
-        let reported = try XCTUnwrap(testDRMAssetRegistry.renewalResults.first)
-        XCTAssertEqual(reported.playbackID, "fake-playback")
-        guard case .failure(let error) = reported.result else {
-            XCTFail("Renewal should have been reported as failed")
-            return
-        }
-        XCTAssertTrue(error is FakeError)
-    }
-
-    func testReportFailedRenewal_IgnoresRequestsWithNoRenewalWaiting() async {
-        testDRMAssetRegistry.renewingOfflineLicense = false
-
-        await contentKeySessionDelegate.reportFailedRenewal(
-            keyRequestIdentifier: makeFakeSkdUrl(fakePlaybackID: "fake-playback"),
-            error: FakeError()
-        )
-
-        XCTAssertTrue(testDRMAssetRegistry.renewalResults.isEmpty)
-    }
-
-    func testReportFailedRenewal_IgnoresAnIdentifierWithNoPlaybackId() async {
-        testDRMAssetRegistry.renewingOfflineLicense = true
-
-        await contentKeySessionDelegate.reportFailedRenewal(
-            keyRequestIdentifier: makeFakeSkdUrlIncorrect(),
-            error: FakeError()
-        )
-
-        XCTAssertTrue(testDRMAssetRegistry.renewalResults.isEmpty)
-    }
-
     // MARK: - Online license caching
 
     func testOnlinePersistableKeyRequest_CacheHit_UsesCachedLicenseNoNetwork() async throws {

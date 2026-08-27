@@ -139,32 +139,8 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
                 "CK Request Failed Underlying Error Code: \(underlyingError.code)"
             )
         }
-
-        // This is the system's catch-all for a failed key request, including
-        // failures we reported ourselves via processContentKeyResponseError. If a
-        // renewal was waiting on this request, hand it the real error instead of
-        // leaving it to time out.
-        Task {
-            await reportFailedRenewal(keyRequestIdentifier: keyRequest.identifier, error: err)
-        }
     }
 
-    /// Reports `error` to a `renewOfflineLicense` call waiting on this key
-    /// request, if there is one. A no-op for every other key request, and for a
-    /// renewal that has already reported an outcome.
-    func reportFailedRenewal(keyRequestIdentifier: Any?, error: any Error) async {
-        guard let sessionManager,
-              let identifier = keyRequestIdentifier as? String,
-              let keyURL = URL(string: identifier),
-              let playbackID = parsePlaybackId(fromSkdLocation: keyURL),
-              await sessionManager.isRenewingOfflineLicense(playbackID: playbackID)
-        else {
-            return
-        }
-
-        sessionManager.finishOfflineLicenseRenewal(playbackID: playbackID, result: .failure(error))
-    }
-    
     func contentKeySession(
         _ session: AVContentKeySession,
         shouldRetry keyRequest: AVContentKeyRequest,
