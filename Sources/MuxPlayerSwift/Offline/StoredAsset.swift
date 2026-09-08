@@ -40,6 +40,13 @@ struct StoredAsset: Codable {
     /// Seconds from first offline playback until expiration (from JWT playDuration claim)
     let playDurationSeconds: TimeInterval?
 
+    /// The `skd://` key URI this asset's content key was requested under, as
+    /// provided by AVFoundation during the download. Renewing the license later
+    /// requires re-requesting the key under this exact identifier, because the
+    /// content key is bound to it. Absent for downloads made before we started
+    /// recording it, which therefore can't be renewed.
+    let keyIdentifier: String?
+
     func isExpired(at now: Date = Date()) -> Bool {
         guard let expireLicenseFrom else { return false }
 
@@ -77,7 +84,8 @@ extension StoredAsset {
             expireLicenseFrom: hasDRM ? Date() : nil,
             expirationPhase: hasDRM ? .licenseExpiration : nil,
             licenseExpirationSeconds: drmClaims?.licenseExpiration,
-            playDurationSeconds: drmClaims?.playDuration
+            playDurationSeconds: drmClaims?.playDuration,
+            keyIdentifier: nil
         )
     }
 }

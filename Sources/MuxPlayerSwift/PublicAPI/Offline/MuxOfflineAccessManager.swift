@@ -79,6 +79,35 @@ public class MuxOfflineAccessManager {
         await manager.removeDownload(playbackID: playbackID)
     }
     
+    /// Renew the DRM license of an already-downloaded video, extending how long
+    /// it stays playable offline without re-downloading the media
+    ///
+    /// Call this while online and any time you like — an asset whose license
+    /// has already expired can be renewed just as well as one that hasn't.
+    ///
+    /// - Parameters:
+    ///   - playbackID: The Mux playback ID of a completed, DRM-protected download
+    ///   - drmToken: A freshly-minted JSON web token for DRM playback, signed for
+    ///   offline use
+    ///   - customDomain: Custom playback domain, in the format
+    ///   media.example.com. Pass the same one you downloaded the asset with, so
+    ///   the license is requested from the same host that issued the original.
+    /// - Returns: The asset with its renewed license, playable again if it had expired
+    /// - Throws: ``OfflineLicenseRenewalError`` if the asset can't be renewed, or
+    /// if the license request fails
+    @discardableResult
+    public func renewOfflineLicense(
+        playbackID: String,
+        drmToken: String,
+        customDomain: String? = nil
+    ) async throws -> DownloadedAsset {
+        return try await manager.renewOfflineLicense(
+            playbackID: playbackID,
+            drmToken: drmToken,
+            customDomain: customDomain
+        )
+    }
+
     /// Find a downloaded asset by playback ID
     /// - Parameter playbackID: The Mux playback ID
     /// - Returns: The downloaded asset if found, nil otherwise

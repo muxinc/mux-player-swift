@@ -140,7 +140,7 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
             )
         }
     }
-    
+
     func contentKeySession(
         _ session: AVContentKeySession,
         shouldRetry keyRequest: AVContentKeyRequest,
@@ -296,6 +296,10 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
     /// Offline download / playback path: serve a previously-persisted key if we
     /// have one, otherwise fetch a persistable license and save it to the
     /// download key store.
+    ///
+    /// During a renewal (see `renewOfflineLicense`) the persisted key is skipped
+    /// and a replacement is always fetched, then the outcome is reported back to
+    /// the caller waiting on the renewal.
     private func handleOfflinePersistableContentKeyRequest(
         request: any KeyRequest,
         sessionManager: SessionManager,
@@ -303,8 +307,11 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
         requestIdentifierString: String,
         contentIdentifier: Data
     ) async throws {
+        let isRenewal = await sessionManager.isRenewingOfflineLicense(playbackID: playbackID)
+
         // If we already have a persisted content key, use it (this is the offline playback path)
-        if let persistedContentKey = try await persistedKeyStore.findPersistedContentKey(playbackID: playbackID) {
+        if !isRenewal,
+           let persistedContentKey = try await persistedKeyStore.findPersistedContentKey(playbackID: playbackID) {
             // Transition to playDuration-based expiration on first offline playback
             await persistedKeyStore.updateExpirationPhase(playbackID: playbackID, phase: .playDuration)
             request.processContentKeyResponse(
@@ -313,25 +320,37 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
             return
         }
 
-        // No content key already? Try to get one
-        let appCertData = try await sessionManager.requestCertificate(playbackID: playbackID, offline: true)
-        let spcData = try await request.makeStreamingContentKeyRequestData(
-            forApp: appCertData,
-            contentIdentifier: contentIdentifier,
-            options: [AVContentKeyRequestProtocolVersionsKey: [1]]
-        )
-        let ckcData = try await sessionManager.requestLicence(spcData: spcData, playbackID: playbackID, offline: true)
+        do {
+            // No content key already (or we're replacing it)? Try to get one
+            let appCertData = try await sessionManager.requestCertificate(playbackID: playbackID, offline: true)
+            let spcData = try await request.makeStreamingContentKeyRequestData(
+                forApp: appCertData,
+                contentIdentifier: contentIdentifier,
+                options: [AVContentKeyRequestProtocolVersionsKey: [1]]
+            )
+            let ckcData = try await sessionManager.requestLicence(spcData: spcData, playbackID: playbackID, offline: true)
 
-        let persistableKey = try request.persistableContentKey(fromKeyVendorResponse: ckcData, options: nil)
-        try await persistedKeyStore.savePersistedContentKey(
-            playbackID: playbackID,
-            identifier: requestIdentifierString,
-            contentKeyData: persistableKey
-        )
+            let persistableKey = try request.persistableContentKey(fromKeyVendorResponse: ckcData, options: nil)
+            try await persistedKeyStore.savePersistedContentKey(
+                playbackID: playbackID,
+                identifier: requestIdentifierString,
+                contentKeyData: persistableKey
+            )
 
-        request.processContentKeyResponse(
-            request.makeContentKeyResponse(fairPlayStreamingKeyResponseData: persistableKey)
-        )
+            request.processContentKeyResponse(
+                request.makeContentKeyResponse(fairPlayStreamingKeyResponseData: persistableKey)
+            )
+        } catch {
+            if isRenewal {
+                sessionManager.finishOfflineLicenseRenewal(playbackID: playbackID, result: .failure(error))
+            }
+            throw error
+        }
+
+        if isRenewal {
+            logger.debug("Renewed offline license for \(playbackID, privacy: .public)")
+            sessionManager.finishOfflineLicenseRenewal(playbackID: playbackID, result: .success(()))
+        }
     }
     #endif
 
@@ -407,9 +426,10 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
     ///
     /// - Online: drop the cached license so the normal flow re-fetches a fresh
     ///   one and re-caches it.
-    /// - Offline: we can't renew (we don't persist the `drm_token`), so throw to
-    ///   notify the system via `processContentKeyResponseError` rather than hang
-    ///   or silently re-serve a stale key. The asset must be re-downloaded.
+    /// - Offline: we can't renew in-band (we don't persist the `drm_token`), so
+    ///   throw to notify the system via `processContentKeyResponseError` rather
+    ///   than hang or silently re-serve a stale key. Renewing needs a fresh token
+    ///   from the app, via `MuxOfflineAccessManager.renewOfflineLicense`.
     func handleRenewingContentKeyRequest(request: any KeyRequest) async throws {
         guard let identifier = request.identifier as? String,
               let keyURL = URL(string: identifier),
@@ -421,7 +441,7 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
         #if os(iOS)
         if await sessionManager?.hasOfflineDRMConfig(playbackID: playbackID) == true {
             throw FairPlaySessionError.unexpected(
-                message: "Cannot renew an offline DRM license for \(playbackID); the asset must be re-downloaded"
+                message: "Cannot renew an offline DRM license for \(playbackID) during playback; renew it with a fresh drm_token while online, or re-download the asset"
             )
         }
         #endif
@@ -480,6 +500,18 @@ class ContentKeySessionDelegate<SessionManager: FairPlayStreamingSessionCredenti
         } catch {
             logger.debug("Persistable key request unavailable, using one-shot key: \(error.localizedDescription)")
         }
+
+        #if os(iOS)
+        // A renewal has nothing to renew without a persistable key, and the
+        // caller is waiting on an answer either way.
+        if isOffline, await sessionManager.isRenewingOfflineLicense(playbackID: playbackID) {
+            let renewalError = FairPlaySessionError.unexpected(
+                message: "Cannot renew the offline license for \(playbackID); persistable content keys are unavailable"
+            )
+            sessionManager.finishOfflineLicenseRenewal(playbackID: playbackID, result: .failure(renewalError))
+            throw renewalError
+        }
+        #endif
 
         // Fallback: one-shot (ephemeral) key, no caching. Use the asset's
         // offline token if it's an offline asset (not really supported, but

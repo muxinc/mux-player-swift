@@ -30,9 +30,30 @@ class TestContentKeySession: ContentKeyProvider {
     func removeContentKeyRecipient(_ recipient: any AVContentKeyRecipient) {
         // no-op
     }
-    
+
+    /// Identifiers passed to `processContentKeyRequest`, in order
+    var processedKeyRequestIdentifiers: [Any?] = []
+    /// Called when `processContentKeyRequest` is invoked, so tests can drive the
+    /// delegate flow that a real session would kick off
+    var onProcessContentKeyRequest: ((Any?) -> Void)?
+
+    func processContentKeyRequest(withIdentifier identifier: Any?, initializationData: Data?, options: [String: Any]?) {
+        processedKeyRequestIdentifiers.append(identifier)
+        onProcessContentKeyRequest?(identifier)
+    }
+
+    /// Sessions handed out by `recreate()`, in order
+    var recreatedSessions: [TestContentKeySession] = []
+    /// Applied to each session `recreate()` produces, so a test can set up
+    /// expectations on a session it doesn't create itself
+    var configureRecreatedSession: ((TestContentKeySession) -> Void)?
+
     func recreate() -> Self {
-        Self()
+        let session = Self()
+        session.configureRecreatedSession = configureRecreatedSession
+        configureRecreatedSession?(session)
+        recreatedSessions.append(session)
+        return session
     }
 
 	required init() {

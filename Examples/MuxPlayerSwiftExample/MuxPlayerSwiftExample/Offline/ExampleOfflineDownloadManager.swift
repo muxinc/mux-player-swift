@@ -11,6 +11,7 @@ import MuxPlayerSwift
 enum AssetDownloadState {
     case downloading(progress: Double)
     case downloaded
+    case renewingLicense
     case expired
     case mustRedownload
     case error(Error)
@@ -105,6 +106,41 @@ final class ExampleOfflineDownloadManager: ObservableObject {
         )
         downloadStates[asset.playbackID] = .downloading(progress: 0.0)
         observeDownload(playbackID: asset.playbackID, stream: stream)
+    }
+
+    /// Extends how long a downloaded DRM asset stays playable offline, without
+    /// re-downloading it. Works whether or not its license has already expired.
+    ///
+    /// The token has to be a fresh one, since the SDK doesn't keep the token the
+    /// download was made with. In your app it would come from your backend,
+    /// signed on demand; here it's whatever is configured on the `ExampleAsset`.
+    func renewLicense(for asset: ExampleAsset) async {
+        // The Renew action is only offered for DRM assets
+        guard let drmToken = asset.drmToken else { return }
+
+        let previousState = downloadStates[asset.playbackID]
+        downloadStates[asset.playbackID] = .renewingLicense
+        do {
+            let renewed = try await MuxOfflineAccessManager.shared.renewOfflineLicense(
+                playbackID: asset.playbackID,
+                drmToken: drmToken
+            )
+            if renewed.avAssetIfPlayable() != nil {
+                downloadStates[asset.playbackID] = .downloaded
+            } else {
+                downloadStates[asset.playbackID] = .mustRedownload
+            }
+        } catch OfflineLicenseRenewalError.renewalInProgress {
+            // Double tap. The first renewal owns the row's state, so leave it be.
+            print("[Example] Already renewing \(asset.playbackID)")
+        } catch OfflineLicenseRenewalError.licenseRequestFailed(let cause) {
+            // Renewal needs connectivity, so this one is worth retrying later.
+            // The asset itself is untouched, so put its old state back.
+            print("[Example] License renewal failed, try again when online: \(cause)")
+            downloadStates[asset.playbackID] = previousState ?? .expired
+        } catch {
+            downloadStates[asset.playbackID] = .error(error)
+        }
     }
 
     func cancelOrDeleteDownload(for playbackID: String) {

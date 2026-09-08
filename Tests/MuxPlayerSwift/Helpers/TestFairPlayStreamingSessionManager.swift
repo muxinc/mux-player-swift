@@ -57,6 +57,23 @@ class TestFairPlayStreamingSessionManager : FairPlayStreamingSessionCredentialCl
     func onlineDRMCredentials(playbackID: String) async -> (drmToken: String, rootDomain: String)? {
         await drmAssetRegistry.onlineDRMCredentials(playbackID: playbackID)
     }
+
+    func renewOfflineLicense(playbackID: String, keyIdentifier: String, drmToken: String, rootDomain: String) async throws {
+        try await drmAssetRegistry.renewOfflineLicense(
+            playbackID: playbackID,
+            keyIdentifier: keyIdentifier,
+            drmToken: drmToken,
+            rootDomain: rootDomain
+        )
+    }
+
+    func isRenewingOfflineLicense(playbackID: String) async -> Bool {
+        await drmAssetRegistry.isRenewingOfflineLicense(playbackID: playbackID)
+    }
+
+    func finishOfflineLicenseRenewal(playbackID: String, result: Result<Void, Error>) {
+        drmAssetRegistry.finishOfflineLicenseRenewal(playbackID: playbackID, result: result)
+    }
     
     init(credentialClient: any FairPlayStreamingSessionCredentialClient,
          drmAssetRegistry: any DRMAssetRegistry) {

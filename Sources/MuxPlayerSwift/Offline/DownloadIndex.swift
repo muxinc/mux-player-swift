@@ -116,7 +116,8 @@ actor DownloadIndex {
             expireLicenseFrom: existing.expireLicenseFrom,
             expirationPhase: existing.expirationPhase,
             licenseExpirationSeconds: existing.licenseExpirationSeconds,
-            playDurationSeconds: existing.playDurationSeconds
+            playDurationSeconds: existing.playDurationSeconds,
+            keyIdentifier: existing.keyIdentifier
         )
         assets[playbackID] = updated
         persist()
@@ -125,7 +126,7 @@ actor DownloadIndex {
     }
 
     @discardableResult
-    func updateCKCFileURL(playbackID: String, ckcFilePath: String?) -> StoredAsset? {
+    func updateCKCFileURL(playbackID: String, ckcFilePath: String?, keyIdentifier: String?) -> StoredAsset? {
         // not an error case. Deletion can occur re-entrantly before the delegate callback that calls this
         guard let existing = assets[playbackID] else {
             logger.warning("[Mux-Offline] DownloadIndex.updateCKCFileURL: No existing asset for playbackID \(playbackID)")
@@ -143,7 +144,8 @@ actor DownloadIndex {
             expireLicenseFrom: existing.expireLicenseFrom,
             expirationPhase: existing.expirationPhase,
             licenseExpirationSeconds: existing.licenseExpirationSeconds,
-            playDurationSeconds: existing.playDurationSeconds
+            playDurationSeconds: existing.playDurationSeconds,
+            keyIdentifier: keyIdentifier
         )
         assets[playbackID] = updated
         persist()
@@ -170,7 +172,8 @@ actor DownloadIndex {
             expireLicenseFrom: existing.expireLicenseFrom,
             expirationPhase: existing.expirationPhase,
             licenseExpirationSeconds: existing.licenseExpirationSeconds,
-            playDurationSeconds: existing.playDurationSeconds
+            playDurationSeconds: existing.playDurationSeconds,
+            keyIdentifier: existing.keyIdentifier
         )
         assets[playbackID] = updated
         persist()
@@ -195,7 +198,37 @@ actor DownloadIndex {
             expireLicenseFrom: Date(),
             expirationPhase: phase,
             licenseExpirationSeconds: existing.licenseExpirationSeconds,
-            playDurationSeconds: existing.playDurationSeconds
+            playDurationSeconds: existing.playDurationSeconds,
+            keyIdentifier: existing.keyIdentifier
+        )
+        assets[playbackID] = updated
+        persist()
+        return updated
+    }
+
+    /// Restarts the expiration clock from a freshly-issued license's claims. The
+    /// new license hasn't been played offline yet, so this also resets the phase
+    /// back to `licenseExpiration`.
+    @discardableResult
+    func updateLicenseExpiration(playbackID: String, claims: DRMTokenClaims) -> StoredAsset? {
+        guard let existing = assets[playbackID] else {
+            logger.warning("[Mux-Offline] DownloadIndex.updateLicenseExpiration: No existing asset for playbackID \(playbackID)")
+            return nil
+        }
+        let updated = StoredAsset(
+            isComplete: existing.isComplete,
+            completedWithError: existing.completedWithError,
+            playbackID: existing.playbackID,
+            localPath: existing.localPath,
+            readableTitle: existing.readableTitle,
+            posterDataBase64: existing.posterDataBase64,
+            ckcFilePath: existing.ckcFilePath,
+            redownloadExpiration: existing.redownloadExpiration,
+            expireLicenseFrom: Date(),
+            expirationPhase: .licenseExpiration,
+            licenseExpirationSeconds: claims.licenseExpiration,
+            playDurationSeconds: claims.playDuration,
+            keyIdentifier: existing.keyIdentifier
         )
         assets[playbackID] = updated
         persist()

@@ -157,6 +157,82 @@ actor DownloadManager: PersistedKeyStore {
         await index.deleteDownloadedFiles(playbackID: playbackID, removeFromIndex: true)
     }
     
+    /// Fetches a replacement DRM license for an already-downloaded asset, using a
+    /// `drm_token` the caller obtained while online. Everything else it needs is
+    /// already on disk, so there's no re-download and no player involved.
+    func renewOfflineLicense(
+        playbackID: String,
+        drmToken: String,
+        customDomain: String?
+    ) async throws -> DownloadedAsset {
+        logger.log("[Mux-Offline] renewOfflineLicense: called for playbackID \(playbackID)")
+
+        // A download fetches its own license, so let it finish rather than
+        // racing it with a second key request for the same playbackID
+        guard downloadTasksByPlaybackID[playbackID] == nil else {
+            throw OfflineLicenseRenewalError.downloadInProgress
+        }
+        guard let storedAsset = await index.get(playbackID: playbackID),
+              storedAsset.isComplete,
+              !storedAsset.completedWithError,
+              storedAsset.localPath != nil
+        else {
+            throw OfflineLicenseRenewalError.notDownloaded
+        }
+        guard storedAsset.ckcFilePath != nil else {
+            throw OfflineLicenseRenewalError.notDRMProtected
+        }
+        // The renewed key has to be requested under the same identifier the
+        // download used, since the content key is bound to it
+        guard let keyIdentifier = storedAsset.keyIdentifier else {
+            logger.error("[Mux-Offline] renewOfflineLicense: No key identifier recorded for \(playbackID)")
+            throw OfflineLicenseRenewalError.keyIdentifierUnavailable
+        }
+        // The key request can only be routed back to this playbackID if the
+        // identifier carries it, the same way ContentKeySessionDelegate parses it.
+        // Checking here means the delegate's parsing guards can't strand a
+        // renewal that's already waiting on a key.
+        guard let keyURL = URL(string: keyIdentifier),
+              URLComponents(url: keyURL, resolvingAgainstBaseURL: false)?
+                .findQueryValue(key: "playbackId") == playbackID
+        else {
+            logger.error("[Mux-Offline] renewOfflineLicense: Key identifier for \(playbackID) has no matching playbackId")
+            throw OfflineLicenseRenewalError.keyIdentifierUnavailable
+        }
+        // The claims restart the expiration clock once the license lands, and a
+        // token that isn't for offline use won't get us a persistable license
+        guard let claims = DRMTokenClaims.from(drmToken: drmToken), claims.offline else {
+            logger.error("[Mux-Offline] renewOfflineLicense: drm_token for \(playbackID) is unreadable or not marked for offline use")
+            throw OfflineLicenseRenewalError.invalidDRMToken
+        }
+
+        do {
+            try await PlayerSDK.shared.fairPlaySessionManager.renewOfflineLicense(
+                playbackID: playbackID,
+                keyIdentifier: keyIdentifier,
+                drmToken: drmToken,
+                rootDomain: customDomain ?? PlaybackOptions.defaultRootDomain
+            )
+        } catch FairPlaySessionError.renewalAlreadyInProgress {
+            // Not a failure, and not something to report as one: the earlier
+            // call still owns this renewal and will report its outcome
+            logger.log("[Mux-Offline] renewOfflineLicense: Already renewing \(playbackID); declining this request")
+            throw OfflineLicenseRenewalError.renewalInProgress
+        } catch {
+            logger.error("[Mux-Offline] renewOfflineLicense: Failed for \(playbackID): \(error)")
+            throw OfflineLicenseRenewalError.licenseRequestFailed(error)
+        }
+
+        // A fresh license means a fresh expiration, and the playDuration clock
+        // hasn't started on it yet
+        await index.updateLicenseExpiration(playbackID: playbackID, claims: claims)
+
+        guard let renewedAsset = await findDownloadedAsset(playbackID: playbackID) else {
+            throw OfflineLicenseRenewalError.assetUnavailableAfterRenewal
+        }
+        return renewedAsset
+    }
+
     /// If an asset is stored in the index (completed or not), and it has a persisted content key, returns it
     func findPersistedContentKey(playbackID: String) async throws -> Data? {
         guard let storedAsset = await index.get(playbackID: playbackID),
@@ -199,7 +275,12 @@ actor DownloadManager: PersistedKeyStore {
         logger.info("[Mux-Offline] savePersistedContentKey: Saving CKC to file at: \(newCkcFileURL.relativePath)")
         
         // update index first. Better to have blank entries here than orphaned files on disk
-        let _ = await index.updateCKCFileURL(playbackID: playbackID, ckcFilePath: newCkcFileURL.relativePath)
+        // The identifier is recorded so the license can be renewed later without a manifest
+        let _ = await index.updateCKCFileURL(
+            playbackID: playbackID,
+            ckcFilePath: newCkcFileURL.relativePath,
+            keyIdentifier: identifier
+        )
         
         try contentKeyData.write(to: newCkcFileURL)
         

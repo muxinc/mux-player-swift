@@ -11,7 +11,25 @@ class TestDRMAssetRegistry : DRMAssetRegistry {
     
     func addOfflinePlayDRMAsset(_ urlAsset: AVURLAsset, playbackID: String, keyData: Data) async {
     }
-    
+
+    /// When true, `isRenewingOfflineLicense` reports a renewal in flight, which
+    /// makes the delegate bypass any already-persisted key.
+    var renewingOfflineLicense: Bool = false
+    /// Outcomes reported through `finishOfflineLicenseRenewal`, in order
+    var renewalResults: [(playbackID: String, result: Result<Void, Error>)] = []
+
+    func renewOfflineLicense(playbackID: String, keyIdentifier: String, drmToken: String, rootDomain: String) async throws {
+    }
+
+    func isRenewingOfflineLicense(playbackID: String) async -> Bool {
+        return renewingOfflineLicense
+    }
+
+    func finishOfflineLicenseRenewal(playbackID: String, result: Result<Void, Error>) {
+        renewalResults.append((playbackID, result))
+    }
+
+
     /// When true, `hasOfflineDRMConfig` reports the asset as offline (download /
     /// offline playback). Defaults to false (online), matching most tests.
     var offlineConfigured: Bool = false

@@ -30,6 +30,17 @@ protocol DRMAssetRegistry {
 
     func addOfflineDownloadDRMAsset(_ urlAsset: AVURLAsset, playbackID: String, options: PlaybackOptions.DRMPlaybackOptions, rootDomain: String)
     func removeOfflineDownloadSession(playbackID: String)
+    /// Re-runs the FairPlay handshake for an already-downloaded asset using a
+    /// freshly-supplied `drm_token`, with no player and no `AVURLAsset` recipient.
+    /// Returns once the new license has been persisted, or throws if it couldn't be.
+    func renewOfflineLicense(playbackID: String, keyIdentifier: String, drmToken: String, rootDomain: String) async throws
+    /// Whether a ``renewOfflineLicense(playbackID:keyIdentifier:drmToken:rootDomain:)``
+    /// call is awaiting a key for this playbackID. Key requests for a renewal must
+    /// bypass the already-persisted key and fetch a new one.
+    func isRenewingOfflineLicense(playbackID: String) async -> Bool
+    /// Reports the outcome of a renewal key request back to the waiting
+    /// ``renewOfflineLicense(playbackID:keyIdentifier:drmToken:rootDomain:)`` call.
+    func finishOfflineLicenseRenewal(playbackID: String, result: Result<Void, Error>)
     func addOfflinePlayDRMAsset(_ urlAsset: AVURLAsset, playbackID: String, keyData: Data) async
     func hasOfflineDRMConfig(playbackID: String) async -> Bool
     func offlineKeyData(playbackID: String) async -> Data?
@@ -57,6 +68,10 @@ protocol ContentKeyProvider {
 
     func removeContentKeyRecipient(_ recipient: any AVContentKeyRecipient)
 
+    // Starts a key request for an identifier directly, without an
+    // AVContentKeyRecipient. Used to fetch a key with no player involved.
+    func processContentKeyRequest(withIdentifier identifier: Any?, initializationData: Data?, options: [String: Any]?)
+
     func recreate() -> Self
 }
 
@@ -71,6 +86,11 @@ extension AVContentKeySession: ContentKeyProvider {
 }
 
 // MARK: - DefaultFairPlayStreamingSessionManager
+
+/// Ceiling on each of a renewal's credential requests (app certificate, then
+/// license). Renewal is interactive, so these fail fast instead of waiting for
+/// connectivity the way a download does.
+private let offlineLicenseRenewalRequestTimeout: TimeInterval = 30
 
 class DefaultFairPlayStreamingSessionManager<
     ContentKeySession: ContentKeyProvider
@@ -98,6 +118,13 @@ class DefaultFairPlayStreamingSessionManager<
     /// Stored to prevent deallocation since AVContentKeySession holds a
     /// weak reference to its delegate.
     private var downloadKeyDelegates: [String: AVContentKeySessionDelegate] = [:]
+    /// should be accessed on `queue`. playbackIDs with a license renewal in
+    /// flight. Kept separately from `offlineDownloadKeyLookup` because saving a
+    /// key tears that entry down while the renewal is still finishing up.
+    private var renewingPlaybackIDs: Set<String> = []
+    /// should be accessed on `queue`. Callers waiting on a renewal's key request.
+    /// Removed from this table before being resumed, so each is resumed once.
+    private var renewalContinuations: [String: CheckedContinuation<Void, Error>] = [:]
 
     private var contentKeySession: ContentKeySession {
         willSet {
@@ -133,7 +160,15 @@ class DefaultFairPlayStreamingSessionManager<
     }
 
     private let urlSession: URLSession
-    
+    /// Used in place of `urlSession` for license renewals, which fail fast rather
+    /// than waiting for connectivity. See the initializer.
+    private let renewalURLSession: URLSession
+
+    /// The session to make credential requests for this playbackID on.
+    private func urlSession(forPlaybackID playbackID: String) async -> URLSession {
+        return await isRenewingOfflineLicense(playbackID: playbackID) ? renewalURLSession : urlSession
+    }
+
     private func drmConfigOnQueue(for playbackID: String, offline: Bool) async -> DRMConfig? {
         return await withCheckedContinuation { continuation in
             queue.async { [logger, weak self] in
@@ -155,7 +190,11 @@ class DefaultFairPlayStreamingSessionManager<
             throw FairPlaySessionError.unexpected(message: "No DRM config tracked for playbackID: \(playbackID)")
         }
 
-        return try await requestCertificateInner(playbackID: playbackID, drmConfig: config)
+        return try await requestCertificateInner(
+            playbackID: playbackID,
+            drmConfig: config,
+            urlSession: await urlSession(forPlaybackID: playbackID)
+        )
     }
 
     func requestLicence(spcData: Data, playbackID: String, offline: Bool) async throws -> Data {
@@ -163,13 +202,19 @@ class DefaultFairPlayStreamingSessionManager<
             throw FairPlaySessionError.unexpected(message: "No DRM config tracked for playbackID: \(playbackID)")
         }
 
-        return try await requestLicenseInner(spcData: spcData, playbackID: playbackID, drmConfig: config)
+        return try await requestLicenseInner(
+            spcData: spcData,
+            playbackID: playbackID,
+            drmConfig: config,
+            urlSession: await urlSession(forPlaybackID: playbackID)
+        )
     }
 
     /// Requests the App Certificate for a playback id
     private func requestCertificateInner(
         playbackID: String,
-        drmConfig config: DRMConfig
+        drmConfig config: DRMConfig,
+        urlSession: URLSession
     ) async throws -> Data {
         let rootDomain = config.rootDomain
         let drmToken = config.options.drmToken
@@ -271,7 +316,8 @@ class DefaultFairPlayStreamingSessionManager<
     private func requestLicenseInner(
         spcData: Data,
         playbackID: String,
-        drmConfig config: DRMConfig
+        drmConfig config: DRMConfig,
+        urlSession: URLSession
     ) async throws -> Data {
         let drmToken = config.options.drmToken
         let rootDomain = config.rootDomain
@@ -403,7 +449,100 @@ class DefaultFairPlayStreamingSessionManager<
             self?.offlineDownloadKeyLookup[playbackID] = nil
         }
     }
-    
+
+    // MARK: renewing offline licenses
+
+    func renewOfflineLicense(
+        playbackID: String,
+        keyIdentifier: String,
+        drmToken: String,
+        rootDomain: String
+    ) async throws {
+        guard await beginRenewal(playbackID: playbackID) else {
+            throw FairPlaySessionError.renewalAlreadyInProgress(playbackID: playbackID)
+        }
+
+        // A fresh session per renewal, so the key request can't be satisfied by
+        // state left over from an earlier flow. There's no AVURLAsset recipient
+        // here; the key identifier drives the request instead.
+        let session = contentKeySession.recreate()
+        let delegate = ContentKeySessionDelegate(sessionManager: self)
+        session.setDelegate(delegate, queue: queue)
+
+        defer {
+            session.setDelegate(nil, queue: nil)
+            removeOfflineDownloadSession(playbackID: playbackID)
+            queue.async { [weak self] in
+                self?.renewingPlaybackIDs.remove(playbackID)
+            }
+        }
+
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            queue.async { [logger, weak self] in
+                guard let self else {
+                    logger.warning("attempted a license renewal after cleanup")
+                    continuation.resume(
+                        throwing: FairPlaySessionError.unexpected(message: "Session manager terminated")
+                    )
+                    return
+                }
+                // The delegate callbacks need these before the flow starts. Only
+                // the drm_token is needed to reach the cert and license hosts,
+                // so there's no playback token to supply here.
+                offlineDownloadKeyLookup[playbackID] = DRMConfig(
+                    options: PlaybackOptions.DRMPlaybackOptions(
+                        playbackToken: "",
+                        drmToken: drmToken
+                    ),
+                    rootDomain: rootDomain
+                )
+                downloadKeySessions[playbackID] = session
+                downloadKeyDelegates[playbackID] = delegate
+                renewalContinuations[playbackID] = continuation
+
+                session.processContentKeyRequest(
+                    withIdentifier: keyIdentifier,
+                    initializationData: nil,
+                    options: nil
+                )
+            }
+        }
+    }
+
+    func isRenewingOfflineLicense(playbackID: String) async -> Bool {
+        return await withCheckedContinuation { continuation in
+            queue.async { [weak self] in
+                continuation.resume(returning: self?.renewingPlaybackIDs.contains(playbackID) ?? false)
+            }
+        }
+    }
+
+    func finishOfflineLicenseRenewal(playbackID: String, result: Result<Void, Error>) {
+        queue.async { [weak self] in
+            // Removing before resuming keeps this a single resume per renewal,
+            // no matter how many callers report an outcome
+            guard let continuation = self?.renewalContinuations.removeValue(forKey: playbackID) else {
+                return
+            }
+            continuation.resume(with: result)
+        }
+    }
+
+    /// Claims the renewal slot for a playbackID, returning false if one is
+    /// already in flight.
+    private func beginRenewal(playbackID: String) async -> Bool {
+        return await withCheckedContinuation { continuation in
+            queue.async { [weak self] in
+                guard let self, !renewingPlaybackIDs.contains(playbackID) else {
+                    continuation.resume(returning: false)
+                    return
+                }
+                renewingPlaybackIDs.insert(playbackID)
+                continuation.resume(returning: true)
+            }
+        }
+    }
+
     func addOfflinePlayDRMAsset(_ urlAsset: AVURLAsset, playbackID: String, keyData: Data) async {
         await withCheckedContinuation { continuation in
             queue.async { [weak self] in
@@ -471,6 +610,17 @@ class DefaultFairPlayStreamingSessionManager<
             }
             self.downloadKeySessions.removeAll()
             self.downloadKeyDelegates.removeAll()
+            self.renewingPlaybackIDs.removeAll()
+            // No key request is going to arrive for these now
+            let abandonedRenewals = self.renewalContinuations
+            self.renewalContinuations.removeAll()
+            for (playbackID, continuation) in abandonedRenewals {
+                continuation.resume(
+                    throwing: FairPlaySessionError.unexpected(
+                        message: "Media services were lost while renewing the offline license for \(playbackID)"
+                    )
+                )
+            }
         }
         contentKeySession = contentKeySession.recreate()
     }
@@ -505,6 +655,21 @@ class DefaultFairPlayStreamingSessionManager<
             delegate: nil,
             delegateQueue: operationQueue)
 
+        // Renewals are interactive: an app asks for one believing it's online, and
+        // waits on the result. Waiting for connectivity would leave that caller
+        // hanging (the default resource timeout is measured in days), so a renewal
+        // fails fast instead and lets the app try again later.
+        let renewalURLSessionConfiguration = baseURLSessionConfig.copy() as! URLSessionConfiguration
+        renewalURLSessionConfiguration.waitsForConnectivity = false
+        renewalURLSessionConfiguration.networkServiceType = .responsiveData
+        renewalURLSessionConfiguration.timeoutIntervalForRequest = offlineLicenseRenewalRequestTimeout
+        renewalURLSessionConfiguration.timeoutIntervalForResource = offlineLicenseRenewalRequestTimeout
+
+        renewalURLSession = URLSession(
+            configuration: renewalURLSessionConfiguration,
+            delegate: nil,
+            delegateQueue: operationQueue)
+
         notificationObservers.append(
             NotificationCenter.default.addObserver(
                 forName: AVAudioSession.mediaServicesWereLostNotification,
@@ -522,4 +687,8 @@ enum FairPlaySessionError : Error {
     case because(cause: any Error)
     case httpFailed(responseStatusCode: Int)
     case unexpected(message: String)
+    /// A license renewal was requested for a playbackID that already has one in
+    /// flight. Distinct from the other cases because nothing went wrong: the
+    /// earlier renewal is still running and this request was simply declined.
+    case renewalAlreadyInProgress(playbackID: String)
 }
