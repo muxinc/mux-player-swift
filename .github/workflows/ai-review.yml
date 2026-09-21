@@ -1,0 +1,164 @@
+# Observe-only AI review.
+#
+# This repo is PUBLIC and the review tool (muxinc/code-review-analysis) is
+# private. GitHub does not let a public repo consume a reusable workflow from a
+# private one, so this file INLINES the tool's reusable workflow
+# (.github/workflows/ai-review-observe.yml) and checks the tool out with a token
+# instead. If the tool repo ever becomes internal/public, this whole file can be
+# replaced by a thin `uses:` caller.
+#
+# DO NOT EDIT THE STEPS HERE BY HAND. This is a copy of the canonical template
+# at live/workflows/inline-ai-review-public.yml in the tool repo, which has a
+# test (live/tests/test_workflow_parity.py) asserting it stays step-for-step
+# identical to the reusable workflow. Re-copy from there instead of patching
+# locally — the first inlined copy (muxinc/mux-player-android) was hand-edited
+# and drifted behind on timeouts, credential hygiene, and failure handling.
+#
+# WHAT IT DOES: on every PR it posts one comment and one informational
+# `review:*` label saying how much human review the change looks like it needs,
+# and appends the ruling to a central log. It is OBSERVE-ONLY — no required
+# check, no ruleset, nothing blocks a merge, and a bug in the reviewer shows as
+# a neutral skip or a yellow warning rather than a failing check.
+#
+# Requires two org secrets (inherited, nothing to set up in this repo):
+#   REVIEW_TOOL_TOKEN  contents:read on the tool repo + contents:write on its
+#                      rulings-log branch
+#   ANTHROPIC_API_KEY  optional — enables the LLM judge layer; without it the
+#                      band falls back to the rules engine and never blocks
+
+name: ai-review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: ai-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  ai-review-observe:
+    name: ai-review (observe)
+    runs-on: ubuntu-latest
+    # Cap runtime: a wedged pip/gh/LLM call otherwise holds a runner up to 6h.
+    timeout-minutes: 15
+    # Fork PRs don't receive repo/org secrets (GitHub withholds them from forks
+    # by design), so REVIEW_TOOL_TOKEN would be empty and the tool checkout would
+    # 403. Skip the job entirely on fork PRs instead of letting it fail — a
+    # skipped job shows as neutral, never a red/blocking check, which keeps this
+    # true to its observe-only intent. Same-repo PRs run normally. This guard is
+    # the one thing the inline form needs that the reusable workflow does not:
+    # public repos get drive-by fork PRs, internal ones effectively don't.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - name: Check out review tool
+        id: checkout
+        # A bad, missing or EXPIRED REVIEW_TOOL_TOKEN fails here, and this is by
+        # far the likeliest failure mode. Without continue-on-error it reds the
+        # calling repo's PR check, which breaks the observe-only promise
+        # outright: mux-player-android's token expired 2026-08-12 and every PR
+        # there carried a red `ai-review` check for two weeks. Never blocking.
+        continue-on-error: true
+        uses: actions/checkout@v4
+        with:
+          repository: muxinc/code-review-analysis
+          ref: main
+          token: ${{ secrets.REVIEW_TOOL_TOKEN }}
+          # The token is only needed to fetch the tool repo; don't leave it in
+          # .git/config for the later python steps (they auth via GH_TOKEN env).
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        id: setup
+        continue-on-error: true
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        id: deps
+        continue-on-error: true
+        run: pip install -r requirements.txt
+
+      - name: Classify PR (post comment + label, observe-only)
+        id: classify
+        # Nothing to classify with if the tool checkout or its deps failed.
+        if: steps.checkout.outcome == 'success' && steps.deps.outcome == 'success'
+        # Observe-only: a reviewer crash must never block this repo's PR. On
+        # failure this step warns (yellow) and the gated steps below skip.
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python -m live.classify \
+            --repo "${{ github.repository }}" \
+            --pr "${{ github.event.pull_request.number }}" \
+            --live-config "auto" \
+            --apply --observe \
+            > result.json
+          cat result.json
+          echo "ok=true" >> "$GITHUB_OUTPUT"
+
+      - name: Render job summary
+        if: steps.classify.outputs.ok == 'true'
+        run: |
+          {
+            echo "## AI Review — observe-only"
+            echo ""
+            echo "PR [#$(jq -r '.pr' result.json)]($(jq -r '.url' result.json)) — **$(jq -r '.band' result.json)**"
+            echo ""
+            echo "| Layer | Result |"
+            echo "|---|---|"
+            echo "| Band (final) | \`$(jq -r '.label' result.json)\` |"
+            echo "| Route | $(jq -r '.route' result.json) |"
+            echo "| Engine score | $(jq -r '.engine_score' result.json) |"
+            echo "| Learned score | $(jq -r '.learned_score' result.json) |"
+            echo "| LLM judge | $(jq -r '.llm_score // "n/a"' result.json) |"
+            echo ""
+            echo "_Informational only — nothing is enforced._"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Record ruling to central log
+        if: steps.classify.outputs.ok == 'true'
+        # Recording must never block either; record_ruling already exits 0 on
+        # failure, this is belt-and-suspenders.
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.REVIEW_TOOL_TOKEN }}
+          LOG_REPO: muxinc/code-review-analysis
+          LOG_BRANCH: rulings-log
+          LOG_PATH: rulings.jsonl
+        run: |
+          python -m live.record_ruling --result-file result.json
+
+      - name: Flag reviewer outage
+        # The reviewer is now unable to red a PR, so a silent failure would go
+        # unnoticed — that is exactly how the android outage above lasted two
+        # weeks. Make it loud on the run itself instead: a warning annotation
+        # and a job summary naming the likely cause. The job still concludes
+        # SUCCESS; monitoring belongs to the tool team, not the calling repo.
+        if: always() && steps.classify.outputs.ok != 'true'
+        run: |
+          if [ "${{ steps.checkout.outcome }}" != "success" ]; then
+            reason="tool checkout failed — REVIEW_TOOL_TOKEN is missing, invalid or EXPIRED for this repo"
+          elif [ "${{ steps.setup.outcome }}" != "success" ] || [ "${{ steps.deps.outcome }}" != "success" ]; then
+            reason="python setup / dependency install failed"
+          else
+            reason="classification failed — see the step log above"
+          fi
+          echo "::warning title=AI review did not run::$reason"
+          {
+            echo "## AI Review — did not run"
+            echo ""
+            echo "**$reason**"
+            echo ""
+            echo "No comment, label or ruling was produced for this PR. This is"
+            echo "observe-only, so nothing is blocked and this check stays green."
+          } >> "$GITHUB_STEP_SUMMARY"
